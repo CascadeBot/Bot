@@ -1,0 +1,68 @@
+<configuration>
+
+    <variable scope="context" name="logPattern" value="[%d{yyyy.MM.dd HH:mm}] [%level] [%t] [%logger] %msg%n"/>
+
+    <appender name="LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <file>logs/latest.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>logs/latest.%d{yyyy-MM-dd}.log</fileNamePattern>
+
+            <!-- keep 14 days worth of history capped at 1GB total size -->
+            <maxHistory>14</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${logPattern}</pattern>
+        </encoder>
+    </appender>
+    <appender name="DEBUG-LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>logs/debug-latest.log</file>
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- hourly rollover -->
+            <fileNamePattern>logs/debug/debug-latest.%d{yyyy-MM-dd_HH}.log</fileNamePattern>
+
+            <!-- keep 3 days worth of history capped at 1GB total size -->
+            <maxHistory>72</maxHistory>
+            <totalSizeCap>1GB</totalSizeCap>
+        </rollingPolicy>
+
+        <encoder>
+            <pattern>${logPattern}</pattern>
+        </encoder>
+    </appender>
+<!--    <appender name="Sentry" class="io.sentry.logback.SentryAppender">-->
+<!--        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
+<!--            <level>WARN</level>-->
+<!--        </filter>-->
+<!--    </appender>-->
+
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>INFO</level>
+        </filter>
+        <encoder>
+            <pattern>[%d{yyyy.MM.dd HH:mm:ss}] [%highlight(%level)] [%.-40t] [%logger{0}] %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="METRICS" class="io.prometheus.client.logback.InstrumentedAppender" />
+
+    <logger name="org.hibernate.SQL" level="DEBUG"/>
+    <logger name="org.flywaydb.core.internal.license.VersionPrinter" level="OFF"/>
+
+    <root level="DEBUG">
+        <appender-ref ref="STDOUT"/>
+        <appender-ref ref="METRICS"/>
+        <appender-ref ref="LOG"/>
+        <appender-ref ref="DEBUG-LOG"/>
+<!--        <appender-ref ref="Sentry"/>-->
+    </root>
+
+</configuration>
