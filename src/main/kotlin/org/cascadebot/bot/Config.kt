@@ -5,7 +5,10 @@ import com.sksamuel.hoplite.Masked
 import com.sksamuel.hoplite.addEnvironmentSource
 import com.sksamuel.hoplite.addFileSource
 
-data class Sharding(val min: Int? = null, val max: Int? = null, val total: Int = -1)
+sealed class Sharding {
+    data class Total(val total: Int = -1): Sharding()
+    data class MinMax(val total: Int, val min: Int, val max: Int): Sharding()
+}
 
 data class Bot(val token: String, val shards: Sharding?)
 

@@ -36,7 +36,7 @@ dependencies {
     implementation("com.github.Carleslc.Simple-YAML:Simple-Yaml:1.8.2")
     implementation("org.hibernate:hibernate-core:${Versions.hibernate}")
     implementation("org.hibernate:hibernate-hikaricp:${Versions.hibernate}")
-    implementation("com.vladmihalcea:hibernate-types-55:2.16.2")
+    implementation("com.vladmihalcea:hibernate-types-60:2.19.2")
     implementation("org.postgresql:postgresql:${Versions.postgres}")
     implementation("org.flywaydb:flyway-core:9.3.0")
     implementation("ch.qos.logback:logback-classic:1.4.1")
@@ -44,6 +44,7 @@ dependencies {
     implementation("com.sksamuel.hoplite:hoplite-core:${Versions.hoplite}")
     implementation("com.sksamuel.hoplite:hoplite-yaml:${Versions.hoplite}")
     implementation("com.sksamuel.hoplite:hoplite-hikaricp:${Versions.hoplite}")
+    implementation("org.reflections:reflections:0.10.2")
 }
 
 tasks.test {
