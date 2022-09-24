@@ -66,4 +66,8 @@ tasks.jar {
 
     // Copy dependencies into the jar file to produce a fat-jar
     from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+
+    doLast {
+        File(buildDir, "/libs/version.txt").writeText(project.version.toString())
+    }
 }
