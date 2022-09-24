@@ -1,0 +1,20 @@
+botConfig:
+  # The bot token acquired from https://discord.com/developers/applications
+  token: ""
+  # The shards section can be omitted to run in single-shard mode
+  shards:
+    min: 0
+    max: 2
+    total: 10 # If total is not specified, min and max will not take effect and the total will be retrieved from Discord
+
+database:
+  url: "postgresql://localhost:27017/"
+  username: "postgres"
+  password: ""
+
+rabbitMQ:
+  username: ""
+  password: ""
+  hostname: ""
+  port: 5672
+  virtualHost: "/"

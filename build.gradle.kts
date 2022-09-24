@@ -1,10 +1,11 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 object Versions {
-    const val prometheusVersion = "0.16.0"
-    const val jdaVersion = "5.0.0-alpha.20"
-    const val hibernateVersion = "6.1.3.Final"
-    const val postgresVersion = "42.5.0"
+    const val prometheus = "0.16.0"
+    const val jda = "5.0.0-alpha.20"
+    const val hibernate = "6.1.3.Final"
+    const val postgres = "42.5.0"
+    const val hoplite = "2.6.3"
 }
 
 plugins {
@@ -26,21 +27,24 @@ dependencies {
     testImplementation(kotlin("test"))
     implementation("org.apache.commons:commons-lang3:3.12.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlin.coreLibrariesVersion}")
-    implementation("io.prometheus:simpleclient:${Versions.prometheusVersion}")
-    implementation("io.prometheus:simpleclient_logback:${Versions.prometheusVersion}")
-    implementation("io.prometheus:simpleclient_hotspot:${Versions.prometheusVersion}")
-    implementation("net.dv8tion:JDA:${Versions.jdaVersion}")
+    implementation("io.prometheus:simpleclient:${Versions.prometheus}")
+    implementation("io.prometheus:simpleclient_logback:${Versions.prometheus}")
+    implementation("io.prometheus:simpleclient_hotspot:${Versions.prometheus}")
+    implementation("net.dv8tion:JDA:${Versions.jda}")
     implementation("club.minnced:discord-webhooks:0.8.2")
     implementation("com.github.Carleslc.Simple-YAML:Simple-Yaml:1.8.2")
-    implementation("org.hibernate:hibernate-core:${Versions.hibernateVersion}")
-    implementation("org.hibernate:hibernate-hikaricp:${Versions.hibernateVersion}")
+    implementation("org.hibernate:hibernate-core:${Versions.hibernate}")
+    implementation("org.hibernate:hibernate-hikaricp:${Versions.hibernate}")
     implementation("com.vladmihalcea:hibernate-types-55:2.16.2")
-    implementation("org.postgresql:postgresql:${Versions.postgresVersion}")
+    implementation("org.postgresql:postgresql:${Versions.postgres}")
     implementation("org.flywaydb:flyway-core:9.3.0")
     implementation("ch.qos.logback:logback-classic:1.4.1")
     implementation("ch.qos.logback.contrib:logback-json-classic:0.1.5")
     implementation("ch.qos.logback.contrib:logback-jackson:0.1.5")
     implementation("io.sentry:sentry-logback:6.4.2")
+    implementation("com.sksamuel.hoplite:hoplite-core:${Versions.hoplite}")
+    implementation("com.sksamuel.hoplite:hoplite-yaml:${Versions.hoplite}")
+    implementation("com.sksamuel.hoplite:hoplite-hikaricp:${Versions.hoplite}")
 }
 
 tasks.test {
