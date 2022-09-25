@@ -1,13 +1,14 @@
 package org.cascadebot.bot
 
 import com.sksamuel.hoplite.ConfigLoaderBuilder
+import com.sksamuel.hoplite.ConfigResult
 import com.sksamuel.hoplite.Masked
 import com.sksamuel.hoplite.addEnvironmentSource
 import com.sksamuel.hoplite.addFileSource
 
 sealed class Sharding {
-    data class Total(val total: Int = -1): Sharding()
-    data class MinMax(val total: Int, val min: Int, val max: Int): Sharding()
+    data class Total(val total: Int = -1) : Sharding()
+    data class MinMax(val total: Int, val min: Int, val max: Int) : Sharding()
 }
 
 data class Bot(val token: String, val shards: Sharding?)
@@ -30,12 +31,17 @@ data class Config(
     val database: Database,
     val botConfig: Bot,
     val rabbitMQ: RabbitMQ
-)
+) {
 
-fun readConfig(file: String = "config.yml") = ConfigLoaderBuilder.default()
-    .addFileSource(file, optional = true)
-    .addEnvironmentSource(allowUppercaseNames = true)
-    .build()
-    .loadConfigOrThrow<Config>()
+    companion object {
 
-val config = readConfig()
+        fun load(file: String = "config.yml"): ConfigResult<Config> {
+            return ConfigLoaderBuilder.default()
+                .addFileSource(file, optional = true)
+                .addEnvironmentSource(allowUppercaseNames = true)
+                .build()
+                .loadConfig()
+        }
+    }
+
+}
