@@ -172,4 +172,10 @@ gradle-app.setting
 # End of https://www.toptal.com/developers/gitignore/api/gradle,java,intellij
 
 *.yml
-!config.example.yml
+*.env
+.env
+
+!*.example.yml
+!*.example.env
+
+!docker-compose.yml
