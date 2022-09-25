@@ -12,7 +12,7 @@ CREATE TABLE guild_slot
 (
     slot_id   uuid default gen_random_uuid() primary key,
     slot_type slot_type not null,
-    guild_id  bigint,
+    guild_id  bigint not null,
     enabled   bool,
 
     constraint guild_commands_fk FOREIGN KEY (guild_id) REFERENCES guild (guild_id) ON DELETE CASCADE
@@ -45,7 +45,7 @@ CREATE TABLE command_option
 (
     option_id    uuid default gen_random_uuid() primary key,
     name         varchar(32) not null,
-    description  varchar(100),
+    description  varchar(100) not null,
     type         option_type not null,
     constraints  jsonb,
     autocomplete bool,
@@ -75,7 +75,7 @@ CREATE TABLE option_join
 CREATE TABLE auto_responder
 (
     slot_id    uuid primary key,
-    text       json   not null,
+    text       jsonb   not null,
     match_text text[] not null,
 
     constraint slot_id_fk FOREIGN KEY (slot_id) REFERENCES guild_slot (slot_id) ON DELETE CASCADE
