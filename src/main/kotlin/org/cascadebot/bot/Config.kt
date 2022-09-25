@@ -31,7 +31,7 @@ data class Config(
     val debug: Boolean = false,
     val database: Database,
     val discord: Discord,
-    val rabbitMQ: RabbitMQ
+    val rabbitMQ: RabbitMQ?
 ) {
 
     companion object {

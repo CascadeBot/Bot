@@ -12,7 +12,9 @@ class ReadyListener(): ListenerAdapter() {
     override fun onReady(event: ReadyEvent) {
         logger.info("JDA shard " + event.jda.shardInfo.shardId + " logged in!") // TODO this is here to test that jda is working, we probably don't need this
 
-        // This serves 2 purposes, logging and also pre-emptively creating a channel for each shard
-        logger.info("Opened RabbitMQ channel number '{}' for shard ID '{}'", Main.rabbitMQManager.channel.channelNumber, event.jda.shardInfo.shardId)
+        if (Main.rabbitMQManager != null) {
+            // This serves 2 purposes, logging and also pre-emptively creating a channel for each shard
+            logger.info("Opened RabbitMQ channel number '{}' for shard ID '{}'", Main.rabbitMQManager!!.channel.channelNumber, event.jda.shardInfo.shardId)
+        }
     }
 }

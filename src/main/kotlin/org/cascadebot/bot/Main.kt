@@ -19,7 +19,7 @@ object Main {
         private set
     lateinit var postgresManager: PostgresManager
         private set
-    lateinit var rabbitMQManager: RabbitMQManager
+    var rabbitMQManager: RabbitMQManager? = null
     lateinit var config: Config
         private set
 
@@ -40,7 +40,11 @@ object Main {
             exitProcess(1)
         }
 
-        rabbitMQManager = RabbitMQManager(config.rabbitMQ)
+        if (config.rabbitMQ != null) {
+            rabbitMQManager = RabbitMQManager(config.rabbitMQ!!)
+        } else {
+            logger.warn("RabbitMQ config not detected, won't be able to communicate with any other components")
+        }
 
         shardManager = buildShardManager()
     }
