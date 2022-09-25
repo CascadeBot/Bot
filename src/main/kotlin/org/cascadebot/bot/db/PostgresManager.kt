@@ -4,18 +4,22 @@ import jakarta.persistence.Entity
 import org.cascadebot.bot.Database
 import org.hibernate.SessionFactory
 import org.hibernate.cfg.Configuration
+import org.hibernate.dialect.PostgreSQLDialect
+import org.hibernate.hikaricp.internal.HikariCPConnectionProvider
+import org.postgresql.Driver
 import org.reflections.Reflections
 import java.util.Properties
+import kotlin.reflect.jvm.jvmName
 
 class PostgresManager(config: Database) {
 
-    val sessionFactory: SessionFactory
+    private val sessionFactory: SessionFactory
 
     init {
-        sessionFactory = getConfig(config).buildSessionFactory()
+        sessionFactory = createConfig(config).buildSessionFactory()
     }
 
-    private fun getConfig(config: Database): Configuration {
+    private fun createConfig(config: Database): Configuration {
         val dbConfig = Configuration()
 
         val entityReflections = Reflections("org.cascadebot.bot.db.entities")
@@ -23,13 +27,13 @@ class PostgresManager(config: Database) {
 
         classes.forEach { dbConfig.addAnnotatedClass(it) }
 
+        // Add package to read package-level declarations and metadata
         dbConfig.addPackage("org.cascadebot.bot.db.entities")
 
         val hibernateProps = Properties()
-        hibernateProps["hibernate.dialect"] = "org.hibernate.dialect.PostgreSQLDialect"
-        hibernateProps["hibernate.connection.provider_class"] =
-            "org.hibernate.hikaricp.internal.HikariCPConnectionProvider"
-        hibernateProps["hibernate.connection.driver_class"] = "org.postgresql.Driver"
+        hibernateProps["hibernate.dialect"] = PostgreSQLDialect::class.jvmName
+        hibernateProps["hibernate.connection.provider_class"] = HikariCPConnectionProvider::class.jvmName
+        hibernateProps["hibernate.connection.driver_class"] = Driver::class.jvmName
         hibernateProps["hibernate.hikari.maximumPoolSize"] = "20"
         hibernateProps["hibernate.types.print.banner"] = "false"
         hibernateProps["hibernate.connection.url"] = "jdbc:" + config.url.removePrefix("jdbc:")
