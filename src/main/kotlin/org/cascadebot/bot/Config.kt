@@ -5,6 +5,7 @@ import com.sksamuel.hoplite.ConfigResult
 import com.sksamuel.hoplite.Masked
 import com.sksamuel.hoplite.addEnvironmentSource
 import com.sksamuel.hoplite.addFileSource
+import dev.minn.jda.ktx.util.SLF4J
 
 sealed class Sharding {
     data class Total(val total: Int = -1) : Sharding()
@@ -35,12 +36,22 @@ data class Config(
 
     companion object {
 
+        private val logger by SLF4J
+
         fun load(file: String = "config.yml"): ConfigResult<Config> {
-            return ConfigLoaderBuilder.default()
+
+            val configLoaderBuilder = ConfigLoaderBuilder.default()
                 .addFileSource(file, optional = true)
                 .addEnvironmentSource(allowUppercaseNames = true)
                 .build()
-                .loadConfig()
+
+            val configResult = configLoaderBuilder.loadConfig<Config>()
+
+            if (configResult.isValid()) {
+                logger.debug("Loaded config with options:\n{}", configResult.getUnsafe().toString())
+            }
+
+            return configResult
         }
     }
 
