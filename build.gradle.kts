@@ -1,6 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 object Versions {
+
     const val prometheus = "0.16.0"
     const val jda = "5.0.0-alpha.20"
     const val hibernate = "6.1.3.Final"
@@ -10,6 +11,7 @@ object Versions {
 
 plugins {
     kotlin("jvm") version "1.7.10"
+    kotlin("plugin.serialization") version "1.7.10"
 }
 
 group = "org.cascadebot"
@@ -46,6 +48,7 @@ dependencies {
     implementation("com.sksamuel.hoplite:hoplite-hikaricp:${Versions.hoplite}")
     implementation("org.reflections:reflections:0.10.2")
     implementation("com.rabbitmq:amqp-client:5.16.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
 }
 
 tasks.test {
