@@ -1,5 +1,6 @@
 package org.cascadebot.bot.db
 
+import dev.minn.jda.ktx.util.SLF4J
 import jakarta.persistence.Entity
 import org.cascadebot.bot.Database
 import org.hibernate.SessionFactory
@@ -13,6 +14,7 @@ import kotlin.reflect.jvm.jvmName
 
 class PostgresManager(config: Database) {
 
+    private val logger by SLF4J
     private val sessionFactory: SessionFactory
 
     init {
@@ -20,6 +22,7 @@ class PostgresManager(config: Database) {
     }
 
     private fun createConfig(config: Database): Configuration {
+        logger.info("Setting up Postgres Database with config: {}", config)
         val dbConfig = Configuration()
 
         val entityReflections = Reflections("org.cascadebot.bot.db.entities")
