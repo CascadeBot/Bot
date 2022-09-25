@@ -7,14 +7,15 @@ import jakarta.persistence.Table
 import java.io.Serializable
 
 @Entity
-@Table(name = "example")
-class ExampleEntity(): Serializable {
+@Table(name = "guild")
+class GuildEntity(): Serializable {
 
-    constructor(id: Int) : this() {
-        this.id = id
+    constructor(guildId: Long): this() {
+        this.guildId = guildId;
     }
 
     @Id
-    @Column(name = "id")
-    var id: Int = 0
+    @Column(name = "guild_id")
+    var guildId: Long = 0
+
 }
