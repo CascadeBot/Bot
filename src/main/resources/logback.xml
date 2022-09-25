@@ -39,13 +39,6 @@
         </encoder>
     </appender>
 
-    <appender name="WEBHOOK" class="dev.minn.jda.ktx.logback.WebhookAppender">
-        <url>https://canary.discord.com/api/webhooks/558182788944363521/RjWeufn2dgYnUlz_cv1nMQwIH6zR2JG0WMhHA_QvKJRC5I2D7clhnomBiNUFif7zB35s</url>
-        <level>WARN</level>
-        <encoder>
-            <pattern>${highlightLogPattern}</pattern>
-        </encoder>
-    </appender>
 <!--    <appender name="Sentry" class="io.sentry.logback.SentryAppender">-->
 <!--        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">-->
 <!--            <level>WARN</level>-->
@@ -71,7 +64,6 @@
         <appender-ref ref="METRICS"/>
         <appender-ref ref="LOG"/>
         <appender-ref ref="DEBUG-LOG"/>
-        <appender-ref ref="WEBHOOK"/>
 <!--        <appender-ref ref="Sentry"/>-->
     </root>
 
