@@ -7,6 +7,7 @@ import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.cascadebot.bot.db.PostgresManager
 import org.cascadebot.bot.events.ReadyListener
+import org.cascadebot.bot.rabbitmq.RabbitMQManager
 import org.hibernate.HibernateException
 import kotlin.system.exitProcess
 

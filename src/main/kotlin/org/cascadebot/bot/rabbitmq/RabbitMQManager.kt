@@ -1,9 +1,10 @@
-package org.cascadebot.bot
+package org.cascadebot.bot.rabbitmq
 
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import dev.minn.jda.ktx.util.SLF4J
+import org.cascadebot.bot.RabbitMQ
 import kotlin.concurrent.getOrSet
 import kotlin.system.exitProcess
 
