@@ -43,10 +43,10 @@ object Main {
     private fun buildShardManager(): ShardManager {
         val defaultShardManagerBuilder = DefaultShardManagerBuilder.create(GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS)) // TODO do we want to have all here? I imagine eventually, but don't know about mvp
             .setToken(config.botConfig.token)
-            .setActivityProvider { Activity.playing("Cascade Bot") }
+                .setToken(config.discord.token)
             .addEventListeners(ReadyListener(this))
 
-        config.botConfig.shards?.let {
+        config.discord.shards?.let {
             when (it) {
                 is Sharding.Total -> {
                     defaultShardManagerBuilder.setShardsTotal(it.total)

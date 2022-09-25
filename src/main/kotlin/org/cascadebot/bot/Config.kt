@@ -11,7 +11,7 @@ sealed class Sharding {
     data class MinMax(val total: Int, val min: Int, val max: Int) : Sharding()
 }
 
-data class Bot(val token: String, val shards: Sharding?)
+data class Discord(val token: String, val shards: Sharding?)
 
 data class Database(val url: String, val username: String? = null, val password: Masked? = null)
 
@@ -29,7 +29,7 @@ sealed class RabbitMQ {
 data class Config(
     val debug: Boolean = false,
     val database: Database,
-    val botConfig: Bot,
+    val discord: Discord,
     val rabbitMQ: RabbitMQ
 ) {
 
