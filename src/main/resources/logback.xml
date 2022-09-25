@@ -1,6 +1,6 @@
 <configuration>
 
-    <variable scope="context" name="logPattern" value="[%d{yyyy-MM-dd HH:mm}] [%level] [%t] [%logger] %msg%n"/>
+    <variable scope="context" name="logPattern" value="[%d{yyyy-MM-dd HH:mm:ss}] [%level] [%t] [%logger] %msg%n"/>
     <variable scope="context" name="highlightLogPattern" value="[%d{yyyy-MM-dd HH:mm:ss}] [%highlight(%level)] [%.-40t] [%logger{0}] %msg%n" />
 
     <appender name="LOG" class="ch.qos.logback.core.rolling.RollingFileAppender">
