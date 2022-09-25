@@ -45,6 +45,7 @@ dependencies {
     implementation("com.sksamuel.hoplite:hoplite-yaml:${Versions.hoplite}")
     implementation("com.sksamuel.hoplite:hoplite-hikaricp:${Versions.hoplite}")
     implementation("org.reflections:reflections:0.10.2")
+    implementation("com.rabbitmq:amqp-client:5.16.0")
 }
 
 tasks.test {

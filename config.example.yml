@@ -13,8 +13,8 @@ database:
   password: ""
 
 rabbitMQ:
-  username: ""
-  password: ""
-  hostname: ""
+  username: "user"
+  password: "password"
+  hostname: "localhost"
   port: 5672
   virtualHost: "/"

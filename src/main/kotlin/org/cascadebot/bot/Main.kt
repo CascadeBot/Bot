@@ -18,6 +18,7 @@ object Main {
         private set
     lateinit var postgresManager: PostgresManager
         private set
+    lateinit var rabbitMQManager: RabbitMQManager
     lateinit var config: Config
         private set
 
@@ -37,6 +38,8 @@ object Main {
             logger.error("Could not initialise database: {}", exception.message)
             exitProcess(1)
         }
+
+        rabbitMQManager = RabbitMQManager(config.rabbitMQ)
 
         shardManager = buildShardManager()
     }
@@ -59,7 +62,7 @@ object Main {
             DefaultShardManagerBuilder.create(GatewayIntent.getIntents(GatewayIntent.ALL_INTENTS)) // TODO do we want to have all here? I imagine eventually, but don't know about mvp
                 .setToken(config.discord.token)
                 .setActivityProvider { Activity.playing("Cascade Bot") }
-                .addEventListeners(ReadyListener(this))
+                .addEventListeners(ReadyListener())
 
         config.discord.shards?.let {
             when (it) {
