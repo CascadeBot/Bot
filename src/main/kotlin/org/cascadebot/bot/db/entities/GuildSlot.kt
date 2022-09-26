@@ -17,7 +17,7 @@ class GuildSlot(slotType: SlotType, guildId: Long): Serializable {
 
     @Id
     @Column(name = "slot_id")
-    val slotId: UUID = UUID.randomUUID() // TODO allow this to be null so postgres can generate it?
+    var slotId: UUID = UUID.randomUUID() // TODO allow this to be null so postgres can generate it?
 
     @Column(name = "slot_type")
     var slotType: SlotType = slotType

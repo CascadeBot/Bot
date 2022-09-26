@@ -14,6 +14,6 @@ class GuildEntity(guildId: Long): Serializable {
 
     @Id
     @Column(name = "guild_id")
-    val guildId: Long = guildId
+    var guildId: Long = guildId
 
 }
