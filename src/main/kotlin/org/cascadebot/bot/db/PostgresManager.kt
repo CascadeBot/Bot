@@ -3,6 +3,7 @@ package org.cascadebot.bot.db
 import dev.minn.jda.ktx.util.SLF4J
 import jakarta.persistence.Entity
 import org.cascadebot.bot.Database
+import org.hibernate.Session
 import org.hibernate.SessionFactory
 import org.hibernate.cfg.Configuration
 import org.hibernate.dialect.PostgreSQLDialect
@@ -16,6 +17,7 @@ class PostgresManager(config: Database) {
 
     private val logger by SLF4J
     private val sessionFactory: SessionFactory
+    val sessions: ThreadLocal<Session> = ThreadLocal()
 
     init {
         sessionFactory = createConfig(config).buildSessionFactory()
@@ -51,6 +53,34 @@ class PostgresManager(config: Database) {
 
         dbConfig.properties = hibernateProps
         return dbConfig
+    }
+
+    fun <T : Any> transaction(work: Session.() -> T?): T? {
+        var session = sessions.get()
+
+        if (session == null || !session.isOpen) {
+            sessionFactory.openSession().apply {
+                sessions.set(this)
+                session = this
+            }
+        }
+
+        return createTransaction(session, work)
+    }
+
+    private fun <T : Any> createTransaction(session: Session, work: Session.() -> T?): T? {
+        try {
+            session.transaction.timeout = 3
+            session.transaction.begin()
+
+            val value = work(session);
+
+            session.transaction.commit()
+            return value;
+        } catch (e: RuntimeException) {
+            session.transaction.rollback()
+            throw e; // TODO: Or display error?
+        }
     }
 
 }
