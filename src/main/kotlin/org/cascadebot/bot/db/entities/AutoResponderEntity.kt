@@ -1,6 +1,9 @@
 package org.cascadebot.bot.db.entities
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.vladmihalcea.hibernate.type.array.ListArrayType
+import com.vladmihalcea.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -11,16 +14,17 @@ import java.util.UUID
 
 @Entity
 @Table(name = "auto_responder")
-class AutoResponderEntity(slotId: UUID, text: String, match: MutableList<String>): Serializable {
+class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<String>): Serializable {
 
-    constructor() : this(UUID.randomUUID(), "", mutableListOf())
+    constructor() : this(UUID.randomUUID(), ObjectMapper().createObjectNode(), mutableListOf())
 
     @Id
     @Column(name = "slot_id")
     var slotId: UUID = slotId
 
     @Column(name = "text")
-    var text: String = text
+    @Type(JsonType::class)
+    var text: JsonNode = text
 
     @Column(name = "match_text")
     @Type(value = ListArrayType::class)

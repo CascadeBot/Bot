@@ -9,8 +9,9 @@ import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.cascadebot.bot.CustomCommandType
 import org.cascadebot.bot.ScriptLang
+import org.cascadebot.bot.db.EnumDBType
+import org.hibernate.annotations.Type
 import java.io.Serializable
-import java.lang.UnsupportedOperationException
 import java.util.UUID
 
 @Entity
@@ -49,9 +50,11 @@ class CustomCommandEntity(): Serializable {
     var marketplaceRef: UUID? = null;
 
     @Column(name = "type")
+    @Type(EnumDBType::class)
     var type: CustomCommandType = CustomCommandType.SLASH
 
     @Column(name = "script_lang")
+    @Type(EnumDBType::class)
     var lang: ScriptLang = ScriptLang.JS
 
     @Column(name = "entrypoint")

@@ -1,5 +1,7 @@
 package org.cascadebot.bot.db.entities
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.vladmihalcea.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
@@ -8,8 +10,9 @@ import jakarta.persistence.JoinTable
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.cascadebot.bot.OptionType
+import org.cascadebot.bot.db.EnumDBType
+import org.hibernate.annotations.Type
 import java.io.Serializable
-import java.lang.UnsupportedOperationException
 import java.util.UUID
 
 @Entity
@@ -43,10 +46,12 @@ class CommandOptionEntity(): Serializable {
     var description: String = ""
 
     @Column(name = "type")
+    @Type(EnumDBType::class)
     var optionType: OptionType = OptionType.STRING
 
     @Column(name = "constraints")
-    var constraints: String? = null
+    @Type(JsonType::class)
+    var constraints: JsonNode? = null
 
     @Column(name = "autocomplete")
     var autocomplete: Boolean? = null
