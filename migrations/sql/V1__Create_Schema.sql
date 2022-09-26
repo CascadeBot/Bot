@@ -10,7 +10,7 @@ CREATE TABLE guild
 
 CREATE TABLE guild_slot
 (
-    slot_id   uuid default gen_random_uuid() primary key,
+    slot_id   uuid primary key,
     slot_type slot_type not null,
     guild_id  bigint not null,
     enabled   bool,
@@ -33,7 +33,7 @@ CREATE TABLE custom_command
 
 CREATE TABLE script_file
 (
-    script_id uuid default gen_random_uuid() primary key,
+    script_id uuid primary key,
     slot_id   uuid            not null,
     file_name varchar(255)    not null,
     script    text default '' not null,
@@ -43,7 +43,7 @@ CREATE TABLE script_file
 
 CREATE TABLE command_option
 (
-    option_id    uuid default gen_random_uuid() primary key,
+    option_id    uuid primary key,
     name         varchar(32) not null,
     description  varchar(100) not null,
     type         option_type not null,

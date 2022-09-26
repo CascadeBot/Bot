@@ -17,7 +17,7 @@ class GuildSlot(slotType: SlotType, guildId: Long): Serializable {
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID? = null
+    var slotId: UUID = UUID.randomUUID()
 
     @Column(name = "slot_type")
     var slotType: SlotType = slotType
