@@ -15,7 +15,7 @@ class ScriptFileEntity(slotId: UUID, fileName: String, script: String): Serializ
 
     @Id
     @Column(name = "script_id")
-    var scriptId: UUID = UUID.randomUUID()
+    var scriptId: UUID? = null
 
     @Column(name = "slot_id")
     var slotId: UUID = slotId
