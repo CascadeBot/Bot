@@ -11,23 +11,19 @@ import java.util.UUID
 
 @Entity
 @Table(name = "auto_responder")
-class AutoResponderEntity(): Serializable {
+class AutoResponderEntity(slotId: UUID, text: String, match: MutableList<String>): Serializable {
 
-    constructor(slotId: UUID, text: String, match: MutableList<String>): this() {
-        this.slotId = slotId;
-        this.text = text;
-        this.match = match;
-    }
+    constructor() : this(UUID.randomUUID(), "", mutableListOf())
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID = UUID.randomUUID()
+    var slotId: UUID = slotId
 
     @Column(name = "text")
-    var text: String = ""
+    var text: String = text
 
     @Column(name = "match_text")
     @Type(value = ListArrayType::class)
-    var match: MutableList<String> = mutableListOf()
+    var match: MutableList<String> = match
 
 }

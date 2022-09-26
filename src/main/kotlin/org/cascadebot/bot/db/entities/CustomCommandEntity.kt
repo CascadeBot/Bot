@@ -15,32 +15,22 @@ import java.util.UUID
 
 @Entity
 @Table(name = "custom_command")
-class CustomCommandEntity(): Serializable {
+class CustomCommandEntity(slotId: UUID, name: String, customCommandType: CustomCommandType = CustomCommandType.SLASH, lang: ScriptLang): Serializable {
 
-    constructor(slotId: UUID, name: String, description: String, lang: ScriptLang): this() {
-        this.slotId = slotId;
-        this.name = name;
-        this.description = description;
-        this.type = CustomCommandType.SLASH
-        this.lang = lang
-    }
+    constructor() : this(UUID.randomUUID(), "", CustomCommandType.SLASH, ScriptLang.JS)
 
-    constructor(slotId: UUID, name: String, customCommandType: CustomCommandType, lang: ScriptLang): this() {
+    init {
         if (customCommandType == CustomCommandType.SLASH) {
             throw UnsupportedOperationException("Cannot provide custom command type of slash for this constructor")
         }
-        this.slotId = slotId;
-        this.name = name;
-        this.type = customCommandType
-        this.lang = lang
     }
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID = UUID.randomUUID()
+    var slotId: UUID = slotId
 
     @Column(name = "name")
-    var name: String = ""
+    var name: String = name
 
     @Column(name = "description")
     var description: String? = null;
@@ -49,10 +39,10 @@ class CustomCommandEntity(): Serializable {
     var marketplaceRef: UUID? = null;
 
     @Column(name = "type")
-    var type: CustomCommandType = CustomCommandType.SLASH
+    var type: CustomCommandType = customCommandType
 
     @Column(name = "script_lang")
-    var lang: ScriptLang = ScriptLang.TEXT
+    var lang: ScriptLang = lang
 
     @Column(name = "entrypoint")
     var entrypoint: UUID? = null

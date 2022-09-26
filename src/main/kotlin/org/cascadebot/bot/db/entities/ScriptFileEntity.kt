@@ -9,25 +9,21 @@ import java.util.UUID
 
 @Entity
 @Table(name = "script_file")
-class ScriptFileEntity(): Serializable {
+class ScriptFileEntity(slotId: UUID, fileName: String, script: String): Serializable {
 
-    constructor(slotId: UUID, fileName: String, script: String): this() {
-        this.slotId = slotId;
-        this.fileName = fileName;
-        this.script = script;
-    }
+    constructor() : this(UUID.randomUUID(), "", "")
 
     @Id
     @Column(name = "script_id")
-    var scriptId: UUID = UUID.randomUUID()
+    val scriptId: UUID = UUID.randomUUID()
 
     @Column(name = "slot_id")
-    var slotId: UUID = UUID.randomUUID()
+    var slotId: UUID = slotId
 
     @Column(name = "file_name")
-    var fileName: String = ""
+    var fileName: String = fileName
 
     @Column(name = "script")
-    var script: String = ""
+    var script: String = script
 
 }

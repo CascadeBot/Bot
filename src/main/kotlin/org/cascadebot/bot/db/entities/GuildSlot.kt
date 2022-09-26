@@ -10,22 +10,20 @@ import java.util.UUID
 
 @Entity
 @Table(name = "guild_slot")
-class GuildSlot(): Serializable {
+class GuildSlot(slotType: SlotType, guildId: Long): Serializable {
 
-    constructor(slotType: SlotType, guildId: Long): this() {
-        this.slotType = slotType;
-        this.guildId = guildId;
-    }
+    constructor() : this(SlotType.TEXT, 0)
+
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID = UUID.randomUUID() // TODO allow this to be null so postgres can generate it?
+    val slotId: UUID = UUID.randomUUID() // TODO allow this to be null so postgres can generate it?
 
     @Column(name = "slot_type")
-    var slotType: SlotType = SlotType.PROVIDED
+    var slotType: SlotType = slotType
 
     @Column(name = "guild_id")
-    var guildId: Long = 0
+    var guildId: Long = guildId
 
     @Column(name = "enabled")
     var enabled: Boolean? = null

@@ -14,15 +14,12 @@ import java.util.UUID
 
 @Entity
 @Table(name = "command_option")
-class CommandOptionEntity(): Serializable {
+class CommandOptionEntity(name: String, description: String, type: OptionType): Serializable {
 
-    constructor(name: String, description: String, type: OptionType): this() {
+    init {
         if (type == OptionType.SUB_COMMAND) {
             throw UnsupportedOperationException("Must provide entry point if sub command")
         }
-        this.name = name;
-        this.description = description;
-        this.optionType = type;
     }
 
     constructor(name: String, description: String, entrypoint: UUID): this() {
@@ -32,24 +29,26 @@ class CommandOptionEntity(): Serializable {
         this.entrypoint = entrypoint;
     }
 
+    constructor() : this("", "", OptionType.SUB_COMMAND)
+
     @Id
     @Column(name = "option_id")
     var optionId: UUID = UUID.randomUUID()
 
     @Column(name = "name")
-    var name: String = ""
+    var name: String = name
 
     @Column(name = "description")
-    var description: String = ""
+    var description: String = description
 
     @Column(name = "type")
-    var optionType: OptionType = OptionType.STRING
+    var optionType: OptionType = type
 
     @Column(name = "constraints")
     var constraints: String? = null
 
     @Column(name = "autocomplete")
-    var autoComplete: Boolean? = null
+    var autocomplete: Boolean? = null
 
     @Column(name = "entrypoint")
     var entrypoint: UUID? = null

@@ -8,14 +8,12 @@ import java.io.Serializable
 
 @Entity
 @Table(name = "guild")
-class GuildEntity(): Serializable {
+class GuildEntity(guildId: Long): Serializable {
 
-    constructor(guildId: Long): this() {
-        this.guildId = guildId;
-    }
+    constructor() : this(0)
 
     @Id
     @Column(name = "guild_id")
-    var guildId: Long = 0
+    val guildId: Long = guildId
 
 }
