@@ -18,7 +18,7 @@ class GuildSlot(slotType: SlotType, guildId: Long): Serializable {
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID = UUID.randomUUID()
+    val slotId: UUID = UUID.randomUUID()
 
     @Column(name = "slot_type")
     @Type(EnumDBType::class)

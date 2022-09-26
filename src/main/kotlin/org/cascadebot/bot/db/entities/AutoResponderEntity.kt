@@ -20,7 +20,7 @@ class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<Strin
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID = slotId
+    val slotId: UUID = slotId
 
     @Column(name = "text")
     @Type(JsonType::class)

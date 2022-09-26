@@ -39,6 +39,7 @@ class CustomCommandEntity(): Serializable {
     @Id
     @Column(name = "slot_id")
     var slotId: UUID = UUID.randomUUID()
+        private set
 
     @Column(name = "name")
     var name: String = ""

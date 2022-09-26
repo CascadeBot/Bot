@@ -37,7 +37,7 @@ class CommandOptionEntity(): Serializable {
 
     @Id
     @Column(name = "option_id")
-    var optionId: UUID = UUID.randomUUID()
+    val optionId: UUID = UUID.randomUUID()
 
     @Column(name = "name")
     var name: String = ""
