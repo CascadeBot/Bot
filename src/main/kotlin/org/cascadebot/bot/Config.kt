@@ -36,7 +36,7 @@ data class Config(
 
     companion object {
 
-        private val logger by SLF4J
+        private val logger by SLF4J("Config")
 
         fun load(file: String = "config.yml"): ConfigResult<Config> {
 
