@@ -12,6 +12,7 @@ object Versions {
 plugins {
     kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
 }
 
 group = "org.cascadebot"
@@ -57,21 +58,29 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.build {
+    dependsOn("shadowJar")
+}
+
 tasks.withType<KotlinCompile> {
     kotlinOptions.jvmTarget = "11"
 }
 
 tasks.jar {
-    // Without this, the project won't compile due to duplicate stuff
-    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    archiveFileName.set("${project.name}.${archiveExtension.get()}")
 
     // Set the main class to be a runnable jar
     manifest {
         attributes["Main-Class"] = "${project.group}.${project.name}.Main"
     }
+}
 
-    // Copy dependencies into the jar file to produce a fat-jar
-    from(configurations.runtimeClasspath.get().map { if (it.isDirectory) it else zipTree(it) })
+tasks.shadowJar {
+    archiveBaseName.set("${project.name}-shadow")
+    archiveClassifier.set("")
+    archiveVersion.set("")
+
+    mergeServiceFiles()
 
     doLast {
         File(buildDir, "/libs/version.txt").writeText(project.version.toString())
