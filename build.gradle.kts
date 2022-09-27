@@ -86,17 +86,3 @@ tasks.shadowJar {
         File(buildDir, "/libs/version.txt").writeText(project.version.toString())
     }
 }
-
-// Taken from https://stackoverflow.com/a/38528497 to cache dependencies
-fun Configuration.isDeprecated() = this is org.gradle.internal.deprecation.DeprecatableConfiguration && resolutionAlternatives != null
-
-fun ConfigurationContainer.resolveAll() = this
-    .filter { it.isCanBeResolved && !it.isDeprecated() }
-    .forEach { it.resolve() }
-
-tasks.register("downloadDependencies") {
-    doLast {
-        configurations.resolveAll()
-        buildscript.configurations.resolveAll()
-    }
-}
