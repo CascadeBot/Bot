@@ -2,10 +2,11 @@ package org.cascadebot.bot.events
 
 import dev.minn.jda.ktx.util.SLF4J
 import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.cascadebot.bot.Main
 
-class ReadyListener(): ListenerAdapter() {
+class ReadyListener : ListenerAdapter() {
 
     private val logger by SLF4J
 
@@ -23,5 +24,7 @@ class ReadyListener(): ListenerAdapter() {
             rabbitMQManager.channel.queueDeclare("shard-$shardId", true, false, false, mapOf())
             rabbitMQManager.channel.queueBind("shard-$shardId", "amq.topic", "shard.$shardId.*.#")
         }
+
+        Main.commandManager.registerCommandsOnce(event.jda)
     }
 }

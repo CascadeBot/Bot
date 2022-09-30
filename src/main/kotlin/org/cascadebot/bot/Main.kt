@@ -5,7 +5,9 @@ import net.dv8tion.jda.api.entities.Activity
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
+import org.cascadebot.bot.cmd.meta.CommandManager
 import org.cascadebot.bot.db.PostgresManager
+import org.cascadebot.bot.events.InteractionListener
 import org.cascadebot.bot.events.ReadyListener
 import org.cascadebot.bot.rabbitmq.RabbitMQManager
 import org.hibernate.HibernateException
@@ -16,6 +18,8 @@ object Main {
     val logger by SLF4J("Main")
 
     lateinit var shardManager: ShardManager
+        private set
+    lateinit var commandManager: CommandManager
         private set
     lateinit var postgresManager: PostgresManager
         private set
@@ -46,6 +50,8 @@ object Main {
             logger.warn("RabbitMQ config not detected, won't be able to communicate with any other components")
         }
 
+        commandManager = CommandManager()
+
         shardManager = buildShardManager()
     }
 
@@ -68,6 +74,7 @@ object Main {
                 .setToken(config.discord.token)
                 .setActivityProvider { Activity.playing("Cascade Bot") }
                 .addEventListeners(ReadyListener())
+                .addEventListeners(InteractionListener())
 
         config.discord.shards?.let {
             when (it) {
