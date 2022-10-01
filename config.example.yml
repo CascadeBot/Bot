@@ -7,6 +7,10 @@ discord:
     max: 2
     total: 10 # If total is not specified, min and max will not take effect and the total will be retrieved from Discord
 
+development:
+  debugLogging: false # Enables debug logging in the console
+  registerCommandsOnBoot: false # Registers the commands with Discord on boot
+
 database:
   url: "postgresql://localhost:5432/"
   username: "postgres"
