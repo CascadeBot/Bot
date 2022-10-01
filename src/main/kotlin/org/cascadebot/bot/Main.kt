@@ -1,5 +1,6 @@
 package org.cascadebot.bot
 
+import ch.qos.logback.classic.Level
 import dev.minn.jda.ktx.util.SLF4J
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
@@ -13,6 +14,7 @@ import org.cascadebot.bot.db.PostgresManager
 import org.cascadebot.bot.events.InteractionListener
 import org.cascadebot.bot.events.ReadyListener
 import org.cascadebot.bot.rabbitmq.RabbitMQManager
+import org.cascadebot.bot.utils.LogbackUtil
 import org.hibernate.HibernateException
 import kotlin.system.exitProcess
 
@@ -34,6 +36,10 @@ object Main {
         logger.info("Starting CascadeBot")
 
         config = loadConfig()
+
+        if (config.development.debugLogs) {
+            LogbackUtil.setAppenderLevel("STDOUT", Level.DEBUG)
+        }
 
         try {
             postgresManager = PostgresManager(config.database)
