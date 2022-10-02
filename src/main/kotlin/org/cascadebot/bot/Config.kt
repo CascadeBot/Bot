@@ -36,7 +36,7 @@ data class Config(
     val database: Database,
     val discord: Discord,
     val rabbitMQ: RabbitMQ?,
-    val development: DevelopmentSettings
+    val development: DevelopmentSettings?
 ) {
 
     companion object {

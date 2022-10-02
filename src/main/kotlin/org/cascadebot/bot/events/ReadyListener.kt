@@ -24,7 +24,7 @@ class ReadyListener : ListenerAdapter() {
             rabbitMQManager.channel.queueBind("shard-$shardId", "amq.topic", "shard.$shardId.*.#")
         }
 
-        if (Main.config.development.registerCommandsOnBoot) {
+        if (Main.config.development?.registerCommandsOnBoot == true) {
             Main.commandManager.registerCommandsOnce(event.jda)
         }
     }

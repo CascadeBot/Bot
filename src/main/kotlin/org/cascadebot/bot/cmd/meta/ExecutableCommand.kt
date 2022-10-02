@@ -6,6 +6,6 @@ abstract class ExecutableCommand(val name: String, val description: String) {
 
     abstract val commandData: CommandData
 
-    abstract fun onCommand(context: CommandContext, args: CommandArgs, data: Any)
+    abstract fun onCommand(context: CommandContext, args: CommandArgs)
 
 }

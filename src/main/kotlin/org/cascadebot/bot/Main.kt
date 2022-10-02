@@ -37,7 +37,7 @@ object Main {
 
         config = loadConfig()
 
-        if (config.development.debugLogs) {
+        if (config.development?.debugLogs == true) {
             LogbackUtil.setAppenderLevel("STDOUT", Level.DEBUG)
         }
 
