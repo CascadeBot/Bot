@@ -50,6 +50,7 @@ dependencies {
     implementation("org.reflections:reflections:0.10.2")
     implementation("com.rabbitmq:amqp-client:5.16.0")
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
 
 }

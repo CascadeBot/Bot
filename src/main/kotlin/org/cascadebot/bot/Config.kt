@@ -16,6 +16,11 @@ data class Discord(val token: String, val shards: Sharding?)
 
 data class Database(val url: String, val username: String? = null, val password: Masked? = null)
 
+data class DevelopmentSettings(
+    val registerCommandsOnBoot: Boolean = false,
+    val debugLogs: Boolean = false,
+)
+
 sealed class RabbitMQ {
     data class URL(val url: String) : RabbitMQ()
     data class Individual(
@@ -28,10 +33,10 @@ sealed class RabbitMQ {
 }
 
 data class Config(
-    val debug: Boolean = false,
     val database: Database,
     val discord: Discord,
-    val rabbitMQ: RabbitMQ?
+    val rabbitMQ: RabbitMQ?,
+    val development: DevelopmentSettings?
 ) {
 
     companion object {
