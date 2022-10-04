@@ -52,6 +52,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
+    implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
 
 }
 

@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.cascadebot.bot.cmd.meta.CommandManager
+import org.cascadebot.bot.components.ComponentCache
 import org.cascadebot.bot.db.PostgresManager
 import org.cascadebot.bot.events.InteractionListener
 import org.cascadebot.bot.events.ReadyListener
@@ -21,6 +22,8 @@ import kotlin.system.exitProcess
 object Main {
 
     val logger by SLF4J("Main")
+
+    val componentCache = ComponentCache(50)
 
     lateinit var shardManager: ShardManager
         private set
