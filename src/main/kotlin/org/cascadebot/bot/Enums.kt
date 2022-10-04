@@ -1,5 +1,7 @@
 package org.cascadebot.bot
 
+import dev.minn.jda.ktx.messages.EmbedBuilder
+import dev.minn.jda.ktx.messages.InlineEmbed
 import org.cascadebot.bot.utils.Colors
 import java.awt.Color
 
@@ -33,7 +35,7 @@ enum class OptionType {
     BOOLEAN
 }
 
-enum class MessageType() {
+enum class MessageType {
     INFO,
     SUCCESS,
     DANGER,
@@ -47,5 +49,13 @@ enum class MessageType() {
             DANGER -> Colors.DANGER
             WARNING -> Colors.WARNING
             NEUTRAL -> null
+        }
+
+    val embed: InlineEmbed
+        get() {
+            val col = this.color
+            return EmbedBuilder {
+                color = col?.rgb
+            }
         }
 }
