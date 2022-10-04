@@ -6,10 +6,10 @@ import dev.minn.jda.ktx.messages.MessageCreate
 import dev.minn.jda.ktx.util.ref
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
-import net.dv8tion.jda.api.interactions.components.LayoutComponent
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.cascadebot.bot.MessageType
+import org.cascadebot.cascadebot.utils.interactions.ComponentContainer
 
 class CommandContext(private val event: SlashCommandInteractionEvent) {
 
@@ -56,30 +56,53 @@ class CommandContext(private val event: SlashCommandInteractionEvent) {
         event.reply(data.build()).setEphemeral(ephemeral).queue()
     }
 
-    private fun replyTypedEmbed(ephemeral: Boolean = false, messageType: MessageType, messageComponents: Collection<LayoutComponent>, builder: InlineEmbed.() -> Unit) {
+    private fun replyTypedEmbed(
+        ephemeral: Boolean = false,
+        messageType: MessageType,
+        messageComponents: ComponentContainer?,
+        builder: InlineEmbed.() -> Unit
+    ) {
         reply(ephemeral) {
             embeds += run {
-                val embed = MessageType.INFO.embed
+                val embed = messageType.embed
                 builder(embed)
                 embed.build()
             }
-            messageComponents.forEach { components += it }
+            messageComponents?.let { componentContainer ->
+                componentContainer.getComponents().map { it.toDiscordActionRow() }.forEach { components += it }
+            }
         }
     }
 
-    fun replyInfo(ephemeral: Boolean = false, messageComponents: Collection<LayoutComponent> = listOf(), builder: InlineEmbed.() -> Unit) {
+    fun replyInfo(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
         replyTypedEmbed(ephemeral, MessageType.INFO, messageComponents, builder)
     }
 
-    fun replyWarning(ephemeral: Boolean = false, messageComponents: Collection<LayoutComponent> = listOf(), builder: InlineEmbed.() -> Unit) {
+    fun replyWarning(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
         replyTypedEmbed(ephemeral, MessageType.WARNING, messageComponents, builder)
     }
 
-    fun replyDanger(ephemeral: Boolean = false, messageComponents: Collection<LayoutComponent> = listOf(), builder: InlineEmbed.() -> Unit) {
+    fun replyDanger(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
         replyTypedEmbed(ephemeral, MessageType.DANGER, messageComponents, builder)
     }
 
-    fun replySuccess(ephemeral: Boolean = false, messageComponents: Collection<LayoutComponent> = listOf(), builder: InlineEmbed.() -> Unit) {
+    fun replySuccess(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
         replyTypedEmbed(ephemeral, MessageType.SUCCESS, messageComponents, builder)
     }
 
