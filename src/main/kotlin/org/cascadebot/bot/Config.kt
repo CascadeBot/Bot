@@ -32,11 +32,14 @@ sealed class RabbitMQ {
     ) : RabbitMQ()
 }
 
+data class Values(val maxComponentsCachedPerChannel: Long = 50L)
+
 data class Config(
     val database: Database,
     val discord: Discord,
     val rabbitMQ: RabbitMQ?,
-    val development: DevelopmentSettings?
+    val development: DevelopmentSettings?,
+    val values: Values = Values()
 ) {
 
     companion object {

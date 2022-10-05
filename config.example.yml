@@ -22,3 +22,6 @@ rabbitMQ:
   hostname: "localhost"
   port: 5672
   virtualHost: "/"
+
+values:
+  maxComponentsCachedPerChannel: 50

@@ -10,6 +10,7 @@ import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
 import org.cascadebot.bot.cmd.meta.CommandManager
+import org.cascadebot.bot.components.ComponentCache
 import org.cascadebot.bot.db.PostgresManager
 import org.cascadebot.bot.events.InteractionListener
 import org.cascadebot.bot.events.ReadyListener
@@ -22,13 +23,21 @@ object Main {
 
     val logger by SLF4J("Main")
 
+    lateinit var componentCache: ComponentCache
+        private set
+
     lateinit var shardManager: ShardManager
         private set
+
     lateinit var commandManager: CommandManager
         private set
+
     lateinit var postgresManager: PostgresManager
         private set
+
     var rabbitMQManager: RabbitMQManager? = null
+        private set
+
     lateinit var config: Config
         private set
 
@@ -40,6 +49,8 @@ object Main {
         if (config.development?.debugLogs == true) {
             LogbackUtil.setAppenderLevel("STDOUT", Level.DEBUG)
         }
+
+        componentCache = ComponentCache(config.values.maxComponentsCachedPerChannel)
 
         try {
             postgresManager = PostgresManager(config.database)

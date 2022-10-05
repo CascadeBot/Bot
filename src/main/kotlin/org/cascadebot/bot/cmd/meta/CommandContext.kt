@@ -1,13 +1,15 @@
 package org.cascadebot.bot.cmd.meta
 
-import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.InlineEmbed
+import dev.minn.jda.ktx.messages.InlineMessage
 import dev.minn.jda.ktx.messages.MessageCreate
 import dev.minn.jda.ktx.util.ref
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.cascadebot.bot.MessageType
+import org.cascadebot.cascadebot.utils.interactions.ComponentContainer
 
 class CommandContext(private val event: SlashCommandInteractionEvent) {
 
@@ -19,15 +21,18 @@ class CommandContext(private val event: SlashCommandInteractionEvent) {
     val jda = event.jda
 
     fun reply(message: String, messageType: MessageType = MessageType.NEUTRAL) {
-        replyEmbed(false, messageType) {
-            description = message
+        reply(false) {
+            embeds += messageType.embed.apply {
+                description = message
+            }.build()
         }
-        user
     }
 
     fun replyEphemeral(message: String, messageType: MessageType = MessageType.NEUTRAL) {
-        replyEmbed(true, messageType) {
-            description = message
+        reply(true) {
+            embeds += messageType.embed.apply {
+                description = message
+            }.build()
         }
     }
 
@@ -45,28 +50,60 @@ class CommandContext(private val event: SlashCommandInteractionEvent) {
         event.reply(data).setEphemeral(true).queue()
     }
 
-    private fun replyEmbed(ephemeral: Boolean = false, messageType: MessageType, builder: InlineEmbed.() -> Unit) {
-        val embed = EmbedBuilder {
-            color = messageType.color?.rgb
+    fun reply(ephemeral: Boolean = false, messageBuilder: InlineMessage<MessageCreateData>.() -> Unit) {
+        val data = InlineMessage(MessageCreateBuilder())
+        messageBuilder(data)
+        event.reply(data.build()).setEphemeral(ephemeral).queue()
+    }
+
+    private fun replyTypedEmbed(
+        ephemeral: Boolean = false,
+        messageType: MessageType,
+        messageComponents: ComponentContainer?,
+        builder: InlineEmbed.() -> Unit
+    ) {
+        reply(ephemeral) {
+            embeds += run {
+                val embed = messageType.embed
+                builder(embed)
+                embed.build()
+            }
+            messageComponents?.let { componentContainer ->
+                componentContainer.getComponents().map { it.toDiscordActionRow() }.forEach { components += it }
+            }
         }
-        builder(embed)
-        event.replyEmbeds(embed.build()).setEphemeral(ephemeral).queue()
     }
 
-    fun replyInfo(ephemeral: Boolean = false, builder: InlineEmbed.() -> Unit) {
-        replyEmbed(ephemeral, MessageType.INFO, builder)
+    fun replyInfo(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
+        replyTypedEmbed(ephemeral, MessageType.INFO, messageComponents, builder)
     }
 
-    fun replyWarning(ephemeral: Boolean = false, builder: InlineEmbed.() -> Unit) {
-        replyEmbed(ephemeral, MessageType.WARNING, builder)
+    fun replyWarning(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
+        replyTypedEmbed(ephemeral, MessageType.WARNING, messageComponents, builder)
     }
 
-    fun replyDanger(ephemeral: Boolean = false, builder: InlineEmbed.() -> Unit) {
-        replyEmbed(ephemeral, MessageType.DANGER, builder)
+    fun replyDanger(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
+        replyTypedEmbed(ephemeral, MessageType.DANGER, messageComponents, builder)
     }
 
-    fun replySuccess(ephemeral: Boolean = false, builder: InlineEmbed.() -> Unit) {
-        replyEmbed(ephemeral, MessageType.SUCCESS, builder)
+    fun replySuccess(
+        ephemeral: Boolean = false,
+        messageComponents: ComponentContainer? = null,
+        builder: InlineEmbed.() -> Unit
+    ) {
+        replyTypedEmbed(ephemeral, MessageType.SUCCESS, messageComponents, builder)
     }
 
 
