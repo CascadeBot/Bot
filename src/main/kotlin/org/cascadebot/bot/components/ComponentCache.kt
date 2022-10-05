@@ -4,16 +4,23 @@ import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.benmanes.caffeine.cache.LoadingCache
+import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.utils.ChannelId
 import org.cascadebot.bot.utils.ComponentId
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.toJavaDuration
 
-class ComponentCache(private val maxPerChannel: Long) {
+class ComponentCache(private val maxComponentsPerChannel: Long) {
 
-    private val cacheLoader: CacheLoader<ChannelId, Cache<ComponentId, CascadeComponent>> = CacheLoader { channelId ->
+    val logger by SLF4J
+
+    init {
+        logger.info("Created component cache with max cached components per channel: $maxComponentsPerChannel")
+    }
+
+    private val cacheLoader: CacheLoader<ChannelId, Cache<ComponentId, CascadeComponent>> = CacheLoader {
         return@CacheLoader Caffeine.newBuilder()
-            .maximumSize(maxPerChannel)
+            .maximumSize(maxComponentsPerChannel)
             .expireAfterAccess(1.hours.toJavaDuration())
             .build()
     }

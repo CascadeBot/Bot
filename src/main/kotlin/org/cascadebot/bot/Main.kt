@@ -23,15 +23,21 @@ object Main {
 
     val logger by SLF4J("Main")
 
-    val componentCache = ComponentCache(50)
+    lateinit var componentCache: ComponentCache
+        private set
 
     lateinit var shardManager: ShardManager
         private set
+
     lateinit var commandManager: CommandManager
         private set
+
     lateinit var postgresManager: PostgresManager
         private set
+
     var rabbitMQManager: RabbitMQManager? = null
+        private set
+
     lateinit var config: Config
         private set
 
@@ -43,6 +49,8 @@ object Main {
         if (config.development?.debugLogs == true) {
             LogbackUtil.setAppenderLevel("STDOUT", Level.DEBUG)
         }
+
+        componentCache = ComponentCache(config.values.maxComponentsCachedPerChannel)
 
         try {
             postgresManager = PostgresManager(config.database)
