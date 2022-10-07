@@ -6,6 +6,19 @@ import com.sksamuel.hoplite.Masked
 import com.sksamuel.hoplite.addEnvironmentSource
 import com.sksamuel.hoplite.addFileSource
 import dev.minn.jda.ktx.util.SLF4J
+import java.io.File
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import java.security.KeyFactory
+import java.security.KeyPair
+import java.security.KeyPairGenerator
+import java.security.SecureRandom
+import java.security.interfaces.ECPrivateKey
+import java.security.interfaces.ECPublicKey
+import java.security.spec.ECGenParameterSpec
+import java.security.spec.PKCS8EncodedKeySpec
+import java.util.Base64
+import kotlin.system.exitProcess
 
 sealed class Sharding {
     data class Total(val total: Int = -1) : Sharding()
@@ -32,6 +45,81 @@ sealed class RabbitMQ {
     ) : RabbitMQ()
 }
 
+sealed class DashboardEncryption {
+
+    abstract val privateKey: ECPrivateKey
+
+    val logger by SLF4J("DashboardEncryption")
+
+    data class Generate(val generate: Boolean) : DashboardEncryption() {
+
+        override val privateKey: ECPrivateKey
+
+        init {
+            val kpg: KeyPairGenerator = KeyPairGenerator.getInstance("EC")
+            kpg.initialize(ECGenParameterSpec("secp256r1"), SecureRandom())
+            val keyPair: KeyPair = kpg.generateKeyPair()
+
+            privateKey = keyPair.private as ECPrivateKey
+            val publicKey = keyPair.public as ECPublicKey
+
+            val publicKeyEncoded = Base64.getEncoder().encodeToString(publicKey.encoded).chunked(64).joinToString("\n")
+
+            val publicKeyPem = "-----BEGIN PUBLIC KEY-----\n$publicKeyEncoded\n-----END PUBLIC KEY-----"
+
+            logger.info("Generated public key:\n$publicKeyPem")
+        }
+
+    }
+
+    data class Key(val fileName: String = "dashboard_login.pem") : DashboardEncryption() {
+
+        override val privateKey: ECPrivateKey
+
+        init {
+
+            val pemFile = File(fileName)
+
+            if (!pemFile.isFile || !pemFile.exists()) {
+                logger.error("The file '{}' doesn't exist.", pemFile.absolutePath)
+                exitProcess(1)
+            }
+
+            val key = String(Files.readAllBytes(pemFile.toPath()), StandardCharsets.UTF_8)
+
+            if (key.startsWith("-----BEGIN EC PRIVATE KEY-----")) {
+                logger.error("You are using the legacy OpenSSL key format for the dashboard private key. Please convert the private key to PKCS8 using the command below.")
+                logger.error("openssl pkey -in legacy.pem -out pkcs8.pem")
+                exitProcess(1)
+            }
+
+            try {
+                val privateKeyPEM = key
+                    .replace("-----BEGIN PRIVATE KEY-----", "")
+                    .replace(Regex("\r?\n"), "")
+                    .replace("-----END PRIVATE KEY-----", "")
+
+                val encoded: ByteArray = try {
+                    Base64.getDecoder().decode(privateKeyPEM)
+                } catch (e: IllegalArgumentException) {
+                    logger.error("Could not decode Base64 in PEM file. Error: {}", e.message)
+                    exitProcess(1)
+                }
+
+                val kf = KeyFactory.getInstance("EC")
+                val keySpec = PKCS8EncodedKeySpec(encoded)
+                privateKey = kf.generatePrivate(keySpec) as ECPrivateKey;
+
+                logger.info("Loaded private key successfully from '{}'", pemFile.absolutePath)
+            } catch (e: Exception) {
+                logger.error("Could not read private key", e)
+                exitProcess(1)
+            }
+        }
+
+    }
+}
+
 data class Values(val maxComponentsCachedPerChannel: Long = 50L)
 
 data class Config(
@@ -39,6 +127,7 @@ data class Config(
     val discord: Discord,
     val rabbitMQ: RabbitMQ?,
     val development: DevelopmentSettings?,
+    val dashboardEncryption: DashboardEncryption = DashboardEncryption.Key(),
     val values: Values = Values()
 ) {
 

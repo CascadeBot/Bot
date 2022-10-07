@@ -25,3 +25,11 @@ rabbitMQ:
 
 values:
   maxComponentsCachedPerChannel: 50
+
+dashboardEncryption:
+  generate: true
+
+# OR
+
+dashboardEncryption:
+  fileName: dashboard_login.pem # Path to PKCS#8 formatted private key
