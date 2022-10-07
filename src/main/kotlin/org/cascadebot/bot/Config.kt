@@ -79,7 +79,7 @@ sealed class DashboardEncryption {
 
     }
 
-    data class Key(val privateKeyFile: String = "dashboard_login.pem", val publicKeyFile: String = "dashboard_login.pub") : DashboardEncryption() {
+    data class Key(val privateKeyFile: String, val publicKeyFile: String) : DashboardEncryption() {
 
         override val privateKey: ECPrivateKey
         override val publicKey: ECPublicKey
@@ -160,7 +160,7 @@ sealed class DashboardEncryption {
 
 }
 
-data class Dashboard(val encryption: DashboardEncryption = DashboardEncryption.Key())
+data class Dashboard(val encryption: DashboardEncryption = DashboardEncryption.Key("dashboard_login.pem", "dashboard_login.pub"))
 
 data class Values(val maxComponentsCachedPerChannel: Long = 50L)
 
