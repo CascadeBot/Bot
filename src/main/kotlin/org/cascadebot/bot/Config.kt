@@ -160,7 +160,10 @@ sealed class DashboardEncryption {
 
 }
 
-data class Dashboard(val encryption: DashboardEncryption = DashboardEncryption.Key("dashboard_login.pem", "dashboard_login.pub"))
+data class Dashboard(
+    val dashboardBaseUrl: String = "http://localhost:3000",
+    val encryption: DashboardEncryption = DashboardEncryption.Key("dashboard_login.pem", "dashboard_login.pub")
+)
 
 data class Values(val maxComponentsCachedPerChannel: Long = 50L)
 
