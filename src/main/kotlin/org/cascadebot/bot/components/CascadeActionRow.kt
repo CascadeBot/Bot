@@ -38,7 +38,7 @@ class CascadeActionRow {
         if (components.isEmpty()) return
 
         // Check that all values are only true or only false, not a mix
-        require(components.groupBy { it.persistent }.size > 1) {
+        require(components.groupBy { it.persistent }.size == 1) {
             "Cannot mix non-persistent items and persistent items in a row"
         }
 

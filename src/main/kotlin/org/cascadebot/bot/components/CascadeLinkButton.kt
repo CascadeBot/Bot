@@ -17,7 +17,7 @@ class CascadeLinkButton private constructor(
     override val componentType: Component.Type = Component.Type.BUTTON
 
     init {
-        require(label != null && emoji != null) { "Label and emoji cannot both be null" }
+        require(label != null || emoji != null) { "Label and emoji cannot both be null" }
     }
 
     companion object {
