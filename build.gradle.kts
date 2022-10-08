@@ -53,6 +53,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
+    implementation("com.auth0:java-jwt:4.0.0")
 
 }
 

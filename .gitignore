@@ -175,6 +175,9 @@ gradle-app.setting
 *.env
 .env
 
+*.pem
+!development_key.pem
+
 !*.example.yml
 !*.example.env
 
