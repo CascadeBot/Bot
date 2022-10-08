@@ -1,18 +1,14 @@
 package org.cascadebot.bot.rabbitmq
 
-import com.rabbitmq.client.AMQP
+import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.Delivery
 import dev.minn.jda.ktx.util.SLF4J
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
-import org.cascadebot.bot.Main
 import org.cascadebot.bot.RabbitMQ
+import org.cascadebot.bot.rabbitmq.consumers.BroadcastConsumer
+import org.cascadebot.bot.rabbitmq.consumers.MetaConsumer
+import org.cascadebot.bot.rabbitmq.consumers.NoOpCancelCallback
 import kotlin.concurrent.getOrSet
 import kotlin.system.exitProcess
 
@@ -22,6 +18,9 @@ class RabbitMQManager (config: RabbitMQ) {
     private val channels: ThreadLocal<Channel> = ThreadLocal()
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private var connection: Connection
+
+    private var broadcastQueueName: String? = null
+        private set
 
     val channel: Channel
         get() {
@@ -66,31 +65,23 @@ class RabbitMQManager (config: RabbitMQ) {
             exitProcess(1)
         }
 
-        setupQueues()
+        setupGlobalObjects()
         setupConsumers()
     }
 
     private fun setupConsumers() {
-        channel.basicConsume("meta", {consumerTag: String, delivery: Delivery ->
-            val replyProps = AMQP.BasicProperties.Builder()
-                .correlationId(delivery.properties.correlationId)
-                .build()
-
-            val response = mutableMapOf<String, JsonElement>()
-            when (delivery.envelope.routingKey) {
-                "meta.shard-count" -> {
-                    response["shard-count"] = JsonPrimitive(Main.shardManager.shardsTotal)
-                }
-            }
-
-            val json = Json.encodeToString(JsonObject(response))
-
-            channel.basicPublish("", delivery.properties.replyTo, replyProps, json.toByteArray());
-            channel.basicAck(delivery.envelope.deliveryTag, false);
-        }, {_: String -> })
+        channel.basicConsume("meta", MetaConsumer(channel), NoOpCancelCallback())
+        channel.basicConsume(broadcastQueueName, BroadcastConsumer(channel), NoOpCancelCallback())
     }
 
-    private fun setupQueues() {
+    private fun setupGlobalObjects() {
+        channel.exchangeDeclare("bot.broadcast", BuiltinExchangeType.FANOUT, true)
+
+        broadcastQueueName = channel.queueDeclare().queue
+
+        // Bind to the broadcast exchange - Routing key can be empty as a fanout exchange ignores the routing key
+        channel.queueBind(broadcastQueueName, "bot.broadcast", "")
+
         channel.queueDeclare("meta", true, false, false, mapOf())
         channel.queueBind("meta", "amq.direct", "meta.shard-count")
     }
