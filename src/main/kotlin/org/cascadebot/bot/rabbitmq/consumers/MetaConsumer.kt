@@ -11,6 +11,7 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.ErrorCode
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.utils.RabbitMQUtil
 
 class MetaConsumer(channel: Channel) : DefaultConsumer(channel) {
 
@@ -20,9 +21,7 @@ class MetaConsumer(channel: Channel) : DefaultConsumer(channel) {
         properties: AMQP.BasicProperties,
         body: ByteArray
     ) {
-        val replyProps = AMQP.BasicProperties.Builder()
-            .correlationId(properties.correlationId)
-            .build()
+        val replyProps = RabbitMQUtil.propsFromCorrelationId(properties)
 
         val response = mutableMapOf<String, JsonElement>()
         when (val property = properties.headers["property"].toString()) {
@@ -31,7 +30,11 @@ class MetaConsumer(channel: Channel) : DefaultConsumer(channel) {
             }
 
             else -> {
-                val responseObject = RabbitMQResponse.failure(StatusCode.BadRequest, ErrorCode.InvalidProperty, "The property '$property' is invalid")
+                val responseObject = RabbitMQResponse.failure(
+                    StatusCode.BadRequest,
+                    ErrorCode.InvalidProperty,
+                    "The property '$property' is invalid"
+                )
                 channel.basicPublish("", properties.replyTo, replyProps, responseObject.toJsonByteArray())
                 channel.basicAck(envelope.deliveryTag, false)
                 return

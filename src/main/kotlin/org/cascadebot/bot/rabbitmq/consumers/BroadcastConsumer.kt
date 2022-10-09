@@ -17,6 +17,7 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.ErrorCode
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.utils.RabbitMQUtil
 
 class BroadcastConsumer(channel: Channel) : DefaultConsumer(channel) {
 
@@ -28,9 +29,7 @@ class BroadcastConsumer(channel: Channel) : DefaultConsumer(channel) {
         properties: AMQP.BasicProperties,
         body: ByteArray
     ) {
-        val replyProps = AMQP.BasicProperties.Builder()
-            .correlationId(properties.correlationId)
-            .build()
+        val replyProps = RabbitMQUtil.propsFromCorrelationId(properties)
 
         val jsonBody = try {
             Json.decodeFromString<JsonObject>(body.decodeToString())
