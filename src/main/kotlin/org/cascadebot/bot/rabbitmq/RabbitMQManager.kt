@@ -83,7 +83,7 @@ class RabbitMQManager (config: RabbitMQ) {
         channel.queueBind(broadcastQueueName, "bot.broadcast", "")
 
         channel.queueDeclare("meta", true, false, false, mapOf())
-        channel.queueBind("meta", "amq.direct", "meta.shard-count")
+        channel.queueBind("meta", "amq.direct", "meta")
     }
 
 }
