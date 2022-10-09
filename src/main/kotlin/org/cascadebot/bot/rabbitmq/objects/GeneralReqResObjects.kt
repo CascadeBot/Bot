@@ -22,9 +22,13 @@ import java.nio.charset.StandardCharsets
 value class StatusCode private constructor(val code: Int) {
 
     companion object {
+
         val Success = StatusCode(0)
         val NotFound = StatusCode(100)
         val BadRequest = StatusCode(101)
+
+        val ServerException = StatusCode(200)
+
     }
 
 }
@@ -34,10 +38,19 @@ value class StatusCode private constructor(val code: Int) {
 value class ErrorCode private constructor(val code: String) {
 
     companion object {
+
         val UserNotFound = ErrorCode("user_not_found")
         val InvalidProperty = ErrorCode("invalid_property")
         val InvalidMethod = ErrorCode("invalid_method")
+
+        val InvalidJsonFormat = ErrorCode("invalid_json")
+
+        fun fromException(e: Exception): ErrorCode {
+            return ErrorCode(e.javaClass.simpleName)
+        }
+
     }
+
 
 }
 
@@ -53,7 +66,9 @@ data class RabbitMQResponse<T : Any> private constructor(
     val data: T?,
     val error: RabbitMQError?
 ) {
+
     companion object {
+
         fun <T : Any> success(data: T): RabbitMQResponse<T> {
             return RabbitMQResponse(StatusCode.Success, data, null)
         }

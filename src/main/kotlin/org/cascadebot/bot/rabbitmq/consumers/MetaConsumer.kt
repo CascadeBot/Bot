@@ -2,7 +2,6 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.DefaultConsumer
 import com.rabbitmq.client.Envelope
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -13,13 +12,13 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.RabbitMQUtil
 
-class MetaConsumer(channel: Channel) : DefaultConsumer(channel) {
+class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
-    override fun handleDelivery(
+    override fun onDeliver(
         consumerTag: String,
         envelope: Envelope,
         properties: AMQP.BasicProperties,
-        body: ByteArray
+        body: String
     ) {
         val replyProps = RabbitMQUtil.propsFromCorrelationId(properties)
 

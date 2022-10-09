@@ -2,9 +2,7 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.DefaultConsumer
 import com.rabbitmq.client.Envelope
-import dev.minn.jda.ktx.util.SLF4J
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
@@ -19,23 +17,31 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.RabbitMQUtil
 
-class BroadcastConsumer(channel: Channel) : DefaultConsumer(channel) {
+class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
-    val logger by SLF4J
-
-    override fun handleDelivery(
+    override fun onDeliver(
         consumerTag: String,
         envelope: Envelope,
         properties: AMQP.BasicProperties,
-        body: ByteArray
+        body: String
     ) {
         val replyProps = RabbitMQUtil.propsFromCorrelationId(properties)
 
         val jsonBody = try {
-            Json.decodeFromString<JsonObject>(body.decodeToString())
+            Json.decodeFromString<JsonObject>(body)
         } catch (e: Exception) {
-            logger.error("Could not decode RabbitMQ message", e)
-            channel.basicReject(envelope.deliveryTag, false)
+            channel.basicPublish(
+                "",
+                properties.replyTo,
+                replyProps,
+                RabbitMQResponse.failure(
+                    StatusCode.BadRequest,
+                    ErrorCode.InvalidJsonFormat,
+                    e.message ?: e.javaClass.simpleName
+                )
+                    .toJsonByteArray()
+            )
+            channel.basicAck(envelope.deliveryTag, false)
             return
         }
 
@@ -46,7 +52,8 @@ class BroadcastConsumer(channel: Channel) : DefaultConsumer(channel) {
                 val userId = (jsonBody["user_id"] as? JsonPrimitive)?.content?.toLongOrNull()
 
                 if (userId == null) {
-                    val response = RabbitMQResponse.failure(StatusCode.NotFound, ErrorCode.UserNotFound, "User cannot be found")
+                    val response =
+                        RabbitMQResponse.failure(StatusCode.NotFound, ErrorCode.UserNotFound, "User cannot be found")
                     channel.basicPublish("", properties.replyTo, replyProps, response.toJsonByteArray())
                     channel.basicAck(envelope.deliveryTag, false)
                     return
@@ -65,7 +72,11 @@ class BroadcastConsumer(channel: Channel) : DefaultConsumer(channel) {
             }
 
             else -> {
-                val response = RabbitMQResponse.failure(StatusCode.BadRequest, ErrorCode.InvalidMethod, "The method '$method' is invalid.")
+                val response = RabbitMQResponse.failure(
+                    StatusCode.BadRequest,
+                    ErrorCode.InvalidMethod,
+                    "The method '$method' is invalid."
+                )
                 channel.basicPublish("", properties.replyTo, replyProps, response.toJsonByteArray())
                 channel.basicAck(envelope.deliveryTag, false)
                 return
