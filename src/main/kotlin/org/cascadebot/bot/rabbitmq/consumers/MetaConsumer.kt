@@ -19,9 +19,13 @@ class MetaConsumer(private val channel: Channel) : DeliverCallback {
             .build()
 
         val response = mutableMapOf<String, JsonElement>()
-        when (message.envelope.routingKey) {
+        when (message.properties.headers["method"].toString()) {
             "meta.shard-count" -> {
                 response["shard-count"] = JsonPrimitive(Main.shardManager.shardsTotal)
+            }
+            else -> {
+                channel.basicReject(message.envelope.deliveryTag, false)
+                return
             }
         }
 
