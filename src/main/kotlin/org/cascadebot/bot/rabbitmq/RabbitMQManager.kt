@@ -8,7 +8,6 @@ import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.RabbitMQ
 import org.cascadebot.bot.rabbitmq.consumers.BroadcastConsumer
 import org.cascadebot.bot.rabbitmq.consumers.MetaConsumer
-import org.cascadebot.bot.rabbitmq.consumers.NoOpCancelCallback
 import kotlin.concurrent.getOrSet
 import kotlin.system.exitProcess
 
@@ -70,8 +69,8 @@ class RabbitMQManager (config: RabbitMQ) {
     }
 
     private fun setupConsumers() {
-        channel.basicConsume("meta", MetaConsumer(channel), NoOpCancelCallback())
-        channel.basicConsume(broadcastQueueName, BroadcastConsumer(channel), NoOpCancelCallback())
+        channel.basicConsume("meta", MetaConsumer(channel))
+        channel.basicConsume(broadcastQueueName, BroadcastConsumer(channel))
     }
 
     private fun setupGlobalObjects() {

@@ -2,47 +2,54 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.DeliverCallback
-import com.rabbitmq.client.Delivery
+import com.rabbitmq.client.DefaultConsumer
+import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.util.SLF4J
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.longOrNull
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.objects.ErrorCode
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
-class BroadcastConsumer(private val channel: Channel) : DeliverCallback {
+class BroadcastConsumer(channel: Channel) : DefaultConsumer(channel) {
 
     val logger by SLF4J
 
-    override fun handle(consumerTag: String, message: Delivery) {
+    override fun handleDelivery(
+        consumerTag: String,
+        envelope: Envelope,
+        properties: AMQP.BasicProperties,
+        body: ByteArray
+    ) {
         val replyProps = AMQP.BasicProperties.Builder()
-            .correlationId(message.properties.correlationId)
+            .correlationId(properties.correlationId)
             .build()
 
         val jsonBody = try {
-            Json.decodeFromString<JsonObject>(message.body.decodeToString())
+            Json.decodeFromString<JsonObject>(body.decodeToString())
         } catch (e: Exception) {
             logger.error("Could not decode RabbitMQ message", e)
-            channel.basicReject(message.envelope.deliveryTag, false)
+            channel.basicReject(envelope.deliveryTag, false)
             return
         }
 
+        val method = properties.headers["method"].toString()
 
-
-        var response: Any = when (message.properties.headers["method"].toString()) {
+        val response: Any = when (method) {
             "user.mutual_guilds" -> {
-                // TODO: Better error handling here
                 val userId = (jsonBody["user_id"] as? JsonPrimitive)?.content?.toLongOrNull()
 
                 if (userId == null) {
-                    channel.basicReject(message.envelope.deliveryTag, false)
+                    val response = RabbitMQResponse.failure(StatusCode.NotFound, ErrorCode.UserNotFound, "User cannot be found")
+                    channel.basicPublish("", properties.replyTo, replyProps, response.toJsonByteArray())
+                    channel.basicAck(envelope.deliveryTag, false)
                     return
                 }
 
@@ -57,13 +64,19 @@ class BroadcastConsumer(private val channel: Channel) : DeliverCallback {
 
                 mutualGuilds.map { MutualGuildResponse(it) }
             }
+
             else -> {
-                channel.basicReject(message.envelope.deliveryTag, false)
+                val response = RabbitMQResponse.failure(StatusCode.BadRequest, ErrorCode.InvalidMethod, "The method '$method' is invalid.")
+                channel.basicPublish("", properties.replyTo, replyProps, response.toJsonByteArray())
+                channel.basicAck(envelope.deliveryTag, false)
                 return
             }
         }
 
-        // TODO: Reply with response
+        val wrappedResponse = RabbitMQResponse.success(response)
+
+        channel.basicPublish("", properties.replyTo, replyProps, wrappedResponse.toJsonByteArray())
+        channel.basicAck(envelope.deliveryTag, false)
     }
 }
 
@@ -71,7 +84,8 @@ class BroadcastConsumer(private val channel: Channel) : DeliverCallback {
 data class MutualGuildResponse(
     @SerialName("guild_id") val guildId: Long,
     val name: String,
-    @SerialName("icon_url") val iconUrl: String?) {
+    @SerialName("icon_url") val iconUrl: String?
+) {
 
     constructor(guild: Guild) : this(guild.idLong, guild.name, guild.iconUrl)
 }
