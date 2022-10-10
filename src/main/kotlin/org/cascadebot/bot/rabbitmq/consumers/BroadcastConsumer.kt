@@ -1,6 +1,5 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
@@ -97,6 +96,7 @@ data class MutualGuildResponse(
 ) {
 
     companion object {
+
         fun fromGuild(guild: Guild): MutualGuildResponse {
             val guildMetaData = guild.retrieveMetaData().complete()
             return MutualGuildResponse(

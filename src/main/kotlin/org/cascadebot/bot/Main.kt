@@ -19,7 +19,6 @@ import org.cascadebot.bot.db.PostgresManager
 import org.cascadebot.bot.events.InteractionListener
 import org.cascadebot.bot.events.ReadyListener
 import org.cascadebot.bot.rabbitmq.RabbitMQManager
-import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.utils.LogbackUtil
 import org.hibernate.HibernateException
 import kotlin.system.exitProcess

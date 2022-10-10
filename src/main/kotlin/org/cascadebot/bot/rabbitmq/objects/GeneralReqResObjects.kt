@@ -1,6 +1,5 @@
 package org.cascadebot.bot.rabbitmq.objects
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
