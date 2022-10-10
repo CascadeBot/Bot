@@ -24,8 +24,8 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
         val property = properties.headers["action"].toString()
 
         when (property) {
-            "shard-count" -> {
-                response.set("shard-count", IntNode(Main.shardManager.shardsTotal))
+            "shard_count" -> {
+                response.set("shard_count", IntNode(Main.shardManager.shardsTotal))
             }
 
             else -> {
