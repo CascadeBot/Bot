@@ -18,9 +18,6 @@ class RabbitMQManager (config: RabbitMQ) {
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private var connection: Connection
 
-    private var broadcastQueueName: String? = null
-        private set
-
     val channel: Channel
         get() {
             if (!connection.isOpen) {
@@ -64,25 +61,29 @@ class RabbitMQManager (config: RabbitMQ) {
             exitProcess(1)
         }
 
-        setupGlobalObjects()
-        setupConsumers()
+        val globalObjectNames = setupGlobalObjects()
+        setupConsumers(globalObjectNames)
     }
 
-    private fun setupConsumers() {
+    private fun setupConsumers(globalObjectNames: GlobalObjectNames) {
         channel.basicConsume("meta", MetaConsumer(channel))
-        channel.basicConsume(broadcastQueueName, BroadcastConsumer(channel))
+        channel.basicConsume(globalObjectNames.broadcastQueueName, BroadcastConsumer(channel))
     }
 
-    private fun setupGlobalObjects() {
+    private fun setupGlobalObjects(): GlobalObjectNames {
         channel.exchangeDeclare("bot.broadcast", BuiltinExchangeType.FANOUT, true)
 
-        broadcastQueueName = channel.queueDeclare().queue
+        val broadcastQueueName = channel.queueDeclare().queue
 
         // Bind to the broadcast exchange - Routing key can be empty as a fanout exchange ignores the routing key
         channel.queueBind(broadcastQueueName, "bot.broadcast", "")
 
         channel.queueDeclare("meta", true, false, false, mapOf())
         channel.queueBind("meta", "amq.direct", "meta")
+
+        return GlobalObjectNames(broadcastQueueName)
     }
+
+    data class GlobalObjectNames(val broadcastQueueName: String)
 
 }
