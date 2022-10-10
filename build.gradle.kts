@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 object Versions {
 
+    const val jackson = "2.13.4"
     const val prometheus = "0.16.0"
     const val jda = "5.0.0-alpha.20"
     const val hibernate = "6.1.3.Final"
@@ -49,9 +50,9 @@ dependencies {
     implementation("com.sksamuel.hoplite:hoplite-hikaricp:${Versions.hoplite}")
     implementation("org.reflections:reflections:0.10.2")
     implementation("com.rabbitmq:amqp-client:5.16.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.4.0")
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
-    implementation("com.fasterxml.jackson.core:jackson-databind:2.13.4")
+    implementation("com.fasterxml.jackson.core:jackson-databind:${Versions.jackson}")
+    implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${Versions.jackson}")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.1")
     implementation("com.auth0:java-jwt:4.0.0")
 

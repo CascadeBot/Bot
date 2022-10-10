@@ -8,6 +8,7 @@ import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.RabbitMQ
 import org.cascadebot.bot.rabbitmq.consumers.BroadcastConsumer
 import org.cascadebot.bot.rabbitmq.consumers.MetaConsumer
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.getOrSet
 import kotlin.system.exitProcess
 
@@ -17,6 +18,8 @@ class RabbitMQManager (config: RabbitMQ) {
     private val channels: ThreadLocal<Channel> = ThreadLocal()
     private val connectionFactory: ConnectionFactory = ConnectionFactory()
     private var connection: Connection
+
+    private val isSetup = AtomicBoolean(false)
 
     val channel: Channel
         get() {
@@ -60,7 +63,10 @@ class RabbitMQManager (config: RabbitMQ) {
             logger.error("Error setting up RabbitMQ connection", e)
             exitProcess(1)
         }
+    }
 
+    fun setupRabbitMQ() {
+        if (isSetup.getAndSet(true)) return
         val globalObjectNames = setupGlobalObjects()
         setupConsumers(globalObjectNames)
     }

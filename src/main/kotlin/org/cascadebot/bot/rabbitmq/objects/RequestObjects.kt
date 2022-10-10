@@ -1,7 +1,5 @@
 package org.cascadebot.bot.rabbitmq.objects
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
+import com.fasterxml.jackson.annotation.JsonProperty
 
-@Serializable
-data class UserIDObject(@SerialName("user_id") val userId: String)
+data class UserIDObject(@JsonProperty("user_id") val userId: String)

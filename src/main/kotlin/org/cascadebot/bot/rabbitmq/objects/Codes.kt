@@ -1,7 +1,5 @@
 package org.cascadebot.bot.rabbitmq.objects
 
-import kotlinx.serialization.Serializable
-
 /*
     Status Codes
 
@@ -12,7 +10,6 @@ import kotlinx.serialization.Serializable
     400 - 499   ?
 
  */
-@Serializable
 @JvmInline
 value class StatusCode private constructor(val code: Int) {
 
@@ -28,7 +25,6 @@ value class StatusCode private constructor(val code: Int) {
 
 }
 
-@Serializable
 @JvmInline
 value class ErrorCode internal constructor(val code: String) {
 

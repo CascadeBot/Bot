@@ -1,6 +1,9 @@
 package org.cascadebot.bot
 
 import ch.qos.logback.classic.Level
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.KotlinModule
 import dev.minn.jda.ktx.util.SLF4J
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
@@ -40,6 +43,11 @@ object Main {
 
     lateinit var config: Config
         private set
+
+    val json: ObjectMapper = ObjectMapper().apply {
+        registerModule(KotlinModule.Builder().build())
+        configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+    }
 
     private fun runBot() {
         logger.info("Starting CascadeBot")
