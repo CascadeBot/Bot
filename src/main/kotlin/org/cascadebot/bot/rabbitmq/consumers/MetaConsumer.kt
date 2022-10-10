@@ -7,7 +7,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.objects.ErrorCode
+import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.RabbitMQUtil
@@ -31,7 +31,7 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
             else -> {
                 val responseObject = RabbitMQResponse.failure(
                     StatusCode.BadRequest,
-                    ErrorCode.InvalidProperty,
+                    InvalidErrorCodes.InvalidProperty,
                     "The property '$property' is invalid"
                 )
                 channel.basicPublish("", properties.replyTo, replyProps, responseObject.toJsonByteArray())

@@ -12,7 +12,8 @@ import kotlinx.serialization.json.JsonPrimitive
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.objects.ErrorCode
+import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.NotFoundErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.RabbitMQUtil
@@ -36,7 +37,7 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                 replyProps,
                 RabbitMQResponse.failure(
                     StatusCode.BadRequest,
-                    ErrorCode.InvalidJsonFormat,
+                    InvalidErrorCodes.InvalidJsonFormat,
                     e.message ?: e.javaClass.simpleName
                 )
                     .toJsonByteArray()
@@ -53,7 +54,11 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
                 if (userId == null) {
                     val response =
-                        RabbitMQResponse.failure(StatusCode.NotFound, ErrorCode.UserNotFound, "User cannot be found")
+                        RabbitMQResponse.failure(
+                            StatusCode.NotFound,
+                            NotFoundErrorCodes.UserNotFound,
+                            "User cannot be found"
+                        )
                     channel.basicPublish("", properties.replyTo, replyProps, response.toJsonByteArray())
                     channel.basicAck(envelope.deliveryTag, false)
                     return
@@ -74,7 +79,7 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
             else -> {
                 val response = RabbitMQResponse.failure(
                     StatusCode.BadRequest,
-                    ErrorCode.InvalidMethod,
+                    InvalidErrorCodes.InvalidMethod,
                     "The method '$method' is invalid."
                 )
                 channel.basicPublish("", properties.replyTo, replyProps, response.toJsonByteArray())

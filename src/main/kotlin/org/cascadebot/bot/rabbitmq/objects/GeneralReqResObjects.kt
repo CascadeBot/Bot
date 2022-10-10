@@ -6,54 +6,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.nio.charset.StandardCharsets
 
-
-/*
-    Status Codes
-
-    0   -  99   Success
-    100 - 199   Data Error
-    200 - 299   Server Error
-    300 - 399   Scripting Error
-    400 - 499   ?
-
- */
-@Serializable
-@JvmInline
-value class StatusCode private constructor(val code: Int) {
-
-    companion object {
-
-        val Success = StatusCode(0)
-        val NotFound = StatusCode(100)
-        val BadRequest = StatusCode(101)
-
-        val ServerException = StatusCode(200)
-
-    }
-
-}
-
-@Serializable
-@JvmInline
-value class ErrorCode private constructor(val code: String) {
-
-    companion object {
-
-        val UserNotFound = ErrorCode("user_not_found")
-        val InvalidProperty = ErrorCode("invalid_property")
-        val InvalidMethod = ErrorCode("invalid_method")
-
-        val InvalidJsonFormat = ErrorCode("invalid_json")
-
-        fun fromException(e: Exception): ErrorCode {
-            return ErrorCode(e.javaClass.simpleName)
-        }
-
-    }
-
-
-}
-
 @Serializable
 data class RabbitMQError(
     @SerialName("error_code") val errorCode: ErrorCode,
