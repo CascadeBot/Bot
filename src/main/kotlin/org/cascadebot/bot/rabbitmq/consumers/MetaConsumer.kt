@@ -1,11 +1,9 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
+import com.fasterxml.jackson.databind.node.IntNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.JsonPrimitive
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -19,13 +17,15 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
         properties: AMQP.BasicProperties,
         body: String
     ) {
-        val response = mutableMapOf<String, JsonElement>()
+        if (!assertReplyTo(properties, envelope)) return
+
+        val response = Main.json.createObjectNode()
 
         val property = properties.headers["action"].toString()
 
         when (property) {
             "shard-count" -> {
-                response["shard-count"] = JsonPrimitive(Main.shardManager.shardsTotal)
+                response.set("shard-count", IntNode(Main.shardManager.shardsTotal))
             }
 
             else -> {
@@ -39,7 +39,7 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
             }
         }
 
-        val responseObject = RabbitMQResponse.success(JsonObject(response))
+        val responseObject = RabbitMQResponse.success(response)
         responseObject.sendAndAck(channel, properties, envelope)
     }
 

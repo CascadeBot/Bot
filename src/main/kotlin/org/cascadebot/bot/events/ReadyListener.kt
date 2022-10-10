@@ -15,8 +15,12 @@ class ReadyListener : ListenerAdapter() {
 
         val rabbitMQManager = Main.rabbitMQManager
         if (rabbitMQManager != null) {
+            // This will execute on the first shard
+            rabbitMQManager.setupRabbitMQ()
+
             // This serves 2 purposes, logging and also pre-emptively creating a channel for each shard
-            logger.info("Opened RabbitMQ channel number '{}' for shard ID '{}'", rabbitMQManager.channel.channelNumber,
+            logger.info(
+                "Opened RabbitMQ channel number '{}' for shard ID '{}'", rabbitMQManager.channel.channelNumber,
                 shardId
             )
 

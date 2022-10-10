@@ -1,31 +1,26 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import org.cascadebot.bot.Main
 import org.cascadebot.bot.utils.RabbitMQUtil
-import java.nio.charset.StandardCharsets
 
-@Serializable
 data class RabbitMQError(
-    @SerialName("error_code") val errorCode: ErrorCode,
+    @JsonProperty("error_code") val errorCode: ErrorCode,
     val message: String
 )
 
-@Serializable
-data class RabbitMQResponse<T : Any> private constructor(
-    @SerialName("status_code") val statusCode: StatusCode,
+data class RabbitMQResponse<T : Any> constructor(
+    @JsonProperty("status_code") val statusCode: StatusCode,
     val data: T?,
     val error: RabbitMQError?
 ) {
 
     companion object {
 
-        fun <T : Any> success(data: T): RabbitMQResponse<T> {
+        inline fun <reified T : Any> success(data: T): RabbitMQResponse<T> {
             return RabbitMQResponse(StatusCode.Success, data, null)
         }
 
@@ -34,12 +29,8 @@ data class RabbitMQResponse<T : Any> private constructor(
         }
     }
 
-    fun toJsonString(): String {
-        return Json.encodeToString(this)
-    }
-
-    fun toJsonByteArray(): ByteArray {
-        return toJsonString().toByteArray(StandardCharsets.UTF_8)
+    private fun toJsonByteArray(): ByteArray {
+        return Main.json.writeValueAsBytes(this)
     }
 
     fun sendAndAck(channel: Channel, properties: AMQP.BasicProperties, envelope: Envelope) {
