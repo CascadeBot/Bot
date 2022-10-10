@@ -1,9 +1,13 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import com.rabbitmq.client.AMQP
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.Envelope
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import org.cascadebot.bot.utils.RabbitMQUtil
 import java.nio.charset.StandardCharsets
 
 @Serializable
@@ -37,4 +41,17 @@ data class RabbitMQResponse<T : Any> private constructor(
     fun toJsonByteArray(): ByteArray {
         return toJsonString().toByteArray(StandardCharsets.UTF_8)
     }
+
+    fun sendAndAck(channel: Channel, properties: AMQP.BasicProperties, envelope: Envelope) {
+        val replyProps = RabbitMQUtil.replyPropsFromRequest(properties)
+
+        channel.basicPublish(
+            "",
+            properties.replyTo,
+            replyProps,
+            this.toJsonByteArray()
+        )
+        channel.basicAck(envelope.deliveryTag, false)
+    }
+
 }

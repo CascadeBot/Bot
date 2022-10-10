@@ -10,7 +10,6 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.utils.RabbitMQUtil
 
 class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
@@ -20,10 +19,11 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
         properties: AMQP.BasicProperties,
         body: String
     ) {
-        val replyProps = RabbitMQUtil.propsFromCorrelationId(properties)
-
         val response = mutableMapOf<String, JsonElement>()
-        when (val property = properties.headers["property"].toString()) {
+
+        val property = properties.headers["action"].toString()
+
+        when (property) {
             "shard-count" -> {
                 response["shard-count"] = JsonPrimitive(Main.shardManager.shardsTotal)
             }
@@ -34,16 +34,13 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                     InvalidErrorCodes.InvalidProperty,
                     "The property '$property' is invalid"
                 )
-                channel.basicPublish("", properties.replyTo, replyProps, responseObject.toJsonByteArray())
-                channel.basicAck(envelope.deliveryTag, false)
+                responseObject.sendAndAck(channel, properties, envelope)
                 return
             }
         }
 
         val responseObject = RabbitMQResponse.success(JsonObject(response))
-
-        channel.basicPublish("", properties.replyTo, replyProps, responseObject.toJsonByteArray());
-        channel.basicAck(envelope.deliveryTag, false);
+        responseObject.sendAndAck(channel, properties, envelope)
     }
 
 }

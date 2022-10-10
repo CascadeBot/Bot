@@ -8,7 +8,6 @@ import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.rabbitmq.objects.ErrorCode
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.utils.RabbitMQUtil
 import java.io.IOException
 
 abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel) {
@@ -31,18 +30,12 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
             if (properties.replyTo == null) return
             // As it's unlikely we'll be able to respond to a client with an IOException, we'll try but fast fail
             try {
-                val replyProps = RabbitMQUtil.propsFromCorrelationId(properties)
-                channel.basicPublish(
-                    "",
-                    properties.replyTo,
-                    replyProps,
-                    RabbitMQResponse.failure(
-                        StatusCode.ServerException,
-                        ErrorCode.fromException(e),
-                        e.message ?: e.javaClass.simpleName
-                    ).toJsonByteArray()
+                val response = RabbitMQResponse.failure(
+                    StatusCode.ServerException,
+                    ErrorCode.fromException(e),
+                    e.message ?: e.javaClass.simpleName
                 )
-                channel.basicAck(envelope.deliveryTag, false)
+                response.sendAndAck(channel, properties, envelope)
             } catch (e: Exception) {
                 logger.error(
                     "Error trying to send error message (${e.javaClass.simpleName}): " + (e.message ?: "<No Message>")

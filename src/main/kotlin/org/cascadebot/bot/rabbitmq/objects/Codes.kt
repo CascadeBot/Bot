@@ -46,6 +46,7 @@ object InvalidErrorCodes {
     val InvalidMethod = ErrorCode("invalid_method")
 
     val InvalidJsonFormat = ErrorCode("invalid_json")
+    val InvalidRequestFormat = ErrorCode("invalid_request")
 }
 
 object NotFoundErrorCodes {
