@@ -8,12 +8,12 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.utils.RabbitMQUtil
 
 data class RabbitMQError(
-    @JsonProperty("error_code") val errorCode: ErrorCode,
+    val errorCode: ErrorCode,
     val message: String
 )
 
 data class RabbitMQResponse<T : Any> constructor(
-    @JsonProperty("status_code") val statusCode: StatusCode,
+    val statusCode: StatusCode,
     val data: T?,
     val error: RabbitMQError?
 ) {

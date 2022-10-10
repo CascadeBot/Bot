@@ -69,7 +69,7 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                         member.isOwner || member.hasPermission(Permission.ADMINISTRATOR)
                     }
 
-                mutualGuilds.map { MutualGuildResponse(it) }
+                mutualGuilds.map { MutualGuildResponse.fromGuild(it) }
             }
 
             else -> {
@@ -89,10 +89,23 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 }
 
 data class MutualGuildResponse(
-    @JsonProperty("guild_id") val guildId: Long,
+    val guildId: Long,
     val name: String,
-    @JsonProperty("icon_url") val iconUrl: String?
+    val iconUrl: String?,
+    val memberCount: Int,
+    val onlineCount: Int
 ) {
 
-    constructor(guild: Guild) : this(guild.idLong, guild.name, guild.iconUrl)
+    companion object {
+        fun fromGuild(guild: Guild): MutualGuildResponse {
+            val guildMetaData = guild.retrieveMetaData().complete()
+            return MutualGuildResponse(
+                guild.idLong,
+                guild.name,
+                guild.iconUrl,
+                guildMetaData.approximateMembers,
+                guildMetaData.approximatePresences
+            )
+        }
+    }
 }
