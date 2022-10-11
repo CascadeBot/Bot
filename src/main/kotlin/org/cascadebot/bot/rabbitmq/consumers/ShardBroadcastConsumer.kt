@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -13,7 +14,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject
 
-class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
+class ShardBroadcastConsumer(val jda: JDA, channel: Channel) : ErrorHandledConsumer(channel) {
 
     override fun onDeliver(
         consumerTag: String,
@@ -63,7 +64,7 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
                 // TODO Filter for permissions when permission system is created
                 val mutualGuilds =
-                    Main.shardManager.getMutualGuilds(user, Main.shardManager.shards.first().selfUser).filter {
+                    jda.getMutualGuilds(user, Main.shardManager.shards.first().selfUser).filter {
                         val member = it.getMember(user) ?: return@filter false
                         member.isOwner || member.hasPermission(Permission.ADMINISTRATOR)
                     }

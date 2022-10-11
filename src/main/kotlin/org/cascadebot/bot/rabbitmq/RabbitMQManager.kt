@@ -6,7 +6,6 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.RabbitMQ
-import org.cascadebot.bot.rabbitmq.consumers.BroadcastConsumer
 import org.cascadebot.bot.rabbitmq.consumers.MetaConsumer
 import org.cascadebot.bot.rabbitmq.consumers.ResourceConsumer
 import java.util.concurrent.atomic.AtomicBoolean
@@ -75,7 +74,8 @@ class RabbitMQManager (config: RabbitMQ) {
     private fun setupConsumers(globalObjectNames: GlobalObjectNames) {
         channel.basicConsume("meta", MetaConsumer(channel))
         channel.basicConsume("resource", ResourceConsumer(channel))
-        channel.basicConsume(globalObjectNames.broadcastQueueName, BroadcastConsumer(channel))
+//      Leaving this here as it will likely be needed in the future but not currently required.
+//        channel.basicConsume(globalObjectNames.broadcastQueueName, BroadcastConsumer(channel))
     }
 
     private fun setupGlobalObjects(): GlobalObjectNames {
