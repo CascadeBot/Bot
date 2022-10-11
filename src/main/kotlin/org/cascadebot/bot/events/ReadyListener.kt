@@ -4,6 +4,7 @@ import dev.minn.jda.ktx.util.SLF4J
 import net.dv8tion.jda.api.events.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.consumers.ShardConsumer
 
 class ReadyListener : ListenerAdapter() {
 
@@ -26,6 +27,8 @@ class ReadyListener : ListenerAdapter() {
 
             rabbitMQManager.channel.queueDeclare("shard-$shardId", true, false, false, mapOf())
             rabbitMQManager.channel.queueBind("shard-$shardId", "amq.topic", "shard.$shardId.*.#")
+
+            rabbitMQManager.channel.basicConsume("shard-$shardId", ShardConsumer(rabbitMQManager.channel, shardId))
         }
 
         if (Main.config.development?.registerCommandsOnBoot == true) {
