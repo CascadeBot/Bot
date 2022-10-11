@@ -40,6 +40,10 @@ object InvalidErrorCodes {
 
     val InvalidProperty = ErrorCode("invalid_property")
     val InvalidMethod = ErrorCode("invalid_method")
+    val InvalidAction = ErrorCode("invalid_action")
+    val InvalidGuild = ErrorCode("invalid_guild")
+    val InvalidShard = ErrorCode("invalid_shard")
+    val InvalidUser = ErrorCode("invalid_user")
 
     val InvalidJsonFormat = ErrorCode("invalid_json")
     val InvalidRequestFormat = ErrorCode("invalid_request")
