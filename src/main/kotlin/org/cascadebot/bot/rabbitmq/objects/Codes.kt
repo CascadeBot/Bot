@@ -44,6 +44,8 @@ object InvalidErrorCodes {
     val InvalidGuild = ErrorCode("invalid_guild")
     val InvalidShard = ErrorCode("invalid_shard")
     val InvalidUser = ErrorCode("invalid_user")
+    val InvalidRole = ErrorCode("invalid_role")
+    val InvalidChannel = ErrorCode("invalid_channel")
 
     val InvalidJsonFormat = ErrorCode("invalid_json")
     val InvalidRequestFormat = ErrorCode("invalid_request")

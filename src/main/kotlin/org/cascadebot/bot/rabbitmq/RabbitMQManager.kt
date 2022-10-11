@@ -8,6 +8,7 @@ import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.RabbitMQ
 import org.cascadebot.bot.rabbitmq.consumers.BroadcastConsumer
 import org.cascadebot.bot.rabbitmq.consumers.MetaConsumer
+import org.cascadebot.bot.rabbitmq.consumers.ResourceConsumer
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.getOrSet
 import kotlin.system.exitProcess
@@ -73,6 +74,7 @@ class RabbitMQManager (config: RabbitMQ) {
 
     private fun setupConsumers(globalObjectNames: GlobalObjectNames) {
         channel.basicConsume("meta", MetaConsumer(channel))
+        channel.basicConsume("resource", ResourceConsumer(channel))
         channel.basicConsume(globalObjectNames.broadcastQueueName, BroadcastConsumer(channel))
     }
 
@@ -85,7 +87,10 @@ class RabbitMQManager (config: RabbitMQ) {
         channel.queueBind(broadcastQueueName, "bot.broadcast", "")
 
         channel.queueDeclare("meta", true, false, false, mapOf())
+        channel.queueDeclare("resource", true, false, false, mapOf())
+
         channel.queueBind("meta", "amq.direct", "meta")
+        channel.queueBind("resource", "amq.direct", "resource")
 
         return GlobalObjectNames(broadcastQueueName)
     }

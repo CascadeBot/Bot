@@ -4,23 +4,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import net.dv8tion.jda.api.Permission
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
-import org.cascadebot.bot.rabbitmq.objects.MutualGuildResponse
 import org.cascadebot.bot.rabbitmq.objects.NotFoundErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject
+import org.cascadebot.bot.rabbitmq.objects.UserResponse
 
-class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
+class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
-    override fun onDeliver(
-        consumerTag: String,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        body: String
-    ) {
+    override fun onDeliver(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: String) {
+        if (!assertReplyTo(properties, envelope)) return
+
         val jsonBody = try {
             Main.json.readValue(body, ObjectNode::class.java)
         } catch (e: Exception) {
@@ -34,9 +30,8 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
         val action = properties.headers["action"].toString()
 
-        val response: Any = when (action) {
-            "user:mutual_guilds" -> {
-                if (!assertReplyTo(properties, envelope)) return
+        val response = when(action) {
+            "user:get_by_id" -> {
                 val decodeResult = kotlin.runCatching { Main.json.treeToValue(jsonBody, UserIDObject::class.java) }
 
                 if (decodeResult.isFailure) {
@@ -61,14 +56,7 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                     return
                 }
 
-                // TODO Filter for permissions when permission system is created
-                val mutualGuilds =
-                    Main.shardManager.getMutualGuilds(user, Main.shardManager.shards.first().selfUser).filter {
-                        val member = it.getMember(user) ?: return@filter false
-                        member.isOwner || member.hasPermission(Permission.ADMINISTRATOR)
-                    }
-
-                mutualGuilds.map { MutualGuildResponse.fromGuild(it) }
+                UserResponse.fromUser(user)
             }
 
             else -> {
@@ -85,4 +73,5 @@ class BroadcastConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
         val wrappedResponse = RabbitMQResponse.success(response)
         wrappedResponse.sendAndAck(channel, properties, envelope)
     }
+
 }

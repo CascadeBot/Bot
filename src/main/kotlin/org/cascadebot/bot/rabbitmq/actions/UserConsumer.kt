@@ -12,7 +12,8 @@ class UserConsumer : ActionConsumer {
         body: ObjectNode,
         envelope: Envelope,
         properties: AMQP.BasicProperties,
-        channel: Channel
+        channel: Channel,
+        shard: Int
     ) {
 
     }

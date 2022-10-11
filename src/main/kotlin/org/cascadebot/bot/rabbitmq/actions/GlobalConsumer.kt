@@ -4,11 +4,14 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.rabbitmq.objects.UserResponse
+import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 
 class GlobalConsumer : ActionConsumer {
 
@@ -42,17 +45,18 @@ class GlobalConsumer : ActionConsumer {
             return
         }
 
-        val guildId = body.get("guild").asLong();
-        val shardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt();
+        val guildId = body.get("guild").asLong()
+        val shardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
+        val guild = Main.shardManager.getShardById(shardId)?.getGuildById(guildId)
 
         when (parts[0]) {
             "user" -> {
                 when (parts[1]) {
                     // global:user:byId
                     "byId" -> {
-                        val userId = body.get("user").asLong();
+                        val userId = body.get("user").asLong()
                         val member =
-                            Main.shardManager.getShardById(shardId)?.getGuildById(guildId)?.getMemberById(userId);
+                            guild?.getMemberById(userId)
 
                         if (member == null) {
                             RabbitMQResponse.failure(
@@ -64,13 +68,7 @@ class GlobalConsumer : ActionConsumer {
                         }
 
                         RabbitMQResponse.success(
-                            UserResponse(
-                                userId.toString(),
-                                member.user.name,
-                                member.effectiveAvatarUrl,
-                                member.nickname,
-                                member.user.discriminator
-                            )
+                            MemberResponse.fromMember(member)
                         )
 
                         return
@@ -87,6 +85,22 @@ class GlobalConsumer : ActionConsumer {
                 when (parts[1]) {
                     // global:role:byId
                     "byId" -> {
+                        val roleId = body.get("role").asLong()
+                        val role =
+                            guild?.getRoleById(roleId)
+
+                        if (role == null) {
+                            RabbitMQResponse.failure(
+                                StatusCode.BadRequest,
+                                InvalidErrorCodes.InvalidRole,
+                                "Role was not found"
+                            ).sendAndAck(channel, properties, envelope)
+                            return
+                        }
+
+                        RabbitMQResponse.success(
+                            RoleResponse.fromRole(role)
+                        )
 
                         return
                     }
@@ -102,6 +116,22 @@ class GlobalConsumer : ActionConsumer {
                 when (parts[1]) {
                     // global:channel:byId
                     "byId" -> {
+                        val channelId = body.get("channel").asLong()
+                        val discordChannel =
+                            guild?.getGuildChannelById(channelId)
+
+                        if (discordChannel == null) {
+                            RabbitMQResponse.failure(
+                                StatusCode.BadRequest,
+                                InvalidErrorCodes.InvalidChannel,
+                                "Channel was not found"
+                            ).sendAndAck(channel, properties, envelope)
+                            return
+                        }
+
+                        RabbitMQResponse.success(
+                            ChannelResponse.fromChannel(discordChannel as StandardGuildChannel)
+                        )
 
                         return
                     }
