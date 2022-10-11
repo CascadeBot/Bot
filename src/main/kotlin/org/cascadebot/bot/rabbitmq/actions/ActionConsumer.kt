@@ -7,6 +7,13 @@ import com.rabbitmq.client.Envelope
 
 interface ActionConsumer {
 
-    fun consume(parts: List<String>, body: ObjectNode, envelope: Envelope, properties: AMQP.BasicProperties, channel: Channel, shard: Int)
+    fun consume(
+        parts: List<String>,
+        body: ObjectNode,
+        envelope: Envelope,
+        properties: AMQP.BasicProperties,
+        channel: Channel,
+        shard: Int
+    )
 
 }

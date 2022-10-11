@@ -60,7 +60,7 @@ class ShardConsumer(channel: Channel, private val shard: Int) : ErrorHandledCons
                 return
             }
 
-            if (Main.shardManager.getShardById(shardId)!!.getGuildById(guildId) == null) {
+            if (Main.shardManager.getShardById(shardId)?.getGuildById(guildId) == null) {
                 RabbitMQResponse.failure(
                     StatusCode.BadRequest,
                     InvalidErrorCodes.InvalidGuild,
@@ -85,7 +85,14 @@ class ShardConsumer(channel: Channel, private val shard: Int) : ErrorHandledCons
             return
         }
 
-        consumerEnum.consumer.consume(actionParts.subList(1, actionParts.size), jsonBody, envelope, properties, channel, shard);
+        consumerEnum.consumer.consume(
+            actionParts.subList(1, actionParts.size),
+            jsonBody,
+            envelope,
+            properties,
+            channel,
+            shard
+        );
     }
 
 }

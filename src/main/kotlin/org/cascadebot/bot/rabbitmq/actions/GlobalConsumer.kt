@@ -45,13 +45,14 @@ class GlobalConsumer : ActionConsumer {
         val guildId = body.get("guild").asLong();
         val shardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt();
 
-        when(parts[0]) {
+        when (parts[0]) {
             "user" -> {
-                when(parts[1]) {
+                when (parts[1]) {
                     // global:user:byId
                     "byId" -> {
                         val userId = body.get("user").asLong();
-                        val member = Main.shardManager.getShardById(shardId)!!.getGuildById(guildId)!!.getMemberById(userId);
+                        val member =
+                            Main.shardManager.getShardById(shardId)?.getGuildById(guildId)?.getMemberById(userId);
 
                         if (member == null) {
                             RabbitMQResponse.failure(
@@ -62,7 +63,15 @@ class GlobalConsumer : ActionConsumer {
                             return
                         }
 
-                        RabbitMQResponse.success(UserResponse(userId.toString(), member.user.name, member.effectiveAvatarUrl, member.nickname, member.user.discriminator))
+                        RabbitMQResponse.success(
+                            UserResponse(
+                                userId.toString(),
+                                member.user.name,
+                                member.effectiveAvatarUrl,
+                                member.nickname,
+                                member.user.discriminator
+                            )
+                        )
 
                         return
                     }
@@ -73,8 +82,9 @@ class GlobalConsumer : ActionConsumer {
                     }
                 }
             }
+
             "role" -> {
-                when(parts[1]) {
+                when (parts[1]) {
                     // global:role:byId
                     "byId" -> {
 
@@ -87,8 +97,9 @@ class GlobalConsumer : ActionConsumer {
                     }
                 }
             }
+
             "channel" -> {
-                when(parts[1]) {
+                when (parts[1]) {
                     // global:channel:byId
                     "byId" -> {
 
