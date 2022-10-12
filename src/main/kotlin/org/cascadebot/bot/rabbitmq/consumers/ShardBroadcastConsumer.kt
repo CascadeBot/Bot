@@ -14,76 +14,62 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject
 
-class ShardBroadcastConsumer(val jda: JDA, channel: Channel) : ErrorHandledConsumer(channel) {
+fun ShardConsumer.onShardBroadcast(
+    consumerTag: String,
+    envelope: Envelope,
+    properties: AMQP.BasicProperties,
+    body: ObjectNode
+) {
+    val action = properties.headers["action"].toString()
 
-    override fun onDeliver(
-        consumerTag: String,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        body: String
-    ) {
-        val jsonBody = try {
-            Main.json.readValue(body, ObjectNode::class.java)
-        } catch (e: Exception) {
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidJsonFormat,
-                e.message ?: e.javaClass.simpleName
-            ).sendAndAck(channel, properties, envelope)
-            return
-        }
+    val response: Any = when (action) {
+        "user:mutual_guilds" -> {
+            if (!assertReplyTo(properties, envelope)) return
+            val decodeResult = kotlin.runCatching { Main.json.treeToValue(body, UserIDObject::class.java) }
 
-        val action = properties.headers["action"].toString()
-
-        val response: Any = when (action) {
-            "user:mutual_guilds" -> {
-                if (!assertReplyTo(properties, envelope)) return
-                val decodeResult = kotlin.runCatching { Main.json.treeToValue(jsonBody, UserIDObject::class.java) }
-
-                if (decodeResult.isFailure) {
-                    RabbitMQResponse.failure(
-                        StatusCode.BadRequest,
-                        InvalidErrorCodes.InvalidRequestFormat,
-                        "Invalid request format, please specify user_id"
-                    ).sendAndAck(channel, properties, envelope)
-                }
-
-                val userId = decodeResult.getOrNull()?.userId
-
-                val user = userId?.let { Main.shardManager.getUserById(userId) }
-
-                if (user == null) {
-                    val response = RabbitMQResponse.failure(
-                        StatusCode.NotFound,
-                        NotFoundErrorCodes.UserNotFound,
-                        "User cannot be found"
-                    )
-                    response.sendAndAck(channel, properties, envelope)
-                    return
-                }
-
-                // TODO Filter for permissions when permission system is created
-                val mutualGuilds =
-                    jda.getMutualGuilds(user, Main.shardManager.shards.first().selfUser).filter {
-                        val member = it.getMember(user) ?: return@filter false
-                        member.isOwner || member.hasPermission(Permission.ADMINISTRATOR)
-                    }
-
-                mutualGuilds.map { MutualGuildResponse.fromGuild(it) }
+            if (decodeResult.isFailure) {
+                RabbitMQResponse.failure(
+                    StatusCode.BadRequest,
+                    InvalidErrorCodes.InvalidRequestFormat,
+                    "Invalid request format, please specify user_id"
+                ).sendAndAck(channel, properties, envelope)
             }
 
-            else -> {
+            val userId = decodeResult.getOrNull()?.userId
+
+            val user = userId?.let { Main.shardManager.getUserById(userId) }
+
+            if (user == null) {
                 val response = RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidMethod,
-                    "The method '$action' is invalid."
+                    StatusCode.NotFound,
+                    NotFoundErrorCodes.UserNotFound,
+                    "User cannot be found"
                 )
                 response.sendAndAck(channel, properties, envelope)
                 return
             }
+
+            // TODO Filter for permissions when permission system is created
+            val mutualGuilds =
+                jda.getMutualGuilds(user, Main.shardManager.shards.first().selfUser).filter {
+                    val member = it.getMember(user) ?: return@filter false
+                    member.isOwner || member.hasPermission(Permission.ADMINISTRATOR)
+                }
+
+            mutualGuilds.map { MutualGuildResponse.fromGuild(it) }
         }
 
-        val wrappedResponse = RabbitMQResponse.success(response)
-        wrappedResponse.sendAndAck(channel, properties, envelope)
+        else -> {
+            val response = RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidMethod,
+                "The method '$action' is invalid."
+            )
+            response.sendAndAck(channel, properties, envelope)
+            return
+        }
     }
+
+    val wrappedResponse = RabbitMQResponse.success(response)
+    wrappedResponse.sendAndAck(channel, properties, envelope)
 }

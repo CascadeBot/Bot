@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import net.dv8tion.jda.api.JDA
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.Consumers
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -12,7 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import java.lang.NumberFormatException
 import java.util.NoSuchElementException
 
-class ShardConsumer(channel: Channel, private val shard: Int) : ErrorHandledConsumer(channel) {
+class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda: JDA) : ErrorHandledConsumer(channel) {
 
     override fun onDeliver(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: String) {
         val jsonBody = try {
@@ -23,6 +24,17 @@ class ShardConsumer(channel: Channel, private val shard: Int) : ErrorHandledCons
                 InvalidErrorCodes.InvalidJsonFormat,
                 e.message ?: e.javaClass.simpleName
             ).sendAndAck(channel, properties, envelope)
+            return
+        }
+
+        // If this is a broadcast request, send to a separate processor
+        if (envelope.routingKey == "shard.all") {
+            onShardBroadcast(
+                consumerTag,
+                envelope,
+                properties,
+                jsonBody
+            )
             return
         }
 
@@ -38,29 +50,18 @@ class ShardConsumer(channel: Channel, private val shard: Int) : ErrorHandledCons
                 return
             }
 
-            val shardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt();
+            val guildShardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt();
 
-            if (shardId != shard) {
+            if (guildShardId != shardId) {
                 RabbitMQResponse.failure(
                     StatusCode.BadRequest,
                     InvalidErrorCodes.InvalidShard,
-                    "Shard mismatch. Guild shard: $shardId. Requested shard: $shard"
+                    "Shard mismatch. Guild shard: $shardId. Requested shard: $shardId"
                 ).sendAndAck(channel, properties, envelope)
                 return
             }
 
-            if (Main.shardManager.getShardById(shardId) == null) {
-                // This should technically never happen, but if it does, here we go
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidShard,
-                    "This bot node is not responsible for this shard!"
-                ).sendAndAck(channel, properties, envelope)
-                logger.error("Got request for a shard this node does not control!")
-                return
-            }
-
-            if (Main.shardManager.getShardById(shardId)?.getGuildById(guildId) == null) {
+            if (jda.getGuildById(guildId) == null) {
                 RabbitMQResponse.failure(
                     StatusCode.BadRequest,
                     InvalidErrorCodes.InvalidGuild,
@@ -91,7 +92,7 @@ class ShardConsumer(channel: Channel, private val shard: Int) : ErrorHandledCons
             envelope,
             properties,
             channel,
-            shard
+            shardId
         );
     }
 

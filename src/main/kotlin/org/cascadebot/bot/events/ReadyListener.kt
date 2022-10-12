@@ -28,7 +28,7 @@ class ReadyListener : ListenerAdapter() {
             rabbitMQManager.channel.queueDeclare("shard-$shardId", true, false, false, mapOf())
             rabbitMQManager.channel.queueBind("shard-$shardId", "amq.topic", "shard.$shardId.*.#")
 
-            rabbitMQManager.channel.basicConsume("shard-$shardId", ShardConsumer(rabbitMQManager.channel, shardId))
+            rabbitMQManager.channel.basicConsume("shard-$shardId", ShardConsumer(rabbitMQManager.channel, shardId, event.jda))
         }
 
         if (Main.config.development?.registerCommandsOnBoot == true) {
