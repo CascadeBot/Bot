@@ -44,7 +44,7 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
                 val userId = decodeResult.getOrNull()?.userId
 
-                val user = userId?.let { Main.shardManager.getUserById(userId) }
+                val user = userId?.let { Main.shardManager.retrieveUserById(userId).complete() }
 
                 if (user == null) {
                     val response = RabbitMQResponse.failure(
