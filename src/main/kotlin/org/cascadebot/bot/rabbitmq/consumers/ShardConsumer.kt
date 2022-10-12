@@ -10,12 +10,12 @@ import org.cascadebot.bot.rabbitmq.actions.Consumers
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import java.lang.NumberFormatException
-import java.util.NoSuchElementException
 
 class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda: JDA) : ErrorHandledConsumer(channel) {
 
     override fun onDeliver(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: String) {
+        if (!assertReplyTo(properties, envelope)) return
+
         val jsonBody = try {
             Main.json.readValue(body, ObjectNode::class.java)
         } catch (e: Exception) {
