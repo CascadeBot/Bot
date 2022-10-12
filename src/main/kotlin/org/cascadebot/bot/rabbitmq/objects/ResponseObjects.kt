@@ -79,7 +79,7 @@ data class ChannelResponse(val id: String, val name: String, val type: String, v
 }
 
 data class MutualGuildResponse(
-    val guildId: Long,
+    val id: Long,
     val name: String,
     val iconUrl: String?,
     val memberCount: Int,
@@ -88,14 +88,13 @@ data class MutualGuildResponse(
 
     companion object {
 
-        fun fromGuild(guild: Guild): MutualGuildResponse {
-            val guildMetaData = guild.retrieveMetaData().complete()
+        fun fromGuild(guild: Guild, guildMetadata: Guild.MetaData): MutualGuildResponse {
             return MutualGuildResponse(
                 guild.idLong,
                 guild.name,
                 guild.iconUrl,
-                guildMetaData.approximateMembers,
-                guildMetaData.approximatePresences
+                guildMetadata.approximateMembers,
+                guildMetadata.approximatePresences
             )
         }
     }

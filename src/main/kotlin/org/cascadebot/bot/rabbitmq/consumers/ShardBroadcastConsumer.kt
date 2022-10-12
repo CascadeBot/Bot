@@ -2,10 +2,9 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.requests.RestAction
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MutualGuildResponse
@@ -56,7 +55,10 @@ fun ShardConsumer.onShardBroadcast(
                     member.isOwner || member.hasPermission(Permission.ADMINISTRATOR)
                 }
 
-            mutualGuilds.map { MutualGuildResponse.fromGuild(it) }
+            val restActions = mutualGuilds.map { guild -> guild.retrieveMetaData().map { guild to it } }
+            val mutualGuildsWithMeta = RestAction.allOf(restActions).complete()
+
+            mutualGuildsWithMeta.map { MutualGuildResponse.fromGuild(it.first, it.second) }
         }
 
         else -> {
