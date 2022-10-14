@@ -17,6 +17,7 @@ import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.PermissionsErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import java.awt.Color
 import java.util.Locale
 import java.util.function.Consumer
 import kotlin.IllegalArgumentException
@@ -66,10 +67,11 @@ class UserConsumer : ActionConsumer {
                 }
             }
             "color" -> {
+                Color.BLACK.rgb
                 // user:color:get
                 if (parts[1] == "get") {
                     val node = Main.json.createObjectNode()
-                    node.put("color", member.colorRaw.toHexString())
+                    node.replace("color", Main.json.valueToTree(member.color))
                     RabbitMQResponse.success(node)
                         .sendAndAck(channel, properties, envelope)
                     return
@@ -149,6 +151,7 @@ class UserConsumer : ActionConsumer {
                         node.put("hasRole", hasRole)
                         RabbitMQResponse.success(node)
                             .sendAndAck(channel, properties, envelope)
+                        return
                     }
 
                 }
@@ -182,7 +185,7 @@ class UserConsumer : ActionConsumer {
                 RabbitMQResponse.failure(
                     StatusCode.DiscordException,
                     PermissionsErrorCodes.CannotInteract,
-                    "Cannot modify this user as they are higher then the bot!"
+                    "Cannot modify this object as it is higher then the bot!"
                 ).sendAndAck(channel, properties, envelope)
             }
 

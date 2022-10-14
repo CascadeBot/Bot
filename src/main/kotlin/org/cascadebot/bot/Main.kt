@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
 import dev.minn.jda.ktx.util.SLF4J
 import kotlinx.cli.ArgParser
@@ -19,8 +20,11 @@ import org.cascadebot.bot.db.PostgresManager
 import org.cascadebot.bot.events.InteractionListener
 import org.cascadebot.bot.events.ReadyListener
 import org.cascadebot.bot.rabbitmq.RabbitMQManager
+import org.cascadebot.bot.utils.ColorDeserializer
+import org.cascadebot.bot.utils.ColorSerializer
 import org.cascadebot.bot.utils.LogbackUtil
 import org.hibernate.HibernateException
+import java.awt.Color
 import kotlin.system.exitProcess
 
 object Main {
@@ -48,6 +52,10 @@ object Main {
     val json: ObjectMapper = ObjectMapper().apply {
         registerModule(KotlinModule.Builder().build())
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val module = SimpleModule()
+        module.addSerializer(Color::class.java, ColorSerializer())
+        module.addDeserializer(Color::class.java, ColorDeserializer())
+        registerModule(module)
         propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
     }
 
