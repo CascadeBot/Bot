@@ -54,7 +54,8 @@ class RabbitMQManager (config: RabbitMQ) {
                 }
             }
             is RabbitMQ.URL -> {
-                connectionFactory.setUri(config.url)
+                // RabbitMQ URL cannot end with a /. https://www.rabbitmq.com/uri-spec.html
+                connectionFactory.setUri(config.url.trimEnd('/'))
             }
         }
         try {
