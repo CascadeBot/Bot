@@ -73,6 +73,7 @@ sealed class DashboardEncryption {
             val publicKeyPem = "-----BEGIN PUBLIC KEY-----\n$publicKeyEncoded\n-----END PUBLIC KEY-----"
 
             File("generated.pem").writeText(privateKeyPem, StandardCharsets.UTF_8)
+            File("generated.pub").writeText(publicKeyPem, StandardCharsets.UTF_8)
 
             logger.info("Generated public key:\n$publicKeyPem")
         }
@@ -161,7 +162,7 @@ sealed class DashboardEncryption {
 }
 
 data class Dashboard(
-    val dashboardBaseUrl: String = "http://localhost:3000",
+    val baseUrl: String = "http://localhost:3000",
     val encryption: DashboardEncryption = DashboardEncryption.Key("dashboard_login.pem", "dashboard_login.pub")
 )
 

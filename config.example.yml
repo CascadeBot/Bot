@@ -2,10 +2,12 @@ discord:
   # The bot token acquired from https://discord.com/developers/applications
   token: ""
   # The shards section can be omitted to run in single-shard mode
+  # min and max can be omitted to just specify the total shards.
+  # If total is not specified, min and max will not take effect and the total will be retrieved from Discord
   shards:
     min: 0
     max: 2
-    total: 10 # If total is not specified, min and max will not take effect and the total will be retrieved from Discord
+    total: 10
 
 development:
   debugLogging: false # Enables debug logging in the console
@@ -22,14 +24,18 @@ rabbitMQ:
   hostname: "localhost"
   port: 5672
   virtualHost: "/"
+  # OR
+  url: "amq://user:password@host:5672/"
 
 values:
   maxComponentsCachedPerChannel: 50
 
-dashboardEncryption:
-  generate: true
-
-# OR
-
-dashboardEncryption:
-  fileName: dashboard_login.pem # Path to PKCS#8 formatted private key
+dashboard:
+  baseUrl: "http://localhost:3000"
+  encryption:
+    # A public/private key pair will be generated. The keys will be written to generated.pem (Private key)
+    # and generated.pub (Public key)
+    generate: true
+    # OR
+    privateKeyFile: dashboard_login.pem # Path to an ECC 256-bit PKCS#8 formatted private key
+    publicKeyFile: dashboard_login.pub # Path to an ECC 256-bit X.509 formatted public keym

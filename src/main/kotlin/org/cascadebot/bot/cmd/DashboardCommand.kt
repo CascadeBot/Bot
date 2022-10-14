@@ -20,7 +20,7 @@ class DashboardCommand : RootCommand("dashboard", "Provides a link to login to t
         val jwt = JwtUtil.createLoginJwt(context.user.idLong)
 
         // TODO Change URL depending on whether the user needs to go through the OAuth flow or not
-        val loginUrl = "${dashboardConfig.dashboardBaseUrl.trimEnd('/')}/login/bot?token=${jwt}"
+        val loginUrl = "${dashboardConfig.baseUrl.trimEnd('/')}/login/bot?token=${jwt}"
 
         val row = CascadeActionRow()
         row.addComponent(CascadeLinkButton.of(loginUrl, "Open Dashboard"))
