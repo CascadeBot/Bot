@@ -1,7 +1,7 @@
 discord:
   # The bot token acquired from https://discord.com/developers/applications
   token: ""
-  # The shards section can be omitted to run in single-shard mode
+  # The shards section can be omitted to run in
   # min and max can be omitted to just specify the total shards.
   # If total is not specified, min and max will not take effect and the total will be retrieved from Discord
   shards:
@@ -25,7 +25,7 @@ rabbitMQ:
   port: 5672
   virtualHost: "/"
   # OR
-  url: "amq://user:password@host:5672/"
+  url: "amqp://user:password@host:5672"
 
 values:
   maxComponentsCachedPerChannel: 50
