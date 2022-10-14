@@ -23,6 +23,10 @@ data class RabbitMQResponse<T : Any> constructor(
             return RabbitMQResponse(StatusCode.Success, data, null)
         }
 
+        inline fun success(): RabbitMQResponse<Void> {
+            return RabbitMQResponse(StatusCode.Success, null, null)
+        }
+
         fun failure(statusCode: StatusCode, errorCode: ErrorCode, message: String): RabbitMQResponse<Unit> {
             return RabbitMQResponse(statusCode, null, RabbitMQError(errorCode, message))
         }

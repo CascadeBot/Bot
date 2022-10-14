@@ -20,6 +20,7 @@ value class StatusCode private constructor(val code: Int) {
         val BadRequest = StatusCode(101)
 
         val ServerException = StatusCode(200)
+        val DiscordException = StatusCode(201)
 
     }
 
@@ -47,11 +48,19 @@ object InvalidErrorCodes {
     val InvalidRole = ErrorCode("invalid_role")
     val InvalidChannel = ErrorCode("invalid_channel")
 
+    val InvalidPermission = ErrorCode("invalid_Permission")
+
     val InvalidJsonFormat = ErrorCode("invalid_json")
     val InvalidRequestFormat = ErrorCode("invalid_request")
 }
 
-object NotFoundErrorCodes {
+object MiscErrorCodes {
 
     val UserNotFound = ErrorCode("user_not_found")
+    val UnexpectedError = ErrorCode("unexpected")
+}
+
+object PermissionsErrorCodes {
+    val MissingPermission = ErrorCode("missing_permission")
+    val CannotInteract = ErrorCode("cannot_interact")
 }

@@ -6,7 +6,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
-import org.cascadebot.bot.rabbitmq.objects.NotFoundErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject
@@ -49,7 +49,7 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                 if (user == null) {
                     val response = RabbitMQResponse.failure(
                         StatusCode.NotFound,
-                        NotFoundErrorCodes.UserNotFound,
+                        MiscErrorCodes.UserNotFound,
                         "User cannot be found"
                     )
                     response.sendAndAck(channel, properties, envelope)

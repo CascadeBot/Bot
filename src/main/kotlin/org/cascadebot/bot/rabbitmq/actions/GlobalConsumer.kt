@@ -75,7 +75,7 @@ class GlobalConsumer : ActionConsumer {
                     }
                     // global:user:byName
                     "byName" -> {
-
+                        // TODO pagination
                         return
                     }
                 }
@@ -106,7 +106,7 @@ class GlobalConsumer : ActionConsumer {
                     }
                     // global:role:byName
                     "byName" -> {
-
+                        // TODO pagination
                         return
                     }
                 }
@@ -137,7 +137,7 @@ class GlobalConsumer : ActionConsumer {
                     }
                     // global:channel:byName
                     "byName" -> {
-
+                        // TODO pagination
                         return
                     }
                 }
