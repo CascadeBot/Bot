@@ -13,6 +13,8 @@ import org.reflections.Reflections
 import java.util.Properties
 import kotlin.reflect.jvm.jvmName
 
+val urlCredentialsRegex = Regex("://([^@]*)@")
+
 class PostgresManager(config: Database) {
 
     private val logger by SLF4J
@@ -35,20 +37,38 @@ class PostgresManager(config: Database) {
         // Add package to read package-level declarations and metadata
         dbConfig.addPackage("org.cascadebot.bot.db.entities")
 
+        var url = config.url.removePrefix("jdbc:")
+        var username = config.username
+        var password = config.password?.value
+
+        // This section allows the user of username and password in the URL
+        // Hikari will not accept a URL with the userinfo so we parse it out, remove it from the url
+        // and pass it in separately
+        val matches = urlCredentialsRegex.find(url)
+        if (matches != null) {
+            val (userInfo) = matches.destructured
+            val splitUserInfo = userInfo.split(":")
+            username = splitUserInfo[0]
+            if (splitUserInfo.getOrNull(1) != null) {
+                password = splitUserInfo[1]
+            }
+            url = url.replaceFirst("$userInfo@", "")
+        }
+
         val hibernateProps = Properties()
         hibernateProps["hibernate.dialect"] = PostgreSQLDialect::class.jvmName
         hibernateProps["hibernate.connection.provider_class"] = HikariCPConnectionProvider::class.jvmName
         hibernateProps["hibernate.connection.driver_class"] = Driver::class.jvmName
         hibernateProps["hibernate.hikari.maximumPoolSize"] = "20"
         hibernateProps["hibernate.types.print.banner"] = "false"
-        hibernateProps["hibernate.connection.url"] = "jdbc:" + config.url.removePrefix("jdbc:")
+        hibernateProps["hibernate.connection.url"] = "jdbc:$url"
 
-        if (config.username != null) {
-            hibernateProps["hibernate.connection.username"] = config.username
+        if (username != null) {
+            hibernateProps["hibernate.connection.username"] = username
         }
 
-        if (config.password != null) {
-            hibernateProps["hibernate.connection.password"] = config.password.value
+        if (password != null) {
+            hibernateProps["hibernate.connection.password"] = password
         }
 
         dbConfig.properties = hibernateProps
