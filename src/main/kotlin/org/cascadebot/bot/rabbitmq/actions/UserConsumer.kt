@@ -10,6 +10,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.exceptions.HierarchyException
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException
+import okhttp3.internal.toHexString
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
@@ -68,7 +69,7 @@ class UserConsumer : ActionConsumer {
                 // user:color:get
                 if (parts[1] == "get") {
                     val node = Main.json.createObjectNode()
-                    node.replace("color", Main.json.valueToTree(member.color))
+                    node.put("color", member.colorRaw.toHexString())
                     RabbitMQResponse.success(node)
                         .sendAndAck(channel, properties, envelope)
                     return
