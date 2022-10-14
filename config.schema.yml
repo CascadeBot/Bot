@@ -18,6 +18,7 @@ database:
   username: "postgres"
   password: ""
 
+# This config section can be omitted if RabbitMQ is not being used
 rabbitMQ:
   username: "user"
   password: "password"

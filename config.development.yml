@@ -1,0 +1,31 @@
+
+##################################
+# Development Config             #
+# !! DO NOT USE IN PRODUCTION !! #
+##################################
+
+discord:
+  # The bot token acquired from https://discord.com/developers/applications
+  token: ""
+
+development:
+  debugLogging: false # Enables debug logging in the console
+  registerCommandsOnBoot: true # Registers the commands with Discord on boot
+
+# Postgres DB - Support Versions
+database:
+  url: "postgresql://localhost:5432/"
+  username: "postgres"
+  password: ""
+
+# Omit this if you don't want to test service integration.
+# Some parts of the bot may not work!
+rabbitMQ:
+  url: "amqp://user:password@host:5672"
+
+
+dashboard:
+  baseUrl: "http://localhost:3000"
+  encryption:
+    privateKeyFile: development_key.pem
+    publicKeyFile: development_key.pub

@@ -178,6 +178,8 @@ gradle-app.setting
 *.pem
 !development_key.pem
 
+!config.development.yml
+!config.schema.yml
 !*.example.yml
 !*.example.env
 
