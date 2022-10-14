@@ -12,8 +12,9 @@ import org.postgresql.Driver
 import org.reflections.Reflections
 import java.util.Properties
 import kotlin.reflect.jvm.jvmName
+import kotlin.system.exitProcess
 
-val urlCredentialsRegex = Regex("://([^@]*)@")
+val urlCredentialsRegex = Regex("://([^@/]*)@")
 
 class PostgresManager(config: Database) {
 
@@ -23,6 +24,8 @@ class PostgresManager(config: Database) {
 
     init {
         sessionFactory = createConfig(config).buildSessionFactory()
+        val session = sessionFactory.openSession()
+        val i = 5
     }
 
     private fun createConfig(config: Database): Configuration {
@@ -53,6 +56,12 @@ class PostgresManager(config: Database) {
                 password = splitUserInfo[1]
             }
             url = url.replaceFirst("$userInfo@", "")
+        }
+
+        val parseResult = Driver.parseURL("jdbc:$url", null)
+        if (parseResult == null) {
+            logger.error("Postgres connection URL invalid. Please make sure the format postgresql://host:port/database is followed!")
+            exitProcess(1)
         }
 
         val hibernateProps = Properties()
