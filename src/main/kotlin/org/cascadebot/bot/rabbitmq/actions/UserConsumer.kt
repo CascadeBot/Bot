@@ -17,6 +17,7 @@ import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.PermissionsErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import java.awt.Color
 import java.util.Locale
 import java.util.function.Consumer
@@ -105,7 +106,7 @@ class UserConsumer : ActionConsumer {
                         RabbitMQResponse.success()
                             .sendAndAck(channel, properties, envelope)
                     }, {
-                        handleError(envelope, properties, channel, it)
+                        ErrorHandler.handleError(envelope, properties, channel, it)
                     })
                     return
                 }
@@ -130,7 +131,7 @@ class UserConsumer : ActionConsumer {
                             RabbitMQResponse.success()
                                 .sendAndAck(channel, properties, envelope)
                         }, {
-                            handleError(envelope, properties, channel, it)
+                            ErrorHandler.handleError(envelope, properties, channel, it)
                         })
                         return
                     }
@@ -140,7 +141,7 @@ class UserConsumer : ActionConsumer {
                             RabbitMQResponse.success()
                                 .sendAndAck(channel, properties, envelope)
                         }, {
-                            handleError(envelope, properties, channel, it)
+                            ErrorHandler.handleError(envelope, properties, channel, it)
                         })
                         return
                     }
@@ -164,38 +165,5 @@ class UserConsumer : ActionConsumer {
             InvalidErrorCodes.InvalidAction,
             "The specified action is not supported"
         ).sendAndAck(channel, properties, envelope)
-    }
-
-    private fun handleError(
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        channel: Channel,
-        throwable: Throwable
-    ) {
-        when (throwable) {
-            is InsufficientPermissionException -> {
-                RabbitMQResponse.failure(
-                    StatusCode.DiscordException,
-                    PermissionsErrorCodes.MissingPermission,
-                    "The bot is missing the permission " + throwable.permission.name + " required to do this"
-                ).sendAndAck(channel, properties, envelope)
-            }
-
-            is HierarchyException -> {
-                RabbitMQResponse.failure(
-                    StatusCode.DiscordException,
-                    PermissionsErrorCodes.CannotInteract,
-                    "Cannot modify this object as it is higher then the bot!"
-                ).sendAndAck(channel, properties, envelope)
-            }
-
-            else -> {
-                RabbitMQResponse.failure(
-                    StatusCode.ServerException,
-                    MiscErrorCodes.UnexpectedError,
-                    "Received an unexpected error " + throwable.javaClass.name + ": " + throwable.message
-                ).sendAndAck(channel, properties, envelope)
-            }
-        }
     }
 }

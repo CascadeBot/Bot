@@ -1,5 +1,6 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
@@ -64,6 +65,10 @@ data class RoleResponse(
         }
     }
 }
+
+data class RolePermission(val permission: Permission, val state: Boolean)
+
+data class RoleMoved(val prevPos: Int, val newPos: Int)
 
 data class ChannelResponse(val id: String, val name: String, val type: String, val position: Int) {
     companion object {

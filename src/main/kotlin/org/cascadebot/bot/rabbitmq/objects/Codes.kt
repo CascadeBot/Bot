@@ -52,6 +52,8 @@ object InvalidErrorCodes {
 
     val InvalidJsonFormat = ErrorCode("invalid_json")
     val InvalidRequestFormat = ErrorCode("invalid_request")
+
+    val InvalidPosition = ErrorCode("invalid_position")
 }
 
 object MiscErrorCodes {
