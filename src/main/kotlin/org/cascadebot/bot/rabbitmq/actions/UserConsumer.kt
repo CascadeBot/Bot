@@ -18,6 +18,7 @@ import org.cascadebot.bot.rabbitmq.objects.PermissionsErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
+import org.cascadebot.bot.utils.PaginationUtil
 import java.awt.Color
 import java.util.Locale
 import java.util.function.Consumer
@@ -63,7 +64,7 @@ class UserConsumer : ActionConsumer {
                 when(parts[1]) {
                     // user:list:role
                     "role" -> {
-
+                        PaginationUtil.paginate(member.roles, 10, 10)
                     }
                 }
             }
