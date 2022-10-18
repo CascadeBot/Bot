@@ -72,11 +72,10 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
         }
 
         val action = properties.headers["action"].toString()
-        val actionParts = action.split(":")
 
-        val root = actionParts[0]
+
         val consumerEnum: Consumers = try {
-            Consumers.values().first { it.root == root };
+            Consumers.values().first { action.startsWith(it.root) };
         } catch (e: NoSuchElementException) {
             RabbitMQResponse.failure(
                 StatusCode.BadRequest,
@@ -86,8 +85,12 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             return
         }
 
+        action.removePrefix(consumerEnum.root)
+
+        val actionParts = action.split(":")
+
         consumerEnum.consumer.consume(
-            actionParts.subList(1, actionParts.size),
+            actionParts,
             jsonBody,
             envelope,
             properties,
