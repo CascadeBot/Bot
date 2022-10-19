@@ -22,14 +22,13 @@ class GlobalConsumer : ActionConsumer {
         properties: AMQP.BasicProperties,
         channel: Channel,
         shard: Int
-    ) {
+    ) : RabbitMQResponse<*> {
         if (parts.isEmpty()) {
-            RabbitMQResponse.failure(
+            return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidAction,
                 "The specified action is not supported"
-            ).sendAndAck(channel, properties, envelope)
-            return
+            )
         }
 
         if (parts[0] == "test") {
@@ -37,12 +36,11 @@ class GlobalConsumer : ActionConsumer {
         }
 
         if (parts.size <= 1) {
-            RabbitMQResponse.failure(
+            return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidAction,
                 "The specified action is not supported"
-            ).sendAndAck(channel, properties, envelope)
-            return
+            )
         }
 
         val guildId = body.get("guild").asLong()
@@ -59,24 +57,21 @@ class GlobalConsumer : ActionConsumer {
                             guild?.getMemberById(userId)
 
                         if (member == null) {
-                            RabbitMQResponse.failure(
+                            return RabbitMQResponse.failure(
                                 StatusCode.BadRequest,
                                 InvalidErrorCodes.InvalidUser,
                                 "User was not found"
-                            ).sendAndAck(channel, properties, envelope)
-                            return
+                            )
                         }
 
-                        RabbitMQResponse.success(
+                        return RabbitMQResponse.success(
                             MemberResponse.fromMember(member)
                         )
-
-                        return
                     }
                     // global:user:byName
                     "byName" -> {
                         // TODO pagination
-                        return
+                        return TODO()
                     }
                 }
             }
@@ -90,24 +85,21 @@ class GlobalConsumer : ActionConsumer {
                             guild?.getRoleById(roleId)
 
                         if (role == null) {
-                            RabbitMQResponse.failure(
+                            return RabbitMQResponse.failure(
                                 StatusCode.BadRequest,
                                 InvalidErrorCodes.InvalidRole,
                                 "Role was not found"
-                            ).sendAndAck(channel, properties, envelope)
-                            return
+                            )
                         }
 
-                        RabbitMQResponse.success(
+                        return RabbitMQResponse.success(
                             RoleResponse.fromRole(role)
                         )
-
-                        return
                     }
                     // global:role:byName
                     "byName" -> {
                         // TODO pagination
-                        return
+                        return TODO()
                     }
                 }
             }
@@ -121,35 +113,31 @@ class GlobalConsumer : ActionConsumer {
                             guild?.getGuildChannelById(channelId)
 
                         if (discordChannel == null) {
-                            RabbitMQResponse.failure(
+                            return RabbitMQResponse.failure(
                                 StatusCode.BadRequest,
                                 InvalidErrorCodes.InvalidChannel,
                                 "Channel was not found"
-                            ).sendAndAck(channel, properties, envelope)
-                            return
+                            )
                         }
 
-                        RabbitMQResponse.success(
+                        return RabbitMQResponse.success(
                             ChannelResponse.fromChannel(discordChannel as StandardGuildChannel)
                         )
-
-                        return
                     }
                     // global:channel:byName
                     "byName" -> {
                         // TODO pagination
-                        return
+                        return TODO()
                     }
                 }
             }
         }
 
         // If it gets to this point, action was not found
-        RabbitMQResponse.failure(
+        return RabbitMQResponse.failure(
             StatusCode.BadRequest,
             InvalidErrorCodes.InvalidAction,
             "The specified action is not supported"
-        ).sendAndAck(channel, properties, envelope)
-        return
+        )
     }
 }

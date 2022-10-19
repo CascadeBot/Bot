@@ -96,7 +96,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             properties,
             channel,
             shardId
-        );
+        )?.sendAndAck(channel, properties, envelope)
     }
 
 }

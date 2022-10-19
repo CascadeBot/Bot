@@ -10,7 +10,6 @@ import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleMoved
 import org.cascadebot.bot.rabbitmq.objects.RolePermission
-import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
@@ -22,14 +21,13 @@ class RoleConsumer : ActionConsumer {
         properties: AMQP.BasicProperties,
         channel: Channel,
         shard: Int
-    ) {
+    ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
-            RabbitMQResponse.failure(
+            return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidAction,
                 "The specified action is not supported"
-            ).sendAndAck(channel, properties, envelope)
-            return
+            )
         }
 
         val roleId = body.get("role").get("id").asLong()
@@ -39,12 +37,11 @@ class RoleConsumer : ActionConsumer {
         val role = guild?.getRoleById(roleId)
 
         if (role == null) {
-            RabbitMQResponse.failure(
+            return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidRole,
                 "The specified role was not found"
-            ).sendAndAck(channel, properties, envelope)
-            return
+            )
         }
 
         when (parts[0]) {
@@ -56,8 +53,7 @@ class RoleConsumer : ActionConsumer {
                         for (perm in Permission.values()) {
                             perms.add(RolePermission(perm, role.hasPermission(perm)))
                         }
-                        RabbitMQResponse.success(perms).sendAndAck(channel, properties, envelope)
-                        return
+                        return RabbitMQResponse.success(perms)
                     }
                     // role:permissions:set
                     "set" -> {
@@ -77,7 +73,7 @@ class RoleConsumer : ActionConsumer {
                                 ErrorHandler.handleError(envelope, properties, channel, it)
                             })
                         }
-                        return
+                        return null
                     }
                 }
             }
@@ -100,22 +96,21 @@ class RoleConsumer : ActionConsumer {
                             ErrorHandler.handleError(envelope, properties, channel, it)
                         }
                     })
-                    return
+                    return null
                 }
             }
             "tags" -> {
                 // role:tags:get
                 if (parts[1] == "get") {
-                    RabbitMQResponse.success(role.tags).sendAndAck(channel, properties, envelope)
-                    return
+                    return RabbitMQResponse.success(role.tags)
                 }
             }
         }
 
-        RabbitMQResponse.failure(
+        return RabbitMQResponse.failure(
             StatusCode.BadRequest,
             InvalidErrorCodes.InvalidAction,
             "The specified action is not supported"
-        ).sendAndAck(channel, properties, envelope)
+        )
     }
 }

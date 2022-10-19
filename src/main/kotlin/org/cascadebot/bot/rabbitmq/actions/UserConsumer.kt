@@ -1,28 +1,17 @@
 package org.cascadebot.bot.rabbitmq.actions
 
-import com.fasterxml.jackson.databind.JsonNode
-import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.node.BooleanNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.exceptions.HierarchyException
-import net.dv8tion.jda.api.exceptions.InsufficientPermissionException
-import okhttp3.internal.toHexString
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
-import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
-import org.cascadebot.bot.rabbitmq.objects.PermissionsErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 import java.awt.Color
-import java.util.Locale
-import java.util.function.Consumer
-import kotlin.IllegalArgumentException
 
 class UserConsumer : ActionConsumer {
 
@@ -33,14 +22,13 @@ class UserConsumer : ActionConsumer {
         properties: AMQP.BasicProperties,
         channel: Channel,
         shard: Int
-    ) {
+    ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
-            RabbitMQResponse.failure(
+            return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidAction,
                 "The specified action is not supported"
-            ).sendAndAck(channel, properties, envelope)
-            return
+            )
         }
 
         val userId = body.get("user").get("id").asLong()
@@ -50,12 +38,11 @@ class UserConsumer : ActionConsumer {
         val member = guild?.getMemberById(userId)
 
         if (member == null) {
-            RabbitMQResponse.failure(
+            return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidUser,
                 "The specified member was not found"
-            ).sendAndAck(channel, properties, envelope)
-            return
+            )
         }
 
         when (parts[0]) {
@@ -76,9 +63,7 @@ class UserConsumer : ActionConsumer {
                 if (parts[1] == "get") {
                     val node = Main.json.createObjectNode()
                     node.replace("color", Main.json.valueToTree(member.color))
-                    RabbitMQResponse.success(node)
-                        .sendAndAck(channel, properties, envelope)
-                    return
+                    return RabbitMQResponse.success(node)
                 }
             }
             "permission" -> {
@@ -86,19 +71,16 @@ class UserConsumer : ActionConsumer {
                 try {
                     permission = Permission.valueOf(body.get("permission").asText().uppercase())
                 } catch (e: IllegalArgumentException) {
-                    RabbitMQResponse.failure(
+                    return RabbitMQResponse.failure(
                         StatusCode.BadRequest,
                         InvalidErrorCodes.InvalidPermission,
                         "The specified permission doesn't exist"
-                    ).sendAndAck(channel, properties, envelope)
-                    return
+                    )
                 }
                 if (parts[1] == "has") {
                     val node = Main.json.createObjectNode()
                     node.put("hasPerm", member.hasPermission(permission))
-                    RabbitMQResponse.success(node)
-                        .sendAndAck(channel, properties, envelope)
-                    return
+                    return RabbitMQResponse.success(node)
                 }
             }
             "nick" -> {
@@ -111,7 +93,7 @@ class UserConsumer : ActionConsumer {
                     }, {
                         ErrorHandler.handleError(envelope, properties, channel, it)
                     })
-                    return
+                    return null
                 }
             }
             "role" -> {
@@ -119,12 +101,11 @@ class UserConsumer : ActionConsumer {
                 val role = guild.getRoleById(roleId)
 
                 if (role == null) {
-                    RabbitMQResponse.failure(
+                    return RabbitMQResponse.failure(
                         StatusCode.BadRequest,
                         InvalidErrorCodes.InvalidRole,
                         "The specified role was not found"
-                    ).sendAndAck(channel, properties, envelope)
-                    return
+                    )
                 }
 
                 when (parts[1]) {
@@ -136,7 +117,7 @@ class UserConsumer : ActionConsumer {
                         }, {
                             ErrorHandler.handleError(envelope, properties, channel, it)
                         })
-                        return
+                        return null
                     }
                     // user:role:remove
                     "remove" -> {
@@ -146,16 +127,14 @@ class UserConsumer : ActionConsumer {
                         }, {
                             ErrorHandler.handleError(envelope, properties, channel, it)
                         })
-                        return
+                        return null
                     }
                     // user:role:has
                     "has" -> {
                         val hasRole = member.roles.contains(role)
                         val node = Main.json.createObjectNode()
                         node.put("hasRole", hasRole)
-                        RabbitMQResponse.success(node)
-                            .sendAndAck(channel, properties, envelope)
-                        return
+                        return RabbitMQResponse.success(node)
                     }
 
                 }
@@ -163,10 +142,10 @@ class UserConsumer : ActionConsumer {
 
         }
 
-        RabbitMQResponse.failure(
+        return RabbitMQResponse.failure(
             StatusCode.BadRequest,
             InvalidErrorCodes.InvalidAction,
             "The specified action is not supported"
-        ).sendAndAck(channel, properties, envelope)
+        )
     }
 }
