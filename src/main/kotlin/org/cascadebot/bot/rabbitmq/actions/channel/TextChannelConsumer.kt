@@ -5,6 +5,7 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 
 class TextChannelConsumer: ActionConsumer {
     override fun consume(
@@ -14,7 +15,7 @@ class TextChannelConsumer: ActionConsumer {
         properties: AMQP.BasicProperties,
         channel: Channel,
         shard: Int
-    ) {
+    ) : RabbitMQResponse<*>? {
         TODO("Not yet implemented")
     }
 }
