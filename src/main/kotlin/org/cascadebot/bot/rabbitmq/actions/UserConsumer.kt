@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -21,7 +22,7 @@ class UserConsumer : ActionConsumer {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         channel: Channel,
-        shard: Int
+        shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
             return RabbitMQResponse.failure(
@@ -34,7 +35,7 @@ class UserConsumer : ActionConsumer {
         val userId = body.get("user").get("id").asLong()
         val guildId = body.get("user").get("guild").asLong()
 
-        val guild = Main.shardManager.getShardById(shard)?.getGuildById(guildId)
+        val guild = shard.getGuildById(guildId)
         val member = guild?.getMemberById(userId)
 
         if (member == null) {

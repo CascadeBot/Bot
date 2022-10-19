@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
-import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleMoved
@@ -20,7 +20,7 @@ class RoleConsumer : ActionConsumer {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         channel: Channel,
-        shard: Int
+        shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
             return RabbitMQResponse.failure(
@@ -33,7 +33,7 @@ class RoleConsumer : ActionConsumer {
         val roleId = body.get("role").get("id").asLong()
         val guildId = body.get("role").get("guild").asLong()
 
-        val guild = Main.shardManager.getShardById(shard)?.getGuildById(guildId)
+        val guild = shard.getGuildById(guildId)
         val role = guild?.getRoleById(roleId)
 
         if (role == null) {
