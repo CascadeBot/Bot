@@ -101,7 +101,9 @@ class GlobalConsumer : ActionConsumer {
                         }
 
                         val members = guild.members
-                            .filter { it.nickname.equals(name, true) || it.user.name.equals(name, true) }
+                            .filter {
+                                (it.nickname?.startsWith(name, true) ?: false) || (it.user.name.startsWith(name, true))
+                            }
 
                         val params = PaginationUtil.parsePaginationParameters(body)
                         val response = params.paginate(members)
@@ -141,7 +143,7 @@ class GlobalConsumer : ActionConsumer {
                             )
                         }
 
-                        val roles = guild.roles.filter { it.name.equals(name, true) }
+                        val roles = guild.getRolesByName(name, true)
 
                         val params = PaginationUtil.parsePaginationParameters(body)
                         val response = params.paginate(roles)
