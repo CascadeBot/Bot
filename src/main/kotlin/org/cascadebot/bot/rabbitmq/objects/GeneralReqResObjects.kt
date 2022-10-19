@@ -19,11 +19,11 @@ data class RabbitMQResponse<T : Any> constructor(
 
     companion object {
 
-        inline fun <reified T : Any> success(data: T): RabbitMQResponse<T> {
+        fun <T : Any> success(data: T): RabbitMQResponse<T> {
             return RabbitMQResponse(StatusCode.Success, data, null)
         }
 
-        inline fun success(): RabbitMQResponse<Void> {
+        fun success(): RabbitMQResponse<Void> {
             return RabbitMQResponse(StatusCode.Success, null, null)
         }
 
