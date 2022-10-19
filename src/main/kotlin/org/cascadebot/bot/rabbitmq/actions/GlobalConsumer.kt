@@ -4,14 +4,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.MemberResponse
+import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.rabbitmq.objects.MemberResponse
+import org.cascadebot.bot.utils.PaginationUtil
 
 class GlobalConsumer : ActionConsumer {
 
@@ -21,8 +24,8 @@ class GlobalConsumer : ActionConsumer {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         channel: Channel,
-        shard: Int
-    ) : RabbitMQResponse<*> {
+        shard: JDA
+    ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
             return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
@@ -33,6 +36,7 @@ class GlobalConsumer : ActionConsumer {
 
         if (parts[0] == "test") {
             // This is an example of a request to global that does not have further parts to it. Currently not used
+            return null
         }
 
         if (parts.size <= 1) {
@@ -43,9 +47,26 @@ class GlobalConsumer : ActionConsumer {
             )
         }
 
-        val guildId = body.get("guild").asLong()
+        val guildId = body.get("guild")?.asLong()
+
+        if (guildId == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidGuild,
+                "Guild ID is not provided"
+            )
+        }
+
         val shardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
         val guild = Main.shardManager.getShardById(shardId)?.getGuildById(guildId)
+
+        if (guild == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.DiscordException,
+                MiscErrorCodes.GuildNotFound,
+                "Guild could not be found with ID $guildId on shard $shardId"
+            )
+        }
 
         when (parts[0]) {
             "user" -> {
@@ -54,7 +75,7 @@ class GlobalConsumer : ActionConsumer {
                     "byId" -> {
                         val userId = body.get("user").asLong()
                         val member =
-                            guild?.getMemberById(userId)
+                            guild.getMemberById(userId)
 
                         if (member == null) {
                             return RabbitMQResponse.failure(
@@ -70,8 +91,21 @@ class GlobalConsumer : ActionConsumer {
                     }
                     // global:user:byName
                     "byName" -> {
-                        // TODO pagination
-                        return TODO()
+                        val name = body.get("name").asText()
+                        if (name == null) {
+                            return RabbitMQResponse.failure(
+                                StatusCode.BadRequest,
+                                InvalidErrorCodes.InvalidName,
+                                "Name was not found"
+                            )
+                        }
+
+                        val members = guild.members
+                            .filter { it.nickname.equals(name, true) || it.user.name.equals(name, true) }
+
+                        val params = PaginationUtil.parsePaginationParameters(body)
+                        val response = params.paginate(members)
+                        return RabbitMQResponse.success(response)
                     }
                 }
             }
@@ -82,7 +116,7 @@ class GlobalConsumer : ActionConsumer {
                     "byId" -> {
                         val roleId = body.get("role").asLong()
                         val role =
-                            guild?.getRoleById(roleId)
+                            guild.getRoleById(roleId)
 
                         if (role == null) {
                             return RabbitMQResponse.failure(
@@ -98,8 +132,20 @@ class GlobalConsumer : ActionConsumer {
                     }
                     // global:role:byName
                     "byName" -> {
-                        // TODO pagination
-                        return TODO()
+                        val name = body.get("name").asText()
+                        if (name == null) {
+                            return RabbitMQResponse.failure(
+                                StatusCode.BadRequest,
+                                InvalidErrorCodes.InvalidName,
+                                "Name was not found"
+                            )
+                        }
+
+                        val roles = guild.roles.filter { it.name.equals(name, true) }
+
+                        val params = PaginationUtil.parsePaginationParameters(body)
+                        val response = params.paginate(roles)
+                        return RabbitMQResponse.success(response)
                     }
                 }
             }
@@ -110,7 +156,7 @@ class GlobalConsumer : ActionConsumer {
                     "byId" -> {
                         val channelId = body.get("channel").asLong()
                         val discordChannel =
-                            guild?.getGuildChannelById(channelId)
+                            guild.getGuildChannelById(channelId)
 
                         if (discordChannel == null) {
                             return RabbitMQResponse.failure(
@@ -126,8 +172,20 @@ class GlobalConsumer : ActionConsumer {
                     }
                     // global:channel:byName
                     "byName" -> {
-                        // TODO pagination
-                        return TODO()
+                        val name = body.get("name").asText()
+                        if (name == null) {
+                            return RabbitMQResponse.failure(
+                                StatusCode.BadRequest,
+                                InvalidErrorCodes.InvalidName,
+                                "Name was not found"
+                            )
+                        }
+
+                        val channels = guild.channels.filter { it.name.equals(name, true) }
+
+                        val params = PaginationUtil.parsePaginationParameters(body)
+                        val response = params.paginate(channels)
+                        return RabbitMQResponse.success(response)
                     }
                 }
             }

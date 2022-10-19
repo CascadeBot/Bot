@@ -43,6 +43,7 @@ object InvalidErrorCodes {
     val InvalidMethod = ErrorCode("invalid_method")
     val InvalidAction = ErrorCode("invalid_action")
     val InvalidGuild = ErrorCode("invalid_guild")
+    val InvalidName = ErrorCode("invalid_name")
     val InvalidShard = ErrorCode("invalid_shard")
     val InvalidUser = ErrorCode("invalid_user")
     val InvalidRole = ErrorCode("invalid_role")
@@ -59,6 +60,7 @@ object InvalidErrorCodes {
 object MiscErrorCodes {
 
     val UserNotFound = ErrorCode("user_not_found")
+    val GuildNotFound = ErrorCode("guild_not_found")
     val UnexpectedError = ErrorCode("unexpected")
 }
 
