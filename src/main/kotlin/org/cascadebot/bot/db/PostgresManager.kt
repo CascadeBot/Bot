@@ -24,8 +24,6 @@ class PostgresManager(config: Database) {
 
     init {
         sessionFactory = createConfig(config).buildSessionFactory()
-        val session = sessionFactory.openSession()
-        val i = 5
     }
 
     private fun createConfig(config: Database): Configuration {
@@ -102,13 +100,13 @@ class PostgresManager(config: Database) {
             session.transaction.timeout = 3
             session.transaction.begin()
 
-            val value = work(session);
+            val value = work(session)
 
             session.transaction.commit()
-            return value;
+            return value
         } catch (e: RuntimeException) {
             session.transaction.rollback()
-            throw e; // TODO: Or display error?
+            throw e // TODO: Or display error?
         }
     }
 
