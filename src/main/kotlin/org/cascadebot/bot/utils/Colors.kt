@@ -4,7 +4,7 @@ import java.awt.Color
 
 object Colors {
 
-    val CASCADE = Color(220, 29, 83);
+    val CASCADE = Color(220, 29, 83)
 
     val SUCCESS = Color(132, 214, 162) // #84D6A2
     val INFO = Color(152, 159, 255) // #989FFF

@@ -19,9 +19,9 @@ import java.util.UUID
 class CustomCommandEntity(): Serializable {
 
     constructor(slotId: UUID, name: String, description: String, lang: ScriptLang): this() {
-        this.slotId = slotId;
-        this.name = name;
-        this.description = description;
+        this.slotId = slotId
+        this.name = name
+        this.description = description
         this.type = CustomCommandType.SLASH
         this.lang = lang
     }
@@ -30,8 +30,8 @@ class CustomCommandEntity(): Serializable {
         if (customCommandType == CustomCommandType.SLASH) {
             throw UnsupportedOperationException("Cannot provide custom command type of slash for this constructor")
         }
-        this.slotId = slotId;
-        this.name = name;
+        this.slotId = slotId
+        this.name = name
         this.type = customCommandType
         this.lang = lang
     }
@@ -45,10 +45,10 @@ class CustomCommandEntity(): Serializable {
     var name: String = ""
 
     @Column(name = "description")
-    var description: String? = null;
+    var description: String? = null
 
     @Column(name = "marketplace_reference")
-    var marketplaceRef: UUID? = null;
+    var marketplaceRef: UUID? = null
 
     @Column(name = "type")
     @Type(EnumDBType::class)

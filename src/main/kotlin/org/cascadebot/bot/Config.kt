@@ -147,8 +147,8 @@ sealed class DashboardEncryption {
                 val kf = KeyFactory.getInstance("EC")
                 val privateKeySpec = PKCS8EncodedKeySpec(privateKeyBytes)
                 val publicKeySpec = X509EncodedKeySpec(publicKeyBytes)
-                privateKey = kf.generatePrivate(privateKeySpec) as ECPrivateKey;
-                publicKey = kf.generatePublic(publicKeySpec) as ECPublicKey;
+                privateKey = kf.generatePrivate(privateKeySpec) as ECPrivateKey
+                publicKey = kf.generatePublic(publicKeySpec) as ECPublicKey
 
                 logger.info("Loaded private key successfully from '{}'", privateFile.absolutePath)
                 logger.info("Loaded public key successfully from '{}'", publicFile.absolutePath)

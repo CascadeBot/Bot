@@ -23,16 +23,16 @@ class CommandOptionEntity(): Serializable {
         if (type == OptionType.SUB_COMMAND) {
             throw UnsupportedOperationException("Must provide entry point if sub command")
         }
-        this.name = name;
-        this.description = description;
-        this.optionType = type;
+        this.name = name
+        this.description = description
+        this.optionType = type
     }
 
     constructor(name: String, description: String, entrypoint: UUID): this() {
-        this.name = name;
-        this.description = description;
-        this.optionType = OptionType.SUB_COMMAND;
-        this.entrypoint = entrypoint;
+        this.name = name
+        this.description = description
+        this.optionType = OptionType.SUB_COMMAND
+        this.entrypoint = entrypoint
     }
 
     @Id

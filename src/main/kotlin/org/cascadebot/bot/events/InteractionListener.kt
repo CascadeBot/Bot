@@ -21,7 +21,7 @@ class InteractionListener : ListenerAdapter() {
         val args = CommandArgs(event.options.groupBy { it.name })
 
         if (event.isGlobalCommand) {
-            val command = Main.commandManager.getCommand(event.commandPath);
+            val command = Main.commandManager.getCommand(event.commandPath)
             if (command == null) {
                 context.reply("Command not recognised!", MessageType.DANGER)
                 return

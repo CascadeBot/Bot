@@ -37,7 +37,7 @@ class CommandManager {
                 for (clazz in commandReflections.getSubTypesOf(ExecutableCommand::class.java)) {
                     if (Modifier.isAbstract(clazz.modifiers)) continue
                     val command: ExecutableCommand = ConstructorUtils.invokeConstructor(clazz) as ExecutableCommand
-                    _commands[CommandPath(listOf(command.name))] = command;
+                    _commands[CommandPath(listOf(command.name))] = command
                 }
             }
 

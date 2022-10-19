@@ -50,7 +50,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 return
             }
 
-            val guildShardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt();
+            val guildShardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
 
             if (guildShardId != shardId) {
                 RabbitMQResponse.failure(
@@ -75,7 +75,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
 
 
         val consumerEnum: Consumers = try {
-            Consumers.values().first { action.startsWith(it.root) };
+            Consumers.values().first { action.startsWith(it.root) }
         } catch (e: NoSuchElementException) {
             RabbitMQResponse.failure(
                 StatusCode.BadRequest,

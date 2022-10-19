@@ -36,8 +36,8 @@ class CascadeSelectBox(uniqueId: String, persistent: Boolean, val consumer: Sele
 
     override val discordComponent: ActionComponent
         get() {
-            builder.maxValues = maxSelect;
-            builder.minValues = minSelect;
+            builder.maxValues = maxSelect
+            builder.minValues = minSelect
             builder.setDefaultValues(defaults)
             return builder.build()
         }
