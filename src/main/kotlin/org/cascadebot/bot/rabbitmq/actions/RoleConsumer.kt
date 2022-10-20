@@ -30,11 +30,11 @@ class RoleConsumer : ActionConsumer {
             )
         }
 
-        val roleId = body.get("role").get("id").asLong()
-        val guildId = body.get("role").get("guild").asLong()
+        val roleId = body.get("role_id").asLong()
+        val guildId = body.get("guild_id").asLong()
 
-        val guild = shard.getGuildById(guildId)
-        val role = guild?.getRoleById(roleId)
+        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
+        val role = guild.getRoleById(roleId)
 
         if (role == null) {
             return RabbitMQResponse.failure(

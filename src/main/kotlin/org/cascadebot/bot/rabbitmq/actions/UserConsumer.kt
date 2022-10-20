@@ -32,11 +32,11 @@ class UserConsumer : ActionConsumer {
             )
         }
 
-        val userId = body.get("user").get("id").asLong()
-        val guildId = body.get("user").get("guild").asLong()
+        val userId = body.get("user_id").asLong()
+        val guildId = body.get("guild_id").asLong()
 
-        val guild = shard.getGuildById(guildId)
-        val member = guild?.getMemberById(userId)
+        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
+        val member = guild.getMemberById(userId)
 
         if (member == null) {
             return RabbitMQResponse.failure(

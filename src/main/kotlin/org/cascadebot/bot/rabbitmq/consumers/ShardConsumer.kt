@@ -2,6 +2,7 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
+import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
@@ -38,45 +39,11 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             return
         }
 
-        if (jsonBody.has("guild")) {
-            val guildId = try {
-                jsonBody.get("guild").asText().toLong()
-            } catch (e: NumberFormatException) {
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidGuild,
-                    e.message ?: e.javaClass.simpleName
-                ).sendAndAck(channel, properties, envelope)
-                return
-            }
-
-            val guildShardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
-
-            if (guildShardId != shardId) {
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidShard,
-                    "Shard mismatch. Guild shard: $shardId. Requested shard: $shardId"
-                ).sendAndAck(channel, properties, envelope)
-                return
-            }
-
-            if (jda.getGuildById(guildId) == null) {
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidGuild,
-                    "The specified guild does not exist"
-                ).sendAndAck(channel, properties, envelope)
-                return
-            }
-        }
-
         val action = properties.headers["action"].toString()
 
+        val consumerEnum = Consumers.values().firstOrNull { action.startsWith(it.root) }
 
-        val consumerEnum: Consumers = try {
-            Consumers.values().first { action.startsWith(it.root) }
-        } catch (e: NoSuchElementException) {
+        if (consumerEnum == null) {
             RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidAction,
@@ -85,9 +52,11 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             return
         }
 
-        action.removePrefix(consumerEnum.root)
+        if (consumerEnum.requiresGuild) {
+            if (!runGuildChecks(jsonBody, properties, envelope)) return
+        }
 
-        val actionParts = action.split(":")
+        val actionParts = action.removePrefix(consumerEnum.root).split(":")
 
         consumerEnum.consumer.consume(
             actionParts,
@@ -97,6 +66,52 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             channel,
             jda
         )?.sendAndAck(channel, properties, envelope)
+    }
+
+    private fun runGuildChecks(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Boolean {
+        val guildIdField = jsonBody.get("guild_id")
+
+        if (guildIdField == null) {
+            RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidGuild,
+                "Guild must be specified in the request"
+            ).sendAndAck(channel, properties, envelope)
+            return false
+        }
+
+        val guildId = guildIdField.asText().toLongOrNull()
+
+        if (guildId == null) {
+            RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidGuild,
+                "Guild ID must be a 64-bit int contained in a string"
+            ).sendAndAck(channel, properties, envelope)
+            return false
+        }
+
+        val guildShardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
+
+        if (guildShardId != shardId) {
+            RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidShard,
+                "Shard mismatch. Guild shard: $shardId. Requested shard: $shardId"
+            ).sendAndAck(channel, properties, envelope)
+            return false
+        }
+
+        if (jda.getGuildById(guildId) == null) {
+            RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidGuild,
+                "The specified guild does not exist"
+            ).sendAndAck(channel, properties, envelope)
+            return false
+        }
+
+        return true
     }
 
 }

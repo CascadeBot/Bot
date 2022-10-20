@@ -6,11 +6,9 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
-import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
-import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -47,26 +45,8 @@ class GlobalConsumer : ActionConsumer {
             )
         }
 
-        val guildId = body.get("guild")?.asLong()
-
-        if (guildId == null) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidGuild,
-                "Guild ID is not provided"
-            )
-        }
-
-        val shardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
-        val guild = Main.shardManager.getShardById(shardId)?.getGuildById(guildId)
-
-        if (guild == null) {
-            return RabbitMQResponse.failure(
-                StatusCode.DiscordException,
-                MiscErrorCodes.GuildNotFound,
-                "Guild could not be found with ID $guildId on shard $shardId"
-            )
-        }
+        val guildId = body.get("guild_id").asLong()
+        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
 
         when (parts[0]) {
             "user" -> {
