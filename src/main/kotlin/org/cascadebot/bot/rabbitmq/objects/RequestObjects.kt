@@ -1,5 +1,6 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import org.cascadebot.bot.MessageType
 import java.awt.Color
 import java.time.Instant
@@ -13,7 +14,7 @@ data class EmbedFooter(val text: String, val iconUrl: String?)
 
 data class EmbedAuthor(val name: String, val url: String?, val iconUrl: String?)
 
-sealed class Embed(
+data class Embed(
     val title: String?,
     val description: String?,
     val url: String?,
@@ -22,9 +23,12 @@ sealed class Embed(
     val image: String?,
     val thumbnail: String?,
     val author: EmbedAuthor?,
-    val fields: List<EmbedField>?
+    val fields: List<EmbedField>?,
+    val messageType: MessageType?,
+    @JsonProperty("color") private val col: Color?
 ) {
-    data class EmbedTyped(val type: MessageType)
 
-    data class EmbedCustom(val color: Color?)
+    val color
+        get() = if (messageType != null) messageType.color else col
+
 }
