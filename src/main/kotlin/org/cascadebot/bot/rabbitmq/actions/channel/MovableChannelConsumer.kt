@@ -6,7 +6,6 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.attribute.IPositionableChannel
-import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -14,7 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class MoveableChannelConsumer : ActionConsumer {
+class MovableChannelConsumer : ActionConsumer {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
