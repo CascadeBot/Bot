@@ -10,7 +10,7 @@ import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
-class TextChannelConsumer : ActionConsumer {
+class VoiceChanelConsumer : ActionConsumer {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
