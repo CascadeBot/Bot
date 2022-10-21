@@ -2,11 +2,12 @@ package org.cascadebot.bot.utils
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import net.dv8tion.jda.api.entities.IMentionable
+import net.dv8tion.jda.api.entities.ISnowflake
 import kotlin.streams.toList
 
 object PaginationUtil {
 
-    fun <T : IMentionable> paginate(list: List<T>, params: PaginationParameters): PaginationResult<T> {
+    fun <T : ISnowflake> paginate(list: List<T>, params: PaginationParameters): PaginationResult<T> {
         val modifiedList = list.stream()
             .sorted { o1, o2 -> o1.idLong.compareTo(o2.idLong) }
             .filter { it.idLong >= params.start }.toList()
@@ -20,11 +21,11 @@ object PaginationUtil {
         )
     }
 
-    data class PaginationResult<T : IMentionable>(val start: Long, val end: Long, val count: Int, val items: List<T>)
+    data class PaginationResult<T : ISnowflake>(val start: Long, val end: Long, val count: Int, val items: List<T>)
 
     data class PaginationParameters(val start: Long, val count: Int) {
 
-        fun <T : IMentionable> paginate(list: List<T>) {
+        fun <T : ISnowflake> paginate(list: List<T>) {
             paginate(list, this)
         }
     }

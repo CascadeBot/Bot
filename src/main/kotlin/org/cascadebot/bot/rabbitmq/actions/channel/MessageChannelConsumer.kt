@@ -5,17 +5,14 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.messages.EmbedBuilder
-import dev.minn.jda.ktx.messages.InlineEmbed
 import dev.minn.jda.ktx.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
-import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
-import org.cascadebot.bot.rabbitmq.objects.Embed
-import org.cascadebot.bot.rabbitmq.objects.EmbedFooter
+import org.cascadebot.bot.rabbitmq.objects.RabbitMqEmbed
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -87,7 +84,7 @@ class MessageChannelConsumer : ActionConsumer {
                         val message = body.get("message")
                         if (message.has("embeds")) {
                             for (embedObj in message.get("embeds")) {
-                                val embed = Main.json.treeToValue(embedObj, Embed::class.java)
+                                val embed = Main.json.treeToValue(embedObj, RabbitMqEmbed::class.java)
                                 builder.addEmbeds(EmbedBuilder {
                                     title = embed.title
                                     description = embed.description
