@@ -21,7 +21,7 @@ class UserConsumer : ActionConsumer {
         body: ObjectNode,
         envelope: Envelope,
         properties: AMQP.BasicProperties,
-        channel: Channel,
+        rabbitMqChannel: Channel,
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
@@ -90,9 +90,9 @@ class UserConsumer : ActionConsumer {
                 if (parts[1] == "set") {
                     member.modifyNickname(nick).queue({
                         RabbitMQResponse.success()
-                            .sendAndAck(channel, properties, envelope)
+                            .sendAndAck(rabbitMqChannel, properties, envelope)
                     }, {
-                        ErrorHandler.handleError(envelope, properties, channel, it)
+                        ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                     })
                     return null
                 }
@@ -114,9 +114,9 @@ class UserConsumer : ActionConsumer {
                     "add" -> {
                         guild.addRoleToMember(member, role).queue({
                             RabbitMQResponse.success()
-                                .sendAndAck(channel, properties, envelope)
+                                .sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
-                            ErrorHandler.handleError(envelope, properties, channel, it)
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                         })
                         return null
                     }
@@ -124,9 +124,9 @@ class UserConsumer : ActionConsumer {
                     "remove" -> {
                         guild.removeRoleFromMember(member, role).queue({
                             RabbitMQResponse.success()
-                                .sendAndAck(channel, properties, envelope)
+                                .sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
-                            ErrorHandler.handleError(envelope, properties, channel, it)
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                         })
                         return null
                     }

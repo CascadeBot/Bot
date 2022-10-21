@@ -53,7 +53,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
         }
 
         if (consumerEnum.requiresGuild) {
-            if (!runGuildChecks(jsonBody, properties, envelope)) return
+            if (!validateGuildId(jsonBody, properties, envelope)) return
         }
 
         val actionParts = action.removePrefix(consumerEnum.root).split(":")
@@ -68,7 +68,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
         )?.sendAndAck(channel, properties, envelope)
     }
 
-    private fun runGuildChecks(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Boolean {
+    private fun validateGuildId(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Boolean {
         val guildIdField = jsonBody.get("guild_id")
 
         if (guildIdField == null) {

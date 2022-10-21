@@ -19,7 +19,7 @@ class RoleConsumer : ActionConsumer {
         body: ObjectNode,
         envelope: Envelope,
         properties: AMQP.BasicProperties,
-        channel: Channel,
+        rabbitMqChannel: Channel,
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
@@ -62,15 +62,15 @@ class RoleConsumer : ActionConsumer {
                         val state = permNode.get("state").asBoolean()
                         if (state) {
                             role.manager.givePermissions(perm).queue({
-                                RabbitMQResponse.success().sendAndAck(channel, properties, envelope)
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
                             }, {
-                                ErrorHandler.handleError(envelope, properties, channel, it)
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                             })
                         } else {
                             role.manager.revokePermissions(perm).queue({
-                                RabbitMQResponse.success().sendAndAck(channel, properties, envelope)
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
                             }, {
-                                ErrorHandler.handleError(envelope, properties, channel, it)
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                             })
                         }
                         return null
@@ -83,7 +83,7 @@ class RoleConsumer : ActionConsumer {
                     val pos = body.get("position").asInt()
                     val current = role.position
                     guild.modifyRolePositions().selectPosition(role).moveTo(pos).queue({
-                        RabbitMQResponse.success(RoleMoved(current, pos)).sendAndAck(channel, properties, envelope)
+                        RabbitMQResponse.success(RoleMoved(current, pos)).sendAndAck(rabbitMqChannel, properties, envelope)
                     },
                     {
                         if (it is IllegalArgumentException) {
@@ -93,7 +93,7 @@ class RoleConsumer : ActionConsumer {
                                 "The specified position is out of bounds!"
                             )
                         } else {
-                            ErrorHandler.handleError(envelope, properties, channel, it)
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                         }
                     })
                     return null

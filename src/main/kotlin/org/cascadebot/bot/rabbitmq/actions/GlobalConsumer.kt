@@ -21,7 +21,7 @@ class GlobalConsumer : ActionConsumer {
         body: ObjectNode,
         envelope: Envelope,
         properties: AMQP.BasicProperties,
-        channel: Channel,
+        rabbitMqChannel: Channel,
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
