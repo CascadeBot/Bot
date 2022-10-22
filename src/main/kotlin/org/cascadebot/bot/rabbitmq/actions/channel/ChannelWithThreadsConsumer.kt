@@ -5,12 +5,15 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer
+import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.utils.PaginationUtil
 
-class ForumChannelConsumer : ActionConsumer {
+class ChannelWithThreadsConsumer : ActionConsumer {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -32,6 +35,33 @@ class ForumChannelConsumer : ActionConsumer {
                 "The specified channel was not found"
             )
         }
-        return null
+
+        if (parts.isEmpty()) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidAction,
+                "The specified action is not supported"
+            )
+        }
+
+        channel as IThreadContainer
+
+        when(parts[0]) {
+            // channel:threaded:list
+            "list" -> {
+                val params = PaginationUtil.parsePaginationParameters(body)
+                return RabbitMQResponse.success(params.paginate(channel.threadChannels))
+            }
+            // channel:threaded:find
+            "find" -> {
+                // TODO figure out how best to handle this
+            }
+        }
+
+        return RabbitMQResponse.failure(
+            StatusCode.BadRequest,
+            InvalidErrorCodes.InvalidAction,
+            "The specified action is not supported"
+        )
     }
 }
