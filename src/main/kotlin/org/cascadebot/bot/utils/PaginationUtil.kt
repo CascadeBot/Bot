@@ -8,9 +8,9 @@ import kotlin.streams.toList
 object PaginationUtil {
 
     fun <T : ISnowflake> paginate(list: List<T>, params: PaginationParameters): PaginationResult<T> {
-        val modifiedList = list.stream()
-            .sorted { o1, o2 -> o1.idLong.compareTo(o2.idLong) }
-            .filter { it.idLong >= params.start }.toList()
+        val modifiedList = list
+            .sortedBy { it.idLong }
+            .filter { it.idLong >= params.start }
             .take(params.count)
 
         return PaginationResult(
