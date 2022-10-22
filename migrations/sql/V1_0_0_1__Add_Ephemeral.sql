@@ -1,0 +1,1 @@
+ALTER TABLE command_option ADD COLUMN ephemeral bool
