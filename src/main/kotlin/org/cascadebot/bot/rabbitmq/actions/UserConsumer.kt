@@ -55,7 +55,7 @@ class UserConsumer : ActionConsumer {
                     // user:list:role
                     "role" -> {
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(member.roles.stream().map { RoleResponse.fromRole(it) }.toList())
+                        val response = params.paginate(member.roles.map { RoleResponse.fromRole(it) })
                         return RabbitMQResponse.success(response)
                     }
                 }

@@ -75,8 +75,7 @@ class GenericChannelConsumer : ActionConsumer {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         return RabbitMQResponse.success(
                             params.paginate(
-                                channel.permissionContainer.permissionOverrides.stream()
-                                    .map { RabbitMqPermissionOverride.fromPermissionOverride(it) }.toList()
+                                channel.permissionContainer.permissionOverrides.map { RabbitMqPermissionOverride.fromPermissionOverride(it) }
                             )
                         )
                     }

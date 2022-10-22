@@ -52,7 +52,7 @@ class ChannelWithThreadsConsumer : ActionConsumer {
             // channel:threaded:list
             "list" -> {
                 val params = PaginationUtil.parsePaginationParameters(body)
-                return RabbitMQResponse.success(params.paginate(channel.threadChannels.stream().map { ChannelResponse.fromThread(it) }.toList()))
+                return RabbitMQResponse.success(params.paginate(channel.threadChannels.map { ChannelResponse.fromThread(it) }))
             }
             // channel:threaded:find
             "find" -> {

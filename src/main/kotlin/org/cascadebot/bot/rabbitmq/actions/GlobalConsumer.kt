@@ -87,7 +87,7 @@ class GlobalConsumer : ActionConsumer {
                             }
 
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(members.stream().map { MemberResponse.fromMember(it) }.toList())
+                        val response = params.paginate(members.map { MemberResponse.fromMember(it) })
                         return RabbitMQResponse.success(response)
                     }
                 }
@@ -127,7 +127,7 @@ class GlobalConsumer : ActionConsumer {
                         val roles = guild.getRolesByName(name, true)
 
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(roles.stream().map { RoleResponse.fromRole(it) }.toList())
+                        val response = params.paginate(roles.map { RoleResponse.fromRole(it) })
                         return RabbitMQResponse.success(response)
                     }
                 }
@@ -167,7 +167,7 @@ class GlobalConsumer : ActionConsumer {
                         val channels = guild.channels.filter { it.name.equals(name, true) }
 
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(channels.stream().map { ChannelResponse.fromChannel(it as StandardGuildChannel) }.toList())
+                        val response = params.paginate(channels.map { ChannelResponse.fromChannel(it as StandardGuildChannel) })
                         return RabbitMQResponse.success(response)
                     }
                 }
