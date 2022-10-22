@@ -9,6 +9,12 @@ import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
+import net.dv8tion.jda.api.utils.messages.MessageEditData
+import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import java.awt.Color
 
 data class UserResponse(val id: String, val name: String, val avatarUrl: String, val discriminator: String) {
@@ -129,7 +135,7 @@ data class MutualGuildResponse(
     }
 }
 
-data class RabbitMqMessage(val id: Long, val channel: Long, val content: String, val embeds: List<RMQEmbed>) : ISnowflake {
+data class RabbitMqMessage(val messageId: Long, val channelId: Long, val content: String, val embeds: List<RMQEmbed>) : ISnowflake {
 
     companion object {
         fun fromDiscordMessage(message: Message): RabbitMqMessage {
@@ -141,7 +147,26 @@ data class RabbitMqMessage(val id: Long, val channel: Long, val content: String,
     }
 
     override fun getIdLong(): Long {
-       return id;
+       return messageId;
+    }
+
+    fun toDiscordCreateMessage(): MessageCreateData {
+        val builder = MessageCreateBuilder()
+        for (embedObj in embeds) {
+            builder.addEmbeds(embedObj.toDiscordEmbed())
+        }
+        builder.setContent(content)
+        return builder.build()
+    }
+
+    fun toDiscordEditMessage(): MessageEditData {
+        val builder = MessageEditBuilder()
+        builder.embeds.clear()
+        for (embedObj in embeds) {
+            builder.embeds.add(embedObj.toDiscordEmbed())
+        }
+        builder.setContent(content)
+        return builder.build()
     }
 
 }

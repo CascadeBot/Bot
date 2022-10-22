@@ -130,17 +130,6 @@ class MessageChannelConsumer : ActionConsumer {
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         },
                             {
-                                when (it) {
-                                    is ErrorResponseException -> {
-                                        if (it.errorResponse == ErrorResponse.UNKNOWN_MESSAGE) {
-                                            RabbitMQResponse.failure(
-                                                StatusCode.BadRequest,
-                                                InvalidErrorCodes.InvalidUser,
-                                                "The specified member was not found"
-                                            ).sendAndAck(rabbitMqChannel, properties, envelope)
-                                        }
-                                    }
-                                }
                                 ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                             })
                     }

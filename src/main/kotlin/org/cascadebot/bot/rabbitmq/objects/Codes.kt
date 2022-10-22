@@ -62,6 +62,7 @@ object MiscErrorCodes {
     val UserNotFound = ErrorCode("user_not_found")
     val GuildNotFound = ErrorCode("guild_not_found")
     val UnexpectedError = ErrorCode("unexpected")
+    val BotDoesNotOwnMessage = ErrorCode("unowned_message")
 }
 
 object PermissionsErrorCodes {
