@@ -5,6 +5,7 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -32,6 +33,15 @@ class ThreadChannelConsumer : ActionConsumer {
                 "The specified channel was not found"
             )
         }
-        return null
+
+        channel as ThreadChannel
+
+        // TODO there isn't much onm thread channel that isn't covered else where.
+
+        return RabbitMQResponse.failure(
+            StatusCode.BadRequest,
+            InvalidErrorCodes.InvalidAction,
+            "The specified action is not supported"
+        )
     }
 }

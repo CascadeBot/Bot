@@ -51,7 +51,7 @@ class UserConsumer : ActionConsumer {
         when (parts[0]) {
             "list" -> {
                 // TODO pagination
-                when(parts[1]) {
+                when (parts[1]) {
                     // user:list:role
                     "role" -> {
                         val params = PaginationUtil.parsePaginationParameters(body)
@@ -60,6 +60,7 @@ class UserConsumer : ActionConsumer {
                     }
                 }
             }
+
             "color" -> {
                 Color.BLACK.rgb
                 // user:color:get
@@ -69,6 +70,7 @@ class UserConsumer : ActionConsumer {
                     return RabbitMQResponse.success(node)
                 }
             }
+
             "permission" -> {
                 val permission: Permission
                 try {
@@ -86,6 +88,7 @@ class UserConsumer : ActionConsumer {
                     return RabbitMQResponse.success(node)
                 }
             }
+
             "nick" -> {
                 val nick = body.get("nick").asText()
                 // user:nick:set
@@ -99,6 +102,7 @@ class UserConsumer : ActionConsumer {
                     return null
                 }
             }
+
             "role" -> {
                 val roleId = body.get("role").asLong()
                 val role = guild.getRoleById(roleId)
@@ -140,6 +144,32 @@ class UserConsumer : ActionConsumer {
                         return RabbitMQResponse.success(node)
                     }
 
+                }
+            }
+
+            "voice" -> {
+                when (parts[1]) {
+                    "deafen" -> {
+                        val state = body.get("deafen").asBoolean()
+                        member.deafen(state).queue({
+                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                        },
+                            {
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                            })
+                        return null
+                    }
+
+                    "mute" -> {
+                        val state = body.get("mute").asBoolean()
+                        member.deafen(state).queue({
+                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                        },
+                            {
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                            })
+                        return null
+                    }
                 }
             }
 
