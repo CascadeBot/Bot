@@ -2,6 +2,7 @@ package org.cascadebot.bot.rabbitmq.objects
 
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
@@ -19,17 +20,17 @@ data class UserResponse(val id: String, val name: String, val avatarUrl: String,
 }
 
 data class MemberResponse(
-    val id: String,
+    val id: Long,
     val name: String,
     val avatarUrl: String,
     val nickname: String?,
     val discriminator: String
-) {
+) : ISnowflake {
 
     companion object {
         fun fromMember(member: Member): MemberResponse {
             return MemberResponse(
-                member.id,
+                member.idLong,
                 member.user.name,
                 member.effectiveAvatarUrl,
                 member.nickname,
@@ -38,10 +39,14 @@ data class MemberResponse(
         }
     }
 
+    override fun getIdLong(): Long {
+        return id
+    }
+
 }
 
 data class RoleResponse(
-    val id: String,
+    val id: Long,
     val name: String,
     val position: Int,
     val color: Color?,
@@ -49,11 +54,11 @@ data class RoleResponse(
     val emoji: String?,
     val mentionable: Boolean = false,
     val hoisted: Boolean = false
-) {
+) : ISnowflake {
     companion object {
         fun fromRole(role: Role): RoleResponse {
             return RoleResponse(
-                role.id,
+                role.idLong,
                 role.name,
                 role.position,
                 role.color,
@@ -64,22 +69,30 @@ data class RoleResponse(
             )
         }
     }
+
+    override fun getIdLong(): Long {
+        return id;
+    }
 }
 
 data class RolePermission(val permission: Permission, val state: Boolean)
 
 data class RoleMoved(val prevPos: Int, val newPos: Int)
 
-data class ChannelResponse(val id: String, val name: String, val type: String, val position: Int) {
+data class ChannelResponse(val id: Long, val name: String, val type: String, val position: Int) : ISnowflake {
     companion object {
         fun fromChannel(channel: StandardGuildChannel): ChannelResponse {
             return ChannelResponse(
-                channel.id,
+                channel.idLong,
                 channel.name,
                 channel.type.name.lowercase(),
                 channel.position
             )
         }
+    }
+
+    override fun getIdLong(): Long {
+        return id
     }
 }
 
