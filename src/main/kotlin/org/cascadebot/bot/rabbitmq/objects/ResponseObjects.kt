@@ -4,6 +4,7 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
@@ -128,3 +129,19 @@ data class MutualGuildResponse(
     }
 }
 
+data class RabbitMqMessage(val id: Long, val channel: Long, val content: String, val embeds: List<RMQEmbed>) : ISnowflake {
+
+    companion object {
+        fun fromDiscordMessage(message: Message): RabbitMqMessage {
+            val embeds = message.embeds.map {
+                RMQEmbed.fromDiscordEmbed(it)
+            }
+            return RabbitMqMessage(message.idLong, message.channel.idLong, message.contentRaw, embeds)
+        }
+    }
+
+    override fun getIdLong(): Long {
+       return id;
+    }
+
+}

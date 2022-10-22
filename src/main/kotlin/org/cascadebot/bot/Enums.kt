@@ -58,4 +58,10 @@ enum class MessageType {
                 color = col?.rgb
             }
         }
+
+    companion object {
+        fun fromColor(color: Color): MessageType? {
+            return values().firstOrNull { it.color == color }
+        }
+    }
 }

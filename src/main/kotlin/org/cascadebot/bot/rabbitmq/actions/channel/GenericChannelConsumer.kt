@@ -6,7 +6,6 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.HolderType
@@ -14,11 +13,10 @@ import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverridePermission
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideState
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.rabbitmq.objects.RabbitMqPermissionOverride
+import org.cascadebot.bot.rabbitmq.objects.RMQPermissionOverride
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
-import kotlin.streams.toList
 
 class GenericChannelConsumer : ActionConsumer {
     override fun consume(
@@ -75,14 +73,14 @@ class GenericChannelConsumer : ActionConsumer {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         return RabbitMQResponse.success(
                             params.paginate(
-                                channel.permissionContainer.permissionOverrides.map { RabbitMqPermissionOverride.fromPermissionOverride(it) }
+                                channel.permissionContainer.permissionOverrides.map { RMQPermissionOverride.fromPermissionOverride(it) }
                             )
                         )
                     }
                     // channel:general:permissions:put
                     "put" -> {
                         val override =
-                            Main.json.treeToValue(body.get("override"), RabbitMqPermissionOverride::class.java)
+                            Main.json.treeToValue(body.get("override"), RMQPermissionOverride::class.java)
                         val holder = when (override.holderType) {
                             HolderType.ROLE -> {
                                 val role = guild.getRoleById(override.holderId)

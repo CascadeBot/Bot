@@ -4,17 +4,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import net.dv8tion.jda.api.exceptions.ErrorResponseException
+import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
-import org.cascadebot.bot.rabbitmq.objects.RabbitMqEmbed
+import org.cascadebot.bot.rabbitmq.objects.RMQEmbed
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.RabbitMqMessage
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
@@ -84,29 +86,8 @@ class MessageChannelConsumer : ActionConsumer {
                         val message = body.get("message")
                         if (message.has("embeds")) {
                             for (embedObj in message.get("embeds")) {
-                                val embed = Main.json.treeToValue(embedObj, RabbitMqEmbed::class.java)
-                                builder.addEmbeds(EmbedBuilder {
-                                    title = embed.title
-                                    description = embed.description
-                                    url = embed.url
-                                    color = embed.color?.rgb
-                                    timestamp = embed.timestamp
-                                    if (embed.footer != null) {
-                                        footer {
-                                            name = embed.footer.text
-                                            iconUrl = embed.footer.iconUrl
-                                        }
-                                    }
-                                    image = embed.image
-                                    thumbnail = embed.thumbnail
-                                    if (embed.author != null) {
-                                        author {
-                                            name = embed.author.name
-                                            url = embed.author.url
-                                            iconUrl = embed.author.iconUrl
-                                        }
-                                    }
-                                }.build())
+                                val embed = Main.json.treeToValue(embedObj, RMQEmbed::class.java)
+                                builder.addEmbeds(embed.toDiscordEmbed())
                             }
                         }
                         if (message.has("content")) {
@@ -128,8 +109,9 @@ class MessageChannelConsumer : ActionConsumer {
                     // channel:message:messages:list
                     "list" -> {
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        channel.getHistoryBefore(params.start, params.count).queue({
-                            RabbitMQResponse.success(it.retrievedHistory)
+                        channel.getHistoryBefore(params.start, params.count).queue({ history ->
+                            RabbitMQResponse.success(history
+                                .retrievedHistory.map { RabbitMqMessage.fromDiscordMessage(it) })
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
                             ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
@@ -139,6 +121,28 @@ class MessageChannelConsumer : ActionConsumer {
                     // channel:message:messages:find
                     "find" -> {
                         TODO("Need to figure out how this would be best handled")
+                    }
+                    // channel:message:messages:id
+                    "id" -> {
+                        val messageId = body.get("message_id").asLong()
+                        channel.retrieveMessageById(messageId).queue({
+                            RabbitMQResponse.success(RabbitMqMessage.fromDiscordMessage(it))
+                                .sendAndAck(rabbitMqChannel, properties, envelope)
+                        },
+                            {
+                                when (it) {
+                                    is ErrorResponseException -> {
+                                        if (it.errorResponse == ErrorResponse.UNKNOWN_MESSAGE) {
+                                            RabbitMQResponse.failure(
+                                                StatusCode.BadRequest,
+                                                InvalidErrorCodes.InvalidUser,
+                                                "The specified member was not found"
+                                            ).sendAndAck(rabbitMqChannel, properties, envelope)
+                                        }
+                                    }
+                                }
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                            })
                     }
                 }
             }
