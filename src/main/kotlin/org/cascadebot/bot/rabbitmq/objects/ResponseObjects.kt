@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
 import net.dv8tion.jda.api.entities.User
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
 import java.awt.Color
 
@@ -89,6 +90,15 @@ data class ChannelResponse(val id: Long, val name: String, val type: String, val
                 channel.position
             )
         }
+
+        fun fromThread(channel: ThreadChannel): ChannelResponse {
+            return ChannelResponse(
+                channel.idLong,
+                channel.name,
+                channel.type.name.lowercase(),
+                -1
+            )
+        }
     }
 
     override fun getIdLong(): Long {
@@ -117,3 +127,4 @@ data class MutualGuildResponse(
         }
     }
 }
+

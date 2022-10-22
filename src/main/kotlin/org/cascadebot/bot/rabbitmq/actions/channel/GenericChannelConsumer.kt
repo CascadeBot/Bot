@@ -18,6 +18,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMqPermissionOverride
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
+import kotlin.streams.toList
 
 class GenericChannelConsumer : ActionConsumer {
     override fun consume(
@@ -66,16 +67,23 @@ class GenericChannelConsumer : ActionConsumer {
                     })
                 }
             }
+
             "permissions" -> {
                 when (parts[1]) {
                     // channel:general:permissions:list
                     "list" -> {
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        return RabbitMQResponse.success(params.paginate(channel.permissionContainer.permissionOverrides))
+                        return RabbitMQResponse.success(
+                            params.paginate(
+                                channel.permissionContainer.permissionOverrides.stream()
+                                    .map { RabbitMqPermissionOverride.fromPermissionOverride(it) }.toList()
+                            )
+                        )
                     }
                     // channel:general:permissions:put
                     "put" -> {
-                        val override = Main.json.treeToValue(body.get("override"), RabbitMqPermissionOverride::class.java)
+                        val override =
+                            Main.json.treeToValue(body.get("override"), RabbitMqPermissionOverride::class.java)
                         val holder = when (override.holderType) {
                             HolderType.ROLE -> {
                                 val role = guild.getRoleById(override.holderId)
@@ -84,6 +92,7 @@ class GenericChannelConsumer : ActionConsumer {
                                 }
                                 role
                             }
+
                             HolderType.USER -> {
                                 val member = guild.getMemberById(override.holderId)
                                 if (member == null) {
@@ -119,9 +128,11 @@ class GenericChannelConsumer : ActionConsumer {
                 PermissionOverrideState.ALLOW -> {
                     allow.add(override.permission)
                 }
+
                 PermissionOverrideState.DENY -> {
                     deny.add(override.permission)
                 }
+
                 else -> {}
             }
         }

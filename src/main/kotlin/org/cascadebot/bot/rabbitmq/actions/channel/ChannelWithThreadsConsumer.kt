@@ -8,10 +8,12 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.PaginationUtil
+import kotlin.streams.toList
 
 class ChannelWithThreadsConsumer : ActionConsumer {
     override fun consume(
@@ -50,7 +52,7 @@ class ChannelWithThreadsConsumer : ActionConsumer {
             // channel:threaded:list
             "list" -> {
                 val params = PaginationUtil.parsePaginationParameters(body)
-                return RabbitMQResponse.success(params.paginate(channel.threadChannels))
+                return RabbitMQResponse.success(params.paginate(channel.threadChannels.stream().map { ChannelResponse.fromThread(it) }.toList()))
             }
             // channel:threaded:find
             "find" -> {

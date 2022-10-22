@@ -32,17 +32,3 @@ data class RabbitMqEmbed(
         get() = if (messageType != null) messageType.color else col
 
 }
-
-enum class HolderType {
-    ROLE,
-    USER
-}
-
-enum class PermissionOverrideState {
-    ALLOW,
-    DENY,
-    NEUTRAL
-}
-
-data class PermissionOverridePermission(val permission: Permission, val state: PermissionOverrideState)
-data class RabbitMqPermissionOverride(val holderId: Long, val holderType: HolderType, val permissions: List<PermissionOverridePermission>)

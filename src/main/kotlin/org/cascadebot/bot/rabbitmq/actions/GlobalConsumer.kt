@@ -13,6 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.PaginationUtil
+import kotlin.streams.toList
 
 class GlobalConsumer : ActionConsumer {
 
@@ -86,7 +87,7 @@ class GlobalConsumer : ActionConsumer {
                             }
 
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(members)
+                        val response = params.paginate(members.stream().map { MemberResponse.fromMember(it) }.toList())
                         return RabbitMQResponse.success(response)
                     }
                 }
@@ -126,7 +127,7 @@ class GlobalConsumer : ActionConsumer {
                         val roles = guild.getRolesByName(name, true)
 
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(roles)
+                        val response = params.paginate(roles.stream().map { RoleResponse.fromRole(it) }.toList())
                         return RabbitMQResponse.success(response)
                     }
                 }
@@ -166,7 +167,7 @@ class GlobalConsumer : ActionConsumer {
                         val channels = guild.channels.filter { it.name.equals(name, true) }
 
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(channels)
+                        val response = params.paginate(channels.stream().map { ChannelResponse.fromChannel(it as StandardGuildChannel) }.toList())
                         return RabbitMQResponse.success(response)
                     }
                 }

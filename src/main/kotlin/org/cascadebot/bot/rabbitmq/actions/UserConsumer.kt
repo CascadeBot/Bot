@@ -9,10 +9,12 @@ import net.dv8tion.jda.api.Permission
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 import java.awt.Color
+import kotlin.streams.toList
 
 class UserConsumer : ActionConsumer {
 
@@ -53,7 +55,7 @@ class UserConsumer : ActionConsumer {
                     // user:list:role
                     "role" -> {
                         val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(member.roles)
+                        val response = params.paginate(member.roles.stream().map { RoleResponse.fromRole(it) }.toList())
                         return RabbitMQResponse.success(response)
                     }
                 }
