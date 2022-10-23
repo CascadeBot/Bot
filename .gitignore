@@ -177,6 +177,7 @@ gradle-app.setting
 
 *.pem
 !development_key.pem
+generated.*
 
 !config.development.yml
 !config.schema.yml
