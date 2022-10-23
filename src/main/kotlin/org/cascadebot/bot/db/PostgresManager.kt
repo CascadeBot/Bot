@@ -82,7 +82,7 @@ class PostgresManager(config: Database) {
         return dbConfig
     }
 
-    fun <T : Any> transaction(work: Session.() -> T?): T? {
+    fun <T : Any?> transaction(work: Session.() -> T): T {
         var session = sessions.get()
 
         if (session == null || !session.isOpen) {
@@ -95,7 +95,7 @@ class PostgresManager(config: Database) {
         return createTransaction(session, work)
     }
 
-    private fun <T : Any> createTransaction(session: Session, work: Session.() -> T?): T? {
+    private fun <T : Any?> createTransaction(session: Session, work: Session.() -> T): T {
         try {
             session.transaction.timeout = 3
             session.transaction.begin()
