@@ -4,6 +4,8 @@ import com.fasterxml.jackson.databind.JsonNode
 import com.vladmihalcea.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
@@ -47,6 +49,7 @@ class CommandOptionEntity(): Serializable {
 
     @Column(name = "type")
     @Type(EnumDBType::class)
+    @Enumerated(EnumType.STRING)
     var optionType: OptionType = OptionType.STRING
 
     @Column(name = "constraints")

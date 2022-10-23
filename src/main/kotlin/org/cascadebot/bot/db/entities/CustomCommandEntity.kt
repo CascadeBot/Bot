@@ -2,6 +2,8 @@ package org.cascadebot.bot.db.entities
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
@@ -52,10 +54,12 @@ class CustomCommandEntity(): Serializable {
 
     @Column(name = "type")
     @Type(EnumDBType::class)
+    @Enumerated(EnumType.STRING)
     var type: CustomCommandType = CustomCommandType.SLASH
 
     @Column(name = "script_lang")
     @Type(EnumDBType::class)
+    @Enumerated(EnumType.STRING)
     var lang: ScriptLang = ScriptLang.JS
 
     @Column(name = "entrypoint")

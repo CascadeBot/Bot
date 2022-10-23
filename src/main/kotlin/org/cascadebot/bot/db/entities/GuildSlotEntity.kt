@@ -2,6 +2,8 @@ package org.cascadebot.bot.db.entities
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.cascadebot.bot.SlotType
@@ -22,6 +24,7 @@ class GuildSlotEntity(slotType: SlotType, guildId: Long): Serializable {
 
     @Column(name = "slot_type")
     @Type(EnumDBType::class)
+    @Enumerated(EnumType.STRING)
     var slotType: SlotType = slotType
 
     @Column(name = "guild_id")
