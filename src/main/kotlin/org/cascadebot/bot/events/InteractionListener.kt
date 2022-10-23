@@ -51,33 +51,27 @@ class InteractionListener : ListenerAdapter() {
         }
 
         val name = event.name
-        val slots = Main.postgresManager.transaction {
+        val command = Main.postgresManager.transaction {
             val builder = criteriaBuilder
-            val query = builder.createQuery(GuildSlotEntity::class.java)
-            val root = query.from(GuildSlotEntity::class.java)
+            val query = builder.createQuery(CustomCommandEntity::class.java)
+            val root = query.from(CustomCommandEntity::class.java)
+            val join = root.join(GuildSlotEntity::class.java)
             query.where(
                 builder.and(
-                    builder.equal(root.get<Long>("guildId"), event.guild!!.idLong),
+                    builder.equal(join.get<Long>("guildId"), event.guild!!.idLong),
+                    builder.equal(root.get<String>("name"), name),
                     builder.or(
-                        builder.equal(root.get<Boolean>("enabled"), true),
-                        builder.isNull(root.get<Boolean>("enabled"))
+                        builder.equal(join.get<Boolean>("enabled"), true),
+                        builder.isNull(join.get<Boolean>("enabled"))
                     )
                 )
             )
-            return@transaction createQuery(query).list()
-        }!!
-        // TODO this is a bad way of doing this, find a better way
-        for (slot in slots) {
-            val command = Main.postgresManager.transaction {
-                return@transaction get(CustomCommandEntity::class.java, slot.slotId)
-            }
-            if (command == null) {
-                continue
-            }
-            if (command.name == name) {
-                loadAndExecuteCustomCommand(event, command)
-                return
-            }
+            createQuery(query).singleResult
+        }
+
+        if (command != null) {
+            loadAndExecuteCustomCommand(event, command)
+            return
         }
 
         // TODO command not found
