@@ -59,6 +59,9 @@ class CommandOptionEntity(): Serializable {
     @Column(name = "entrypoint")
     var entrypoint: UUID? = null
 
+    @Column(name = "ephemeral")
+    var ephemeral: Boolean? = null
+
     @OneToMany
     @JoinTable(name = "option_join", joinColumns = [JoinColumn(name = "parent_option")], inverseJoinColumns = [JoinColumn(name = "child_option")])
     var subOptions: MutableList<CommandOptionEntity> = mutableListOf()

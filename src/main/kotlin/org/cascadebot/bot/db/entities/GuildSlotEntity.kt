@@ -12,7 +12,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "guild_slot")
-class GuildSlot(slotType: SlotType, guildId: Long): Serializable {
+class GuildSlotEntity(slotType: SlotType, guildId: Long): Serializable {
 
     constructor() : this(SlotType.TEXT, 0)
 

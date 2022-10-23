@@ -61,6 +61,9 @@ class CustomCommandEntity(): Serializable {
     @Column(name = "entrypoint")
     var entrypoint: UUID? = null
 
+    @Column(name = "ephemeral")
+    var ephemeral: Boolean? = null
+
     @OneToMany
     @JoinTable(name = "command_option_join", joinColumns = [JoinColumn(name = "slot_id")], inverseJoinColumns = [JoinColumn(name = "option_id")])
     var options: MutableList<CommandOptionEntity> = mutableListOf()
