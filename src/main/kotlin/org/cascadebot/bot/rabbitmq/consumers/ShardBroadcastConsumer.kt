@@ -7,8 +7,8 @@ import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.requests.RestAction
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
-import org.cascadebot.bot.rabbitmq.objects.MutualGuildResponse
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.MutualGuildResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject

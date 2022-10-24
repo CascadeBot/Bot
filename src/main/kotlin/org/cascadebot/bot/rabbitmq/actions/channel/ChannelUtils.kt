@@ -2,13 +2,13 @@ package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
 import net.dv8tion.jda.api.entities.Guild
-import net.dv8tion.jda.api.entities.channel.Channel
 import net.dv8tion.jda.api.entities.channel.ChannelType
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 
 class ChannelUtils {
 
     companion object {
+
         fun validateAndGetChannel(body: ObjectNode, guild: Guild): GuildChannel? {
             if (!body.has("channel")) {
                 return null

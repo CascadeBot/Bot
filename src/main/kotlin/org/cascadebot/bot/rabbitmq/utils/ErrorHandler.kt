@@ -15,7 +15,8 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
 class ErrorHandler {
     companion object {
-        public fun handleError(
+
+        fun handleError(
             envelope: Envelope,
             properties: AMQP.BasicProperties,
             channel: Channel,

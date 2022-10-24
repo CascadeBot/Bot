@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.concurrent.getOrSet
 import kotlin.system.exitProcess
 
-class RabbitMQManager (config: RabbitMQ) {
+class RabbitMQManager(config: RabbitMQ) {
 
     private val logger by SLF4J
     private val channels: ThreadLocal<Channel> = ThreadLocal()
@@ -53,6 +53,7 @@ class RabbitMQManager (config: RabbitMQ) {
                     virtualHost = config.virtualHost
                 }
             }
+
             is RabbitMQ.URL -> {
                 // RabbitMQ URL cannot end with a /. https://www.rabbitmq.com/uri-spec.html
                 connectionFactory.setUri(config.url.trimEnd('/'))

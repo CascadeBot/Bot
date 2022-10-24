@@ -12,6 +12,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
 class ThreadChannelConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -19,7 +20,7 @@ class ThreadChannelConsumer : ActionConsumer {
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
         shard: JDA
-    ): RabbitMQResponse<*>? {
+    ): RabbitMQResponse<*> {
         val guildId = body.get("guild_id").asLong()
 
         val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null

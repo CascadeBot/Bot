@@ -14,7 +14,6 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 import java.awt.Color
-import kotlin.streams.toList
 
 class UserConsumer : ActionConsumer {
 

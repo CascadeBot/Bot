@@ -5,7 +5,6 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -16,6 +15,7 @@ import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
 class VoiceChanelConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -48,13 +48,14 @@ class VoiceChanelConsumer : ActionConsumer {
 
         channel as AudioChannel
 
-        when(parts[0]) {
+        when (parts[0]) {
             "list" -> {
                 if (parts[1] == "user") {
                     val params = PaginationUtil.parsePaginationParameters(body)
                     return RabbitMQResponse.success(params.paginate(channel.members.map { MemberResponse.fromMember(it) }))
                 }
             }
+
             "user" -> {
                 val userId = body.get("user_id").asLong()
                 val member = guild.getMemberById(userId)
@@ -75,7 +76,7 @@ class VoiceChanelConsumer : ActionConsumer {
                     )
                 }
 
-                when(parts[1]) {
+                when (parts[1]) {
                     "move" -> {
                         guild.moveVoiceMember(member, channel).queue({
                             RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)

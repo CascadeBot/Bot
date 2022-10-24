@@ -16,6 +16,7 @@ import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
 class TextChannelConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -48,7 +49,7 @@ class TextChannelConsumer : ActionConsumer {
 
         channel as TextChannel
 
-        when(parts[0]) {
+        when (parts[0]) {
             "topic" -> {
                 when (parts[1]) {
                     // channel:text:topic:get
@@ -73,6 +74,7 @@ class TextChannelConsumer : ActionConsumer {
                     }
                 }
             }
+
             "users" -> {
                 if (parts[1] == "list") {
                     val params = PaginationUtil.parsePaginationParameters(body)

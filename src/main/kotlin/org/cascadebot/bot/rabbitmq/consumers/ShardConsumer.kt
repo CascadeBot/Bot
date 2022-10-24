@@ -1,7 +1,6 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
@@ -14,7 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
 class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda: JDA) : ErrorHandledConsumer(channel) {
 
-    override fun onDeliver(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: String) {
+    override fun onDeliver(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: String) {
         if (!assertReplyTo(properties, envelope)) return
 
         val jsonBody = try {

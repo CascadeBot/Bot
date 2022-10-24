@@ -14,6 +14,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
 class MovableChannelConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -21,7 +22,7 @@ class MovableChannelConsumer : ActionConsumer {
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
         shard: JDA
-    ): RabbitMQResponse<*>? {
+    ): RabbitMQResponse<*> {
         val guildId = body.get("guild_id").asLong()
 
         val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null

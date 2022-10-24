@@ -81,7 +81,7 @@ data class RoleResponse(
     }
 
     override fun getIdLong(): Long {
-        return id;
+        return id
     }
 }
 
@@ -152,7 +152,7 @@ data class MessageResponse(val messageId: Long, val channelId: Long, val content
     }
 
     override fun getIdLong(): Long {
-        return messageId;
+        return messageId
     }
 
     fun toDiscordCreateMessage(): MessageCreateData {

@@ -9,14 +9,14 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.channel.ChannelUtils
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.MessageResponse
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.rabbitmq.objects.MessageResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
-import java.lang.IllegalStateException
 
 class MessageConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,

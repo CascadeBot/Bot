@@ -14,6 +14,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
 class RoleConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -77,28 +78,33 @@ class RoleConsumer : ActionConsumer {
                     }
                 }
             }
+
             "position" -> {
                 // role:position:set
                 if (parts[1] == "set") {
                     val pos = body.get("position").asInt()
                     val current = role.position
-                    guild.modifyRolePositions().selectPosition(role).moveTo(pos).queue({
-                        RabbitMQResponse.success(RoleMoved(current, pos)).sendAndAck(rabbitMqChannel, properties, envelope)
-                    },
-                    {
-                        if (it is IllegalArgumentException) {
-                            RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidPosition,
-                                "The specified position is out of bounds!"
-                            )
-                        } else {
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                    guild.modifyRolePositions().selectPosition(role).moveTo(pos).queue(
+                        {
+                            RabbitMQResponse.success(RoleMoved(current, pos))
+                                .sendAndAck(rabbitMqChannel, properties, envelope)
+                        },
+                        {
+                            if (it is IllegalArgumentException) {
+                                RabbitMQResponse.failure(
+                                    StatusCode.BadRequest,
+                                    InvalidErrorCodes.InvalidPosition,
+                                    "The specified position is out of bounds!"
+                                )
+                            } else {
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                            }
                         }
-                    })
+                    )
                     return null
                 }
             }
+
             "tags" -> {
                 // role:tags:get
                 if (parts[1] == "get") {

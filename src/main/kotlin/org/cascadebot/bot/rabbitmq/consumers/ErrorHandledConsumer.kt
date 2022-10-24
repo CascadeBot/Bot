@@ -1,6 +1,5 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
-import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.DefaultConsumer
@@ -57,7 +56,7 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
     abstract fun onDeliver(
         consumerTag: String,
         envelope: Envelope,
-        properties: AMQP.BasicProperties,
+        properties: BasicProperties,
         body: String
     )
 

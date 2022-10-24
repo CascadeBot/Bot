@@ -10,15 +10,16 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.HolderType
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideData
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverridePermission
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideState
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideData
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
 class GenericChannelConsumer : ActionConsumer {
+
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
@@ -73,7 +74,11 @@ class GenericChannelConsumer : ActionConsumer {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         return RabbitMQResponse.success(
                             params.paginate(
-                                channel.permissionContainer.permissionOverrides.map { PermissionOverrideData.fromPermissionOverride(it) }
+                                channel.permissionContainer.permissionOverrides.map {
+                                    PermissionOverrideData.fromPermissionOverride(
+                                        it
+                                    )
+                                }
                             )
                         )
                     }

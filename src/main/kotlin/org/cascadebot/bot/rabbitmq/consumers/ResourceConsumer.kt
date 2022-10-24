@@ -30,7 +30,7 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
         val action = properties.headers["action"].toString()
 
-        val response = when(action) {
+        val response = when (action) {
             "user:get_by_id" -> {
                 val decodeResult = kotlin.runCatching { Main.json.treeToValue(jsonBody, UserIDObject::class.java) }
 
