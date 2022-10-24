@@ -7,16 +7,14 @@ import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
-import net.dv8tion.jda.api.exceptions.ErrorResponseException
-import net.dv8tion.jda.api.requests.ErrorResponse
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
-import org.cascadebot.bot.rabbitmq.objects.RMQEmbed
+import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.rabbitmq.objects.RabbitMqMessage
+import org.cascadebot.bot.rabbitmq.objects.MessageResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
@@ -86,7 +84,7 @@ class MessageChannelConsumer : ActionConsumer {
                         val message = body.get("message")
                         if (message.has("embeds")) {
                             for (embedObj in message.get("embeds")) {
-                                val embed = Main.json.treeToValue(embedObj, RMQEmbed::class.java)
+                                val embed = Main.json.treeToValue(embedObj, EmbedData::class.java)
                                 builder.addEmbeds(embed.toDiscordEmbed())
                             }
                         }
@@ -111,7 +109,7 @@ class MessageChannelConsumer : ActionConsumer {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         channel.getHistoryBefore(params.start, params.count).queue({ history ->
                             RabbitMQResponse.success(history
-                                .retrievedHistory.map { RabbitMqMessage.fromDiscordMessage(it) })
+                                .retrievedHistory.map { MessageResponse.fromDiscordMessage(it) })
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
                             ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
@@ -126,7 +124,7 @@ class MessageChannelConsumer : ActionConsumer {
                     "id" -> {
                         val messageId = body.get("message_id").asLong()
                         channel.retrieveMessageById(messageId).queue({
-                            RabbitMQResponse.success(RabbitMqMessage.fromDiscordMessage(it))
+                            RabbitMQResponse.success(MessageResponse.fromDiscordMessage(it))
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         },
                             {

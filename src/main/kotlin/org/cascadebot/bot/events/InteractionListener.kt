@@ -14,11 +14,11 @@ import org.cascadebot.bot.db.entities.GuildSlotEntity
 import org.cascadebot.bot.db.entities.ScriptFileEntity
 import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.CommandOption
-import org.cascadebot.bot.rabbitmq.objects.ExecuteCommandReq
+import org.cascadebot.bot.rabbitmq.objects.ExecCommandRequest
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
-import org.cascadebot.bot.rabbitmq.objects.RabbitMqMessage
+import org.cascadebot.bot.rabbitmq.objects.MessageResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
-import org.cascadebot.bot.rabbitmq.objects.ScriptFile
+import org.cascadebot.bot.rabbitmq.objects.ScriptFileData
 import org.cascadebot.bot.rabbitmq.objects.UserResponse
 import java.util.UUID
 import org.cascadebot.bot.OptionType as OptType
@@ -142,19 +142,19 @@ class InteractionListener : ListenerAdapter() {
                     return@queue
                 }
 
-                val scriptFiles: MutableList<ScriptFile> = mutableListOf()
+                val scriptFiles: MutableList<ScriptFileData> = mutableListOf()
                 for (file in files) {
-                    scriptFiles.add(ScriptFile(file.scriptId, file.fileName, file.script))
+                    scriptFiles.add(ScriptFileData(file.scriptId, file.fileName, file.script))
                 }
 
-                val req = ExecuteCommandReq(
+                val req = ExecCommandRequest(
                     command.lang,
                     info.entrypoint,
                     scriptFiles,
                     options,
                     MemberResponse.fromMember(event.member!!),
                     ChannelResponse.fromChannel(event.channel.asTextChannel()),
-                    RabbitMqMessage.fromDiscordMessage(it)
+                    MessageResponse.fromDiscordMessage(it)
                 )
                 // TODO send req via rabbitmq
             }

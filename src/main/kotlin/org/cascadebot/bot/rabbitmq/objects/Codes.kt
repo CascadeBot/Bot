@@ -66,6 +66,7 @@ object MiscErrorCodes {
 }
 
 object PermissionsErrorCodes {
+
     val MissingPermission = ErrorCode("missing_permission")
     val CannotInteract = ErrorCode("cannot_interact")
 }

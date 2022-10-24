@@ -23,13 +23,15 @@ enum class PermissionOverrideState {
 
 data class PermissionOverridePermission(val permission: Permission, val state: PermissionOverrideState)
 
-data class RMQPermissionOverride(
+data class PermissionOverrideData(
     val holderId: Long,
     val holderType: HolderType,
     val permissions: List<PermissionOverridePermission>
 ) : ISnowflake {
+
     companion object {
-        fun fromPermissionOverride(override: PermissionOverride): RMQPermissionOverride {
+
+        fun fromPermissionOverride(override: PermissionOverride): PermissionOverrideData {
             val perms: MutableList<PermissionOverridePermission> = mutableListOf()
             for (discordPerm in Permission.values()) {
                 var state = PermissionOverrideState.NEUTRAL
@@ -46,7 +48,7 @@ data class RMQPermissionOverride(
             } else {
                 HolderType.ROLE
             }
-            return RMQPermissionOverride(override.permissionHolder!!.idLong, type, perms)
+            return PermissionOverrideData(override.permissionHolder!!.idLong, type, perms)
         }
     }
 
@@ -55,22 +57,22 @@ data class RMQPermissionOverride(
     }
 }
 
-data class RMQEmbedField(val name: String, val value: String, val inline: Boolean)
+data class EmbedFieldData(val name: String, val value: String, val inline: Boolean)
 
-data class RMQEmbedFooter(val text: String, val iconUrl: String?)
+data class EmbedFooterData(val text: String, val iconUrl: String?)
 
-data class RMQEmbedAuthor(val name: String, val url: String?, val iconUrl: String?)
+data class EmbedAuthorData(val name: String, val url: String?, val iconUrl: String?)
 
-data class RMQEmbed(
+data class EmbedData(
     val title: String?,
     val description: String?,
     val url: String?,
     val timestamp: Instant?,
-    val footer: RMQEmbedFooter?,
+    val footer: EmbedFooterData?,
     val image: String?,
     val thumbnail: String?,
-    val author: RMQEmbedAuthor?,
-    val fields: List<RMQEmbedField>?,
+    val author: EmbedAuthorData?,
+    val fields: List<EmbedFieldData>?,
     val messageType: MessageType?,
     @JsonProperty("color") private val col: Color?
 ) {
@@ -103,25 +105,26 @@ data class RMQEmbed(
     }
 
     companion object {
-        fun fromDiscordEmbed(discEmbed: MessageEmbed): RMQEmbed {
+
+        fun fromDiscordEmbed(discEmbed: MessageEmbed): EmbedData {
 
             val fields = discEmbed.fields.map {
-                RMQEmbedField(it.name!!, it.value!!, it.isInline)
+                EmbedFieldData(it.name!!, it.value!!, it.isInline)
             }
 
             val author = discEmbed.author?.let {
-                RMQEmbedAuthor(it.name!!, it.url, it.iconUrl)
+                EmbedAuthorData(it.name!!, it.url, it.iconUrl)
             }
 
             val footer = discEmbed.footer?.let {
-                RMQEmbedFooter(it.text!!, it.iconUrl)
+                EmbedFooterData(it.text!!, it.iconUrl)
             }
 
             val messageType = discEmbed.color?.let {
                 MessageType.fromColor(it)
             }
 
-            return RMQEmbed(
+            return EmbedData(
                 discEmbed.title,
                 discEmbed.description,
                 discEmbed.url,

@@ -13,7 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverridePermission
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideState
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.rabbitmq.objects.RMQPermissionOverride
+import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideData
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
@@ -73,14 +73,14 @@ class GenericChannelConsumer : ActionConsumer {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         return RabbitMQResponse.success(
                             params.paginate(
-                                channel.permissionContainer.permissionOverrides.map { RMQPermissionOverride.fromPermissionOverride(it) }
+                                channel.permissionContainer.permissionOverrides.map { PermissionOverrideData.fromPermissionOverride(it) }
                             )
                         )
                     }
                     // channel:general:permissions:put
                     "put" -> {
                         val override =
-                            Main.json.treeToValue(body.get("override"), RMQPermissionOverride::class.java)
+                            Main.json.treeToValue(body.get("override"), PermissionOverrideData::class.java)
                         val holder = when (override.holderType) {
                             HolderType.ROLE -> {
                                 val role = guild.getRoleById(override.holderId)

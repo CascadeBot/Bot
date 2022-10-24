@@ -13,13 +13,12 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import net.dv8tion.jda.api.utils.messages.MessageEditData
-import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import java.awt.Color
 
 data class UserResponse(val id: String, val name: String, val avatarUrl: String, val discriminator: String) {
 
     companion object {
+
         fun fromUser(user: User): UserResponse {
             return UserResponse(user.id, user.name, user.effectiveAvatarUrl, user.discriminator)
         }
@@ -36,6 +35,7 @@ data class MemberResponse(
 ) : ISnowflake {
 
     companion object {
+
         fun fromMember(member: Member): MemberResponse {
             return MemberResponse(
                 member.idLong,
@@ -63,7 +63,9 @@ data class RoleResponse(
     val mentionable: Boolean = false,
     val hoisted: Boolean = false
 ) : ISnowflake {
+
     companion object {
+
         fun fromRole(role: Role): RoleResponse {
             return RoleResponse(
                 role.idLong,
@@ -89,6 +91,7 @@ data class RoleMoved(val prevPos: Int, val newPos: Int)
 
 data class ChannelResponse(val id: Long, val name: String, val type: String, val position: Int) : ISnowflake {
     companion object {
+
         fun fromChannel(channel: StandardGuildChannel): ChannelResponse {
             return ChannelResponse(
                 channel.idLong,
@@ -135,19 +138,21 @@ data class MutualGuildResponse(
     }
 }
 
-data class RabbitMqMessage(val messageId: Long, val channelId: Long, val content: String, val embeds: List<RMQEmbed>) : ISnowflake {
+data class MessageResponse(val messageId: Long, val channelId: Long, val content: String, val embeds: List<EmbedData>) :
+    ISnowflake {
 
     companion object {
-        fun fromDiscordMessage(message: Message): RabbitMqMessage {
+
+        fun fromDiscordMessage(message: Message): MessageResponse {
             val embeds = message.embeds.map {
-                RMQEmbed.fromDiscordEmbed(it)
+                EmbedData.fromDiscordEmbed(it)
             }
-            return RabbitMqMessage(message.idLong, message.channel.idLong, message.contentRaw, embeds)
+            return MessageResponse(message.idLong, message.channel.idLong, message.contentRaw, embeds)
         }
     }
 
     override fun getIdLong(): Long {
-       return messageId;
+        return messageId;
     }
 
     fun toDiscordCreateMessage(): MessageCreateData {
