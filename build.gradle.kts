@@ -14,6 +14,7 @@ plugins {
     kotlin("jvm") version "1.7.10"
     kotlin("plugin.serialization") version "1.7.10"
     id("com.github.johnrengelman.shadow") version "7.1.2"
+    idea
 }
 
 group = "org.cascadebot"
@@ -26,6 +27,12 @@ repositories {
     }
 }
 
+idea {
+    module {
+        isDownloadSources = true
+        isDownloadJavadoc = true
+    }
+}
 
 dependencies {
     testImplementation(kotlin("test"))
