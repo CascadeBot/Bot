@@ -114,7 +114,7 @@ class InteractionListener : ListenerAdapter() {
                         OptionType.USER -> {
                             val member = discOpt.asMember
                             if (member != null) {
-                                CommandOption(OptType.USER, MemberResponse.fromMember(member))
+                                CommandOption(OptType.MEMBER, MemberResponse.fromMember(member))
                             } else {
                                 CommandOption(OptType.USER, UserResponse.fromUser(discOpt.asUser))
                             }

@@ -27,6 +27,7 @@ enum class OptionType {
     SUB_COMMAND,
     SUBCOMMAND_GROUP,
     USER,
+    MEMBER,
     ATTACHMENT,
     ROLE,
     STRING,
