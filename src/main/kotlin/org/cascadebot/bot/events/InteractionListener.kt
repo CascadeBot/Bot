@@ -19,7 +19,9 @@ import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMqMessage
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.ScriptFile
+import org.cascadebot.bot.rabbitmq.objects.UserResponse
 import java.util.UUID
+import org.cascadebot.bot.OptionType as OptType
 
 class InteractionListener : ListenerAdapter() {
 
@@ -85,7 +87,7 @@ class InteractionListener : ListenerAdapter() {
             val root = query.from(ScriptFileEntity::class.java)
             query.where(builder.equal(root.get<UUID>("slotId"), command.slotId))
             return@transaction createQuery(query).list()
-        }!!
+        }
 
         val info = if (command.entrypoint != null) {
             EntrypointInfo(command.entrypoint!!, command.ephemeral!!)
@@ -102,58 +104,36 @@ class InteractionListener : ListenerAdapter() {
             hook.retrieveOriginal().queue {
                 val options: MutableMap<String, MutableList<CommandOption<Any>>> = mutableMapOf()
                 for (discOpt in event.options) {
-                    val list = if (options.containsKey(discOpt.name)) {
-                        options[discOpt.name]
-                    } else {
-                        val newList: MutableList<CommandOption<Any>> = mutableListOf()
-                        options[discOpt.name] = newList
-                        newList
-                    }!!
-                    when (discOpt.type) {
-                        OptionType.STRING -> {
-                            list.add(CommandOption(org.cascadebot.bot.OptionType.STRING, discOpt.asString))
-                        }
+                    val list = options.getOrPut(discOpt.name) { mutableListOf() }
 
-                        OptionType.INTEGER -> {
-                            list.add(CommandOption(org.cascadebot.bot.OptionType.NUMBER, discOpt.asInt))
-                        }
-
-                        OptionType.BOOLEAN -> {
-                            list.add(CommandOption(org.cascadebot.bot.OptionType.BOOLEAN, discOpt.asBoolean))
-                        }
+                    val commandOption: CommandOption<Any>? = when (discOpt.type) {
+                        OptionType.STRING -> CommandOption(OptType.STRING, discOpt.asString)
+                        OptionType.INTEGER -> CommandOption(OptType.NUMBER, discOpt.asInt)
+                        OptionType.BOOLEAN -> CommandOption(OptType.BOOLEAN, discOpt.asBoolean)
 
                         OptionType.USER -> {
-                            list.add(
-                                CommandOption(
-                                    org.cascadebot.bot.OptionType.USER,
-                                    MemberResponse.fromMember(discOpt.asMember!!)
-                                )
-                            )
+                            val member = discOpt.asMember
+                            if (member != null) {
+                                CommandOption(OptType.USER, MemberResponse.fromMember(member))
+                            } else {
+                                CommandOption(OptType.USER, UserResponse.fromUser(discOpt.asUser))
+                            }
                         }
 
                         OptionType.CHANNEL -> {
-                            list.add(
-                                CommandOption(
-                                    org.cascadebot.bot.OptionType.CHANNEL,
-                                    ChannelResponse.fromChannel(discOpt.asChannel.asStandardGuildChannel())
-                                )
+                            CommandOption(
+                                OptType.CHANNEL,
+                                ChannelResponse.fromChannel(discOpt.asChannel.asStandardGuildChannel())
                             )
                         }
 
-                        OptionType.ROLE -> {
-                            list.add(
-                                CommandOption(
-                                    org.cascadebot.bot.OptionType.ROLE,
-                                    RoleResponse.fromRole(discOpt.asRole)
-                                )
-                            )
-                        }
+                        OptionType.ROLE -> CommandOption(OptType.ROLE, RoleResponse.fromRole(discOpt.asRole))
+                        OptionType.NUMBER -> CommandOption(OptType.NUMBER, discOpt.asDouble)
+                        else -> null
+                    }
 
-                        OptionType.NUMBER -> {
-                            list.add(CommandOption(org.cascadebot.bot.OptionType.NUMBER, discOpt.asDouble))
-                        }
-
-                        else -> {}
+                    if (commandOption != null) {
+                        list.add(commandOption)
                     }
                 }
 
