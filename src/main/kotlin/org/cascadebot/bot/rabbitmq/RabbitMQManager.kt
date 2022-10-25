@@ -4,6 +4,7 @@ import com.rabbitmq.client.BuiltinExchangeType
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.impl.ForgivingExceptionHandler
 import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.RabbitMQ
 import org.cascadebot.bot.rabbitmq.consumers.MetaConsumer
@@ -59,6 +60,7 @@ class RabbitMQManager(config: RabbitMQ) {
                 connectionFactory.setUri(config.url.trimEnd('/'))
             }
         }
+        connectionFactory.exceptionHandler = ForgivingExceptionHandler()
         try {
             connection = connectionFactory.newConnection()
         } catch (e: Exception) {
