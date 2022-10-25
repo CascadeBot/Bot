@@ -39,6 +39,7 @@ value class ErrorCode internal constructor(val code: String) {
 
 object InvalidErrorCodes {
 
+    val InvalidInteraction = ErrorCode("invalid_interaction")
     val InvalidProperty = ErrorCode("invalid_property")
     val InvalidMethod = ErrorCode("invalid_method")
     val InvalidAction = ErrorCode("invalid_action")

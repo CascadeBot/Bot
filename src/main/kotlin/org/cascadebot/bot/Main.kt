@@ -6,11 +6,14 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.github.benmanes.caffeine.cache.Cache
+import com.github.benmanes.caffeine.cache.Caffeine
 import dev.minn.jda.ktx.util.SLF4J
 import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
 import net.dv8tion.jda.api.sharding.ShardManager
@@ -25,6 +28,7 @@ import org.cascadebot.bot.utils.ColorSerializer
 import org.cascadebot.bot.utils.LogbackUtil
 import org.hibernate.HibernateException
 import java.awt.Color
+import java.util.concurrent.TimeUnit
 import kotlin.system.exitProcess
 
 object Main {
@@ -33,6 +37,9 @@ object Main {
 
     lateinit var componentCache: ComponentCache
         private set
+
+    val interactionHookCache: Cache<String, InteractionHook> =
+        Caffeine.newBuilder().expireAfterWrite(20, TimeUnit.MINUTES).build()
 
     lateinit var shardManager: ShardManager
         private set

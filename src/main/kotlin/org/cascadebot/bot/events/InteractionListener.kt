@@ -106,12 +106,13 @@ class InteractionListener : ListenerAdapter() {
         }
 
         event.deferReply(info.ephemeral).queue { hook ->
+            Main.interactionHookCache.put(hook.interaction.id, hook)
             sendCommandRequest(
                 command,
                 event,
                 files,
                 info,
-                hook.interaction.token,
+                hook.interaction.id,
                 context
             )
         }
@@ -123,7 +124,7 @@ class InteractionListener : ListenerAdapter() {
         event: SlashCommandInteractionEvent,
         files: MutableList<ScriptFileEntity>,
         info: EntrypointInfo,
-        interactionToken: String,
+        interactionId: String,
         context: CommandContext
     ) {
         val options: MutableMap<String, MutableList<CommandOption<Any>>> = mutableMapOf()
@@ -175,7 +176,7 @@ class InteractionListener : ListenerAdapter() {
             options,
             MemberResponse.fromMember(event.member!!),
             ChannelResponse.fromChannel(event.channel.asTextChannel()),
-            interactionToken
+            interactionId
         )
 
         val bodyBytes = Main.json.writeValueAsBytes(req)

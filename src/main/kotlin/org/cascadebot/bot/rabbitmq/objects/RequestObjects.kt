@@ -17,5 +17,5 @@ data class ExecCommandRequest(
     val options: Map<String, List<CommandOption<Any>>>,
     val member: MemberResponse,
     val channel: ChannelResponse,
-    val interactionToken: String
+    val interactionId: String
 )
