@@ -4,8 +4,13 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import net.dv8tion.jda.api.EmbedBuilder
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.ISnowflake
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.PermissionOverride
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
+import net.dv8tion.jda.api.utils.messages.MessageCreateData
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
+import net.dv8tion.jda.api.utils.messages.MessageEditData
 import org.cascadebot.bot.MessageType
 import java.awt.Color
 import java.time.Instant
@@ -141,3 +146,43 @@ data class EmbedData(
     }
 
 }
+
+data class MessageData(val messageId: Long, val channelId: Long, val content: String, val embeds: List<EmbedData>) :
+    ISnowflake {
+
+    companion object {
+
+        fun fromDiscordMessage(message: Message): MessageData {
+            val embeds = message.embeds.map {
+                EmbedData.fromDiscordEmbed(it)
+            }
+            return MessageData(message.idLong, message.channel.idLong, message.contentRaw, embeds)
+        }
+    }
+
+    override fun getIdLong(): Long {
+        return messageId
+    }
+
+    fun toDiscordCreateMessage(): MessageCreateData {
+        val builder = MessageCreateBuilder()
+        for (embedObj in embeds) {
+            builder.addEmbeds(embedObj.toDiscordEmbed())
+        }
+        builder.setContent(content)
+        return builder.build()
+    }
+
+    fun toDiscordEditMessage(): MessageEditData {
+        val builder = MessageEditBuilder()
+        builder.embeds.clear()
+        for (embedObj in embeds) {
+            builder.embeds.add(embedObj.toDiscordEmbed())
+        }
+        builder.setContent(content)
+        return builder.build()
+    }
+
+}
+
+data class InteractionData(val interactionToken: String, val content: String, val embeds: List<EmbedData>)

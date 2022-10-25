@@ -138,40 +138,4 @@ data class MutualGuildResponse(
     }
 }
 
-data class MessageResponse(val messageId: Long, val channelId: Long, val content: String, val embeds: List<EmbedData>) :
-    ISnowflake {
 
-    companion object {
-
-        fun fromDiscordMessage(message: Message): MessageResponse {
-            val embeds = message.embeds.map {
-                EmbedData.fromDiscordEmbed(it)
-            }
-            return MessageResponse(message.idLong, message.channel.idLong, message.contentRaw, embeds)
-        }
-    }
-
-    override fun getIdLong(): Long {
-        return messageId
-    }
-
-    fun toDiscordCreateMessage(): MessageCreateData {
-        val builder = MessageCreateBuilder()
-        for (embedObj in embeds) {
-            builder.addEmbeds(embedObj.toDiscordEmbed())
-        }
-        builder.setContent(content)
-        return builder.build()
-    }
-
-    fun toDiscordEditMessage(): MessageEditData {
-        val builder = MessageEditBuilder()
-        builder.embeds.clear()
-        for (embedObj in embeds) {
-            builder.embeds.add(embedObj.toDiscordEmbed())
-        }
-        builder.setContent(content)
-        return builder.build()
-    }
-
-}

@@ -6,8 +6,11 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import net.dv8tion.jda.internal.interactions.DeferrableInteractionImpl
+import net.dv8tion.jda.internal.interactions.InteractionHookImpl
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.channel.ChannelUtils
+import org.cascadebot.bot.rabbitmq.objects.InteractionData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MessageData
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
@@ -15,7 +18,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class MessageConsumer : ActionConsumer {
+class InteractionConsumer : ActionConsumer {
 
     override fun consume(
         parts: List<String>,
@@ -37,14 +40,14 @@ class MessageConsumer : ActionConsumer {
 
         val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
 
-        val rmqMessage = Main.json.treeToValue(body, MessageData::class.java)
+        val rmqInteraction = Main.json.treeToValue(body, InteractionData::class.java)
 
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {
             return RabbitMQResponse.failure(
-                StatusCode.NotFound,
-                MiscErrorCodes.ChannelNotFound,
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidChannel,
                 "The specified channel was not found"
             )
         }
@@ -57,37 +60,10 @@ class MessageConsumer : ActionConsumer {
             )
         }
 
-        channel.retrieveMessageById(rmqMessage.messageId).queue({
-            when (parts[0]) {
-                // message:edit
-                "edit" -> {
-                    it.editMessage(rmqMessage.toDiscordEditMessage()).queue({
-                        RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                    },
-                        { error ->
-                            when (error) {
-                                is IllegalStateException -> {
-                                    RabbitMQResponse.failure(
-                                        StatusCode.BadRequest,
-                                        MiscErrorCodes.BotDoesNotOwnMessage,
-                                        "The bot does not own the message trying to be edited"
-                                    )
-                                }
-                                else -> ErrorHandler.handleError(envelope, properties, rabbitMqChannel, error)
-                            }
-                        })
-                }
-            }
-
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            ).sendAndAck(rabbitMqChannel, properties, envelope)
-        }, {
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-        })
-
-        return null
+        return RabbitMQResponse.failure(
+            StatusCode.BadRequest,
+            InvalidErrorCodes.InvalidAction,
+            "The specified action is not supported"
+        )
     }
 }

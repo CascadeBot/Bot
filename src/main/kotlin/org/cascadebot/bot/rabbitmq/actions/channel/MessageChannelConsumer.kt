@@ -13,7 +13,7 @@ import org.cascadebot.bot.MessageType
 import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
 import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
-import org.cascadebot.bot.rabbitmq.objects.MessageResponse
+import org.cascadebot.bot.rabbitmq.objects.MessageData
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
@@ -110,22 +110,18 @@ class MessageChannelConsumer : ActionConsumer {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         channel.getHistoryBefore(params.start, params.count).queue({ history ->
                             RabbitMQResponse.success(history
-                                .retrievedHistory.map { MessageResponse.fromDiscordMessage(it) })
+                                .retrievedHistory.map { MessageData.fromDiscordMessage(it) })
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
                             ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                         })
                         return null
                     }
-                    // channel:message:messages:find
-                    "find" -> {
-                        TODO("Need to figure out how this would be best handled")
-                    }
                     // channel:message:messages:id
                     "id" -> {
                         val messageId = body.get("message_id").asLong()
                         channel.retrieveMessageById(messageId).queue({
-                            RabbitMQResponse.success(MessageResponse.fromDiscordMessage(it))
+                            RabbitMQResponse.success(MessageData.fromDiscordMessage(it))
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         },
                             {

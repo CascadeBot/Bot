@@ -59,8 +59,10 @@ object InvalidErrorCodes {
 
 object MiscErrorCodes {
 
+    val InteractionTokenNotFound = ErrorCode("interaction_token_not_found")
     val UserNotFound = ErrorCode("user_not_found")
     val GuildNotFound = ErrorCode("guild_not_found")
+    val ChannelNotFound = ErrorCode("channel_not_found")
     val UnexpectedError = ErrorCode("unexpected")
     val BotDoesNotOwnMessage = ErrorCode("unowned_message")
 }
