@@ -26,7 +26,11 @@ sealed class Sharding {
     data class MinMax(val total: Int, val min: Int, val max: Int) : Sharding()
 }
 
-data class Discord(val token: String, val shards: Sharding?)
+data class Discord(
+    val token: String,
+    val shards: Sharding?,
+    val supportServerInvite: String = "https://discord.gg/P23GZFB" // TODO: Probably want to add this to the planned resources file
+)
 
 data class Database(val url: String, val username: String? = null, val password: Masked? = null)
 
