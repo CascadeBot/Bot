@@ -2,7 +2,6 @@ package org.cascadebot.bot.events
 
 import com.rabbitmq.client.AMQP
 import dev.minn.jda.ktx.util.SLF4J
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import net.dv8tion.jda.api.interactions.commands.OptionType
@@ -18,7 +17,6 @@ import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.CommandOption
 import org.cascadebot.bot.rabbitmq.objects.ExecCommandRequest
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
-import org.cascadebot.bot.rabbitmq.objects.MessageResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.ScriptFileData
 import org.cascadebot.bot.rabbitmq.objects.UserResponse
@@ -108,9 +106,14 @@ class InteractionListener : ListenerAdapter() {
         }
 
         event.deferReply(info.ephemeral).queue { hook ->
-            hook.retrieveOriginal().queue {
-                sendCommandRequest(command, event, files, info, it, context)
-            }
+            sendCommandRequest(
+                command,
+                event,
+                files,
+                info,
+                hook.interaction.token,
+                context
+            )
         }
 
     }
@@ -120,7 +123,7 @@ class InteractionListener : ListenerAdapter() {
         event: SlashCommandInteractionEvent,
         files: MutableList<ScriptFileEntity>,
         info: EntrypointInfo,
-        message: Message,
+        interactionToken: String,
         context: CommandContext
     ) {
         val options: MutableMap<String, MutableList<CommandOption<Any>>> = mutableMapOf()
@@ -172,7 +175,7 @@ class InteractionListener : ListenerAdapter() {
             options,
             MemberResponse.fromMember(event.member!!),
             ChannelResponse.fromChannel(event.channel.asTextChannel()),
-            MessageResponse.fromDiscordMessage(message)
+            interactionToken
         )
 
         val bodyBytes = Main.json.writeValueAsBytes(req)
