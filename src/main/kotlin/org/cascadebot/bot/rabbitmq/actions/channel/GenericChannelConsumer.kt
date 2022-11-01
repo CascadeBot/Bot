@@ -58,8 +58,8 @@ class GenericChannelConsumer : ActionConsumer {
                     val newName = body.get("name").asText()
                     channel.manager.setName(newName).queue({
                         val node = Main.json.createObjectNode()
-                        node.put("oldName", old)
-                        node.put("newName", newName)
+                        node.put("old_name", old)
+                        node.put("new_name", newName)
                         RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
                     }, {
                         ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)

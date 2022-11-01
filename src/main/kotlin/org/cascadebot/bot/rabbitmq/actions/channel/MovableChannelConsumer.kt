@@ -55,8 +55,8 @@ class MovableChannelConsumer : ActionConsumer {
                     val newPos = body.get("pos").asInt()
                     channel.manager.setPosition(newPos).queue({
                         val node = Main.json.createObjectNode()
-                        node.put("oldPos", old)
-                        node.put("newPos", newPos)
+                        node.put("old_pos", old)
+                        node.put("new_pos", newPos)
                         RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
                     }, {
                         ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)

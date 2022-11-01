@@ -64,8 +64,8 @@ class TextChannelConsumer : ActionConsumer {
                         val newVal = body.get("topic").asText()
                         channel.manager.setTopic(newVal).queue({
                             val node = Main.json.createObjectNode()
-                            node.put("oldTopic", old)
-                            node.put("newTopic", newVal)
+                            node.put("old_topic", old)
+                            node.put("new_topic", newVal)
                             RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
                             ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
