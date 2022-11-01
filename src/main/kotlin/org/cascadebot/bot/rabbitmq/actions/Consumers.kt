@@ -16,6 +16,7 @@ enum class Consumers(val root: String, val consumer: ActionConsumer, val require
     GENERAL_CHANNEL("channel:general", GenericChannelConsumer(), true),
     MOVABLE_CHANNEL("channel:movable", MovableChannelConsumer(), true),
     THREADED_CHANNEL("channel:threaded", ChannelWithThreadsConsumer(), true),
+    INTERACTION("channel:interaction", InteractionConsumer(), true),
     TEXT_CHANNEL("channel:text", TextChannelConsumer(), true),
     VOICE_CHANNEL("channel:voice", VoiceChanelConsumer(), true),
     MESSAGE("message", MessageConsumer(), true)

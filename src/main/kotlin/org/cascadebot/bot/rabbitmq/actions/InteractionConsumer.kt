@@ -4,14 +4,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import dev.minn.jda.ktx.messages.MessageEditBuilder
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
+import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.actions.channel.ChannelUtils
+import org.cascadebot.bot.MessageType
+import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.InteractionData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
 class InteractionConsumer : ActionConsumer {
 
@@ -22,7 +25,7 @@ class InteractionConsumer : ActionConsumer {
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
         shard: JDA
-    ): RabbitMQResponse<*> {
+    ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
             RabbitMQResponse.failure(
                 StatusCode.BadRequest,
@@ -45,6 +48,55 @@ class InteractionConsumer : ActionConsumer {
                 InvalidErrorCodes.InvalidInteraction,
                 "The specified interaction ID could not be found in the cache"
             )
+        }
+
+        when (parts[0]) {
+            "reply" -> {
+                when (parts[1]) {
+                    // channel:interaction:reply:simple
+                    "simple" -> {
+                        interactionHook.editOriginal(MessageEditBuilder {
+                            embeds += MessageType.INFO.embed.apply {
+                                description = body.get("message").asText()
+                            }.build()
+                        }.build()).queue(
+                            {
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            {
+                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                            }
+                        )
+
+                        // We can't reply to an interaction twice, so we should invalidate this after it's been used
+                        Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
+                        return null
+                    }
+                    // channel:interaction:reply:complex
+                    "complex" -> {
+                        val builder = MessageEditBuilder()
+                        val message = body.get("message")
+                        if (message.has("embeds")) {
+                            builder.setEmbeds(message.get("embeds").map {
+                                Main.json.treeToValue(it, EmbedData::class.java).toDiscordEmbed()
+                            })
+                        }
+                        if (message.has("content")) {
+                            builder.setContent(message.get("content").asText())
+                        }
+
+                        interactionHook.editOriginal(builder.build()).queue({
+                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                        }, {
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                        })
+
+                        // We can't reply to an interaction twice, so we should invalidate this after it's been used
+                        Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
+                        return null
+                    }
+                }
+            }
         }
 
         // TODO Actually do stuff and things
