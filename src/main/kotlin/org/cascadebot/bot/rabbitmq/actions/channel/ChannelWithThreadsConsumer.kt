@@ -57,10 +57,6 @@ class ChannelWithThreadsConsumer : ActionConsumer {
                     )
                 }))
             }
-            // channel:threaded:find
-            "find" -> {
-                // TODO figure out how best to handle this
-            }
         }
 
         return RabbitMQResponse.failure(
