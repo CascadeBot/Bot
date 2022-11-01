@@ -19,6 +19,7 @@ import java.security.spec.ECGenParameterSpec
 import java.security.spec.PKCS8EncodedKeySpec
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
+import kotlin.io.path.Path
 import kotlin.system.exitProcess
 
 sealed class Sharding {
@@ -63,23 +64,45 @@ sealed class DashboardEncryption {
         override val publicKey: ECPublicKey
 
         init {
-            val kpg: KeyPairGenerator = KeyPairGenerator.getInstance("EC")
-            kpg.initialize(ECGenParameterSpec("secp256r1"), SecureRandom())
-            val keyPair: KeyPair = kpg.generateKeyPair()
+            val keyPair = if (Files.exists(Path("generated.pem"))) {
+                if (!Files.exists(Path("generated.pub"))) {
+                    logger.error("Generated private key exists but no public key found. Delete private key to force regeneration or restore public key file.")
+                    throw IllegalArgumentException()
+                }
 
-            privateKey = keyPair.private as ECPrivateKey
-            publicKey = keyPair.public as ECPublicKey
+                val keys = Key("generated.pem", "generated.pub")
+                val publicKeyEncoded =
+                    Base64.getEncoder().encodeToString(keys.publicKey.encoded).chunked(64).joinToString("\n")
+                val publicKeyPem = "-----BEGIN PUBLIC KEY-----\n$publicKeyEncoded\n-----END PUBLIC KEY-----"
 
-            val privateKeyEncoded = Base64.getEncoder().encodeToString(privateKey.encoded).chunked(64).joinToString("\n")
-            val publicKeyEncoded = Base64.getEncoder().encodeToString(publicKey.encoded).chunked(64).joinToString("\n")
+                logger.info("Using existed generated public key:\n$publicKeyPem")
+                KeyPair(keys.publicKey, keys.privateKey)
+            } else {
+                val kpg: KeyPairGenerator = KeyPairGenerator.getInstance("EC")
+                kpg.initialize(ECGenParameterSpec("secp256r1"), SecureRandom())
+                val keyPair: KeyPair = kpg.generateKeyPair()
 
-            val privateKeyPem = "-----BEGIN PRIVATE KEY-----\n$privateKeyEncoded\n-----END PRIVATE KEY-----"
-            val publicKeyPem = "-----BEGIN PUBLIC KEY-----\n$publicKeyEncoded\n-----END PUBLIC KEY-----"
+                val privateKeyEncoded =
+                    Base64.getEncoder().encodeToString(keyPair.private.encoded).chunked(64).joinToString("\n")
+                val publicKeyEncoded =
+                    Base64.getEncoder().encodeToString(keyPair.public.encoded).chunked(64).joinToString("\n")
 
-            File("generated.pem").writeText(privateKeyPem, StandardCharsets.UTF_8)
-            File("generated.pub").writeText(publicKeyPem, StandardCharsets.UTF_8)
+                val privateKeyPem = "-----BEGIN PRIVATE KEY-----\n$privateKeyEncoded\n-----END PRIVATE KEY-----"
+                val publicKeyPem = "-----BEGIN PUBLIC KEY-----\n$publicKeyEncoded\n-----END PUBLIC KEY-----"
 
-            logger.info("Generated public key:\n$publicKeyPem")
+                File("generated.pem").writeText(privateKeyPem, StandardCharsets.UTF_8)
+                File("generated.pub").writeText(publicKeyPem, StandardCharsets.UTF_8)
+
+                logger.info("Public and private key pair have been generated and stored in generated.pub and generated.pem respectively.")
+                logger.info("Generated public key:\n$publicKeyPem")
+
+                KeyPair(keyPair.public as ECPublicKey, keyPair.private as ECPrivateKey)
+            }
+
+            this.privateKey = keyPair.private as ECPrivateKey
+            this.publicKey = keyPair.public as ECPublicKey
+
+
         }
 
     }
