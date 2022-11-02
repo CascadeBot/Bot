@@ -12,10 +12,7 @@ import org.cascadebot.bot.db.entities.GuildSlotEntity
 import org.cascadebot.bot.db.entities.SlotEntry
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.utils.QueryUtils.getEntities
-import org.cascadebot.bot.utils.QueryUtils.queryEntity
 import org.cascadebot.bot.utils.QueryUtils.queryJoinedEntities
-import org.cascadebot.bot.utils.QueryUtils.queryWhereInEntity
 
 class SlotProcessor : Processor {
 
