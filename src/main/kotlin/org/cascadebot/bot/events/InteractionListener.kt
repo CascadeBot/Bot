@@ -20,6 +20,8 @@ import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.ScriptFileData
 import org.cascadebot.bot.rabbitmq.objects.UserResponse
+import org.cascadebot.bot.utils.QueryUtils.queryEntity
+import org.cascadebot.bot.utils.QueryUtils.queryJoinedEntities
 import java.util.UUID
 import org.cascadebot.bot.OptionType as OptType
 
@@ -54,21 +56,16 @@ class InteractionListener : ListenerAdapter() {
 
         val name = event.name
         val command = Main.postgresManager.transaction {
-            val builder = criteriaBuilder
-            val query = builder.createQuery(CustomCommandEntity::class.java)
-            val root = query.from(CustomCommandEntity::class.java)
-            val join = root.join(GuildSlotEntity::class.java)
-            query.where(
-                builder.and(
-                    builder.equal(join.get<Long>("guildId"), event.guild!!.idLong),
-                    builder.equal(root.get<String>("name"), name),
-                    builder.or(
-                        builder.equal(join.get<Boolean>("enabled"), true),
-                        builder.isNull(join.get<Boolean>("enabled"))
+            queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { root, join ->
+                and(
+                    equal(join.get<Long>("guildId"), event.guild!!.idLong),
+                    equal(root.get<String>("name"), name),
+                    or(
+                        equal(join.get<Boolean>("enabled"), true),
+                        isNull(join.get<Boolean>("enabled"))
                     )
                 )
-            )
-            createQuery(query).singleResult
+            }.singleResult
         }
 
         if (command != null) {
@@ -86,12 +83,9 @@ class InteractionListener : ListenerAdapter() {
         command: CustomCommandEntity
     ) {
         val files = Main.postgresManager.transaction {
-            val builder = criteriaBuilder
-            val query = builder.createQuery(ScriptFileEntity::class.java)
-            val root = query.from(ScriptFileEntity::class.java)
-            query.where(builder.equal(root.get<UUID>("slotId"), command.slotId))
-
-            createQuery(query).list()
+            queryEntity(ScriptFileEntity::class.java) { root ->
+                equal(root.get<UUID>("slotId"), command.slotId)
+            }.list()
         }
 
         val info = if (command.entrypoint != null) {

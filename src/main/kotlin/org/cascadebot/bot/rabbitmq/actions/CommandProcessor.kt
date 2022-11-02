@@ -7,7 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 
-class CommandProcessors : Processor {
+class CommandProcessor : Processor {
 
     override fun consume(
         parts: List<String>,
@@ -17,6 +17,16 @@ class CommandProcessors : Processor {
         rabbitMqChannel: Channel,
         shard: JDA
     ): RabbitMQResponse<*>? {
+         /*
+         * Create
+         * Delete
+         * Update
+         * Get By ID
+         * Enable/Disable
+         *
+         */
+
+
         return null
     }
 
