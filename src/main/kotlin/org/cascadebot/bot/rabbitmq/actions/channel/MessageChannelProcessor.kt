@@ -11,11 +11,10 @@ import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
 import org.cascadebot.bot.rabbitmq.actions.Processor
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.EmbedData
-import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MessageData
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
-import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
@@ -36,11 +35,7 @@ class MessageChannelProcessor : Processor {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidChannel,
-                "The specified channel was not found"
-            )
+            return CommonResponses.CHANNEL_NOT_FOUND
         }
 
         channel as MessageChannel
@@ -55,11 +50,7 @@ class MessageChannelProcessor : Processor {
         }*/
 
         if (parts.size <= 1) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         when (parts[0]) {
@@ -132,10 +123,6 @@ class MessageChannelProcessor : Processor {
             }
         }
 
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

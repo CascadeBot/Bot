@@ -7,6 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
 import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -25,11 +26,7 @@ class GlobalProcessor : Processor {
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         if (parts[0] == "test") {
@@ -38,11 +35,7 @@ class GlobalProcessor : Processor {
         }
 
         if (parts.size <= 1) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val guildId = body.get("guild_id").asLong()
@@ -175,10 +168,6 @@ class GlobalProcessor : Processor {
         }
 
         // If it gets to this point, action was not found
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

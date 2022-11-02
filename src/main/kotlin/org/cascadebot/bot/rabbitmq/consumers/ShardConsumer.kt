@@ -7,6 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionProcessors
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -43,11 +44,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
         val consumerEnum = ActionProcessors.values().firstOrNull { action.startsWith(it.root) }
 
         if (consumerEnum == null) {
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            ).sendAndAck(channel, properties, envelope)
+            CommonResponses.UNSUPPORTED_ACTION.sendAndAck(channel, properties, envelope)
             return
         }
 

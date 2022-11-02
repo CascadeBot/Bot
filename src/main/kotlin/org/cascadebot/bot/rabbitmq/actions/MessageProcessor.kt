@@ -8,6 +8,7 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.channel.ChannelUtils
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MessageData
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
@@ -26,11 +27,7 @@ class MessageProcessor : Processor {
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            ).sendAndAck(rabbitMqChannel, properties, envelope)
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val guildId = body.get("guild_id").asLong()
@@ -42,11 +39,7 @@ class MessageProcessor : Processor {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {
-            return RabbitMQResponse.failure(
-                StatusCode.NotFound,
-                MiscErrorCodes.ChannelNotFound,
-                "The specified channel was not found"
-            )
+            return CommonResponses.CHANNEL_NOT_FOUND
         }
 
         if (channel !is MessageChannel) {
@@ -79,11 +72,7 @@ class MessageProcessor : Processor {
                 }
             }
 
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            ).sendAndAck(rabbitMqChannel, properties, envelope)
+            CommonResponses.UNSUPPORTED_ACTION.sendAndAck(rabbitMqChannel, properties, envelope)
         }, {
             ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
         })

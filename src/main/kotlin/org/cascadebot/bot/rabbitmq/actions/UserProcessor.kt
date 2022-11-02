@@ -7,6 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
@@ -26,11 +27,7 @@ class UserProcessor : Processor {
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val userId = body.get("user_id").asLong()
@@ -174,10 +171,6 @@ class UserProcessor : Processor {
 
         }
 
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

@@ -17,7 +17,7 @@ class CommandProcessors : Processor {
         rabbitMqChannel: Channel,
         shard: JDA
     ): RabbitMQResponse<*>? {
-
+        return null
     }
 
 

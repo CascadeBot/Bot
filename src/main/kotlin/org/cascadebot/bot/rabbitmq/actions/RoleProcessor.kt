@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleMoved
@@ -24,11 +25,7 @@ class RoleProcessor : Processor {
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val roleId = body.get("role_id").asLong()
@@ -113,10 +110,6 @@ class RoleProcessor : Processor {
             }
         }
 
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

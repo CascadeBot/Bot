@@ -7,6 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import org.cascadebot.bot.rabbitmq.actions.Processor
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -31,19 +32,11 @@ class VoiceChanelProcessor : Processor {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidChannel,
-                "The specified channel was not found"
-            )
+            return CommonResponses.CHANNEL_NOT_FOUND
         }
 
         if (parts.size <= 1) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         channel as AudioChannel
@@ -90,10 +83,6 @@ class VoiceChanelProcessor : Processor {
             }
         }
 
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

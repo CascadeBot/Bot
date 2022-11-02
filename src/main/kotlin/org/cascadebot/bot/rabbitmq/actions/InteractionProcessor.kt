@@ -9,6 +9,7 @@ import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.InteractionData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -27,11 +28,7 @@ class InteractionProcessor : Processor {
         shard: JDA
     ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            ).sendAndAck(rabbitMqChannel, properties, envelope)
+            return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val guildId = body.get("guild_id").asLong()
@@ -101,6 +98,6 @@ class InteractionProcessor : Processor {
 
         // TODO Actually do stuff and things
 
-        return
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }
