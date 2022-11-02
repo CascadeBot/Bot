@@ -18,7 +18,7 @@ import java.util.UUID
 
 @Entity
 @Table(name = "custom_command")
-class CustomCommandEntity(): Serializable {
+class CustomCommandEntity(): Serializable, SlotEntry {
 
     constructor(slotId: UUID, name: String, description: String, lang: ScriptLang): this() {
         this.slotId = slotId
@@ -40,8 +40,7 @@ class CustomCommandEntity(): Serializable {
 
     @Id
     @Column(name = "slot_id")
-    var slotId: UUID = UUID.randomUUID()
-        private set
+    override var slotId: UUID = UUID.randomUUID()
 
     @Column(name = "name")
     var name: String = ""

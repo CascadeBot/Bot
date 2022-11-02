@@ -14,13 +14,13 @@ import java.util.UUID
 
 @Entity
 @Table(name = "auto_responder")
-class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<String>): Serializable {
+class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<String>): Serializable, SlotEntry {
 
     constructor() : this(UUID.randomUUID(), ObjectMapper().createObjectNode(), mutableListOf())
 
     @Id
     @Column(name = "slot_id")
-    val slotId: UUID = slotId
+    override var slotId: UUID = slotId
 
     @Column(name = "text")
     @Type(JsonType::class)
