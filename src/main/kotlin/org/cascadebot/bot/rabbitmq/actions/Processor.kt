@@ -7,7 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 
-interface ActionConsumer {
+interface Processor {
 
     fun consume(
         parts: List<String>,

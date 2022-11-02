@@ -5,15 +5,13 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.channel.attribute.IPositionableChannel
-import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
+import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class MovableChannelConsumer : ActionConsumer {
+class ThreadChannelProcessor : Processor {
 
     override fun consume(
         parts: List<String>,
@@ -37,33 +35,9 @@ class MovableChannelConsumer : ActionConsumer {
             )
         }
 
-        channel as IPositionableChannel
+        channel as ThreadChannel
 
-        if (parts.size <= 1) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
-            )
-        }
-
-        when (parts[0]) {
-            "position" -> {
-                // channel:general:name:set
-                if (parts[1] == "set") {
-                    val old = channel.position
-                    val newPos = body.get("pos").asInt()
-                    channel.manager.setPosition(newPos).queue({
-                        val node = Main.json.createObjectNode()
-                        node.put("old_pos", old)
-                        node.put("new_pos", newPos)
-                        RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, {
-                        ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                    })
-                }
-            }
-        }
+        // TODO there isn't much onm thread channel that isn't covered else where.
 
         return RabbitMQResponse.failure(
             StatusCode.BadRequest,

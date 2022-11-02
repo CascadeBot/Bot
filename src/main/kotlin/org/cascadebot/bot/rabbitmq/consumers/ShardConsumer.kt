@@ -6,7 +6,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.actions.Consumers
+import org.cascadebot.bot.rabbitmq.actions.ActionProcessors
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -40,7 +40,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
 
         val action = properties.headers["action"].toString()
 
-        val consumerEnum = Consumers.values().firstOrNull { action.startsWith(it.root) }
+        val consumerEnum = ActionProcessors.values().firstOrNull { action.startsWith(it.root) }
 
         if (consumerEnum == null) {
             RabbitMQResponse.failure(
@@ -57,7 +57,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
 
         val actionParts = action.removePrefix(consumerEnum.root).split(":")
 
-        consumerEnum.consumer.consume(
+        consumerEnum.processor.consume(
             actionParts,
             jsonBody,
             envelope,

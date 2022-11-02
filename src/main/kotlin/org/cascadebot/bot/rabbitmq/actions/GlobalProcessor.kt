@@ -14,7 +14,7 @@ import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.utils.PaginationUtil
 
-class GlobalConsumer : ActionConsumer {
+class GlobalProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

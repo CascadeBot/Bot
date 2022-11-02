@@ -15,7 +15,7 @@ import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 import java.awt.Color
 
-class UserConsumer : ActionConsumer {
+class UserProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

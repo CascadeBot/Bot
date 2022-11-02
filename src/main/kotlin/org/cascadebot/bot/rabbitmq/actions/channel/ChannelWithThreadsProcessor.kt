@@ -5,13 +5,16 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
-import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer
+import org.cascadebot.bot.rabbitmq.actions.Processor
+import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.utils.PaginationUtil
 
-class ThreadChannelConsumer : ActionConsumer {
+class ChannelWithThreadsProcessor : Processor {
 
     override fun consume(
         parts: List<String>,
@@ -35,14 +38,28 @@ class ThreadChannelConsumer : ActionConsumer {
             )
         }
 
-        channel as ThreadChannel
+        if (parts.isEmpty()) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidAction,
+                "The specified action is not supported"
+            )
+        }
 
-        // TODO there isn't much onm thread channel that isn't covered else where.
+        channel as IThreadContainer
 
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        when (parts[0]) {
+            // channel:threaded:list
+            "list" -> {
+                val params = PaginationUtil.parsePaginationParameters(body)
+                return RabbitMQResponse.success(params.paginate(channel.threadChannels.map {
+                    ChannelResponse.fromThread(
+                        it
+                    )
+                }))
+            }
+        }
+
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

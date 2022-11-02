@@ -6,7 +6,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
-import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -14,7 +14,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
-class VoiceChanelConsumer : ActionConsumer {
+class VoiceChanelProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

@@ -16,7 +16,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class InteractionConsumer : ActionConsumer {
+class InteractionProcessor : Processor {
 
     override fun consume(
         parts: List<String>,
@@ -101,10 +101,6 @@ class InteractionConsumer : ActionConsumer {
 
         // TODO Actually do stuff and things
 
-        return RabbitMQResponse.failure(
-            StatusCode.BadRequest,
-            InvalidErrorCodes.InvalidAction,
-            "The specified action is not supported"
-        )
+        return
     }
 }

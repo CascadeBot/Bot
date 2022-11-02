@@ -10,7 +10,7 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
-import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MessageData
@@ -19,7 +19,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
-class MessageChannelConsumer : ActionConsumer {
+class MessageChannelProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

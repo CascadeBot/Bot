@@ -15,7 +15,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class MessageConsumer : ActionConsumer {
+class MessageProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

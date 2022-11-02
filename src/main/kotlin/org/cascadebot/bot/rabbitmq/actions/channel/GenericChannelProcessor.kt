@@ -7,7 +7,7 @@ import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
 import org.cascadebot.bot.Main
-import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
+import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.HolderType
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideData
@@ -18,7 +18,7 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
 
-class GenericChannelConsumer : ActionConsumer {
+class GenericChannelProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

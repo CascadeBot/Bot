@@ -13,7 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.RolePermission
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class RoleConsumer : ActionConsumer {
+class RoleProcessor : Processor {
 
     override fun consume(
         parts: List<String>,

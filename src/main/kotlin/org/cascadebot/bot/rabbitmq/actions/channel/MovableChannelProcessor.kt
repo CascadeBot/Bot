@@ -5,15 +5,15 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
-import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer
-import org.cascadebot.bot.rabbitmq.actions.ActionConsumer
-import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
+import net.dv8tion.jda.api.entities.channel.attribute.IPositionableChannel
+import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.utils.PaginationUtil
+import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
-class ChannelWithThreadsConsumer : ActionConsumer {
+class MovableChannelProcessor : Processor {
 
     override fun consume(
         parts: List<String>,
@@ -37,7 +37,9 @@ class ChannelWithThreadsConsumer : ActionConsumer {
             )
         }
 
-        if (parts.isEmpty()) {
+        channel as IPositionableChannel
+
+        if (parts.size <= 1) {
             return RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidAction,
@@ -45,17 +47,21 @@ class ChannelWithThreadsConsumer : ActionConsumer {
             )
         }
 
-        channel as IThreadContainer
-
         when (parts[0]) {
-            // channel:threaded:list
-            "list" -> {
-                val params = PaginationUtil.parsePaginationParameters(body)
-                return RabbitMQResponse.success(params.paginate(channel.threadChannels.map {
-                    ChannelResponse.fromThread(
-                        it
-                    )
-                }))
+            "position" -> {
+                // channel:general:name:set
+                if (parts[1] == "set") {
+                    val old = channel.position
+                    val newPos = body.get("pos").asInt()
+                    channel.manager.setPosition(newPos).queue({
+                        val node = Main.json.createObjectNode()
+                        node.put("old_pos", old)
+                        node.put("new_pos", newPos)
+                        RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
+                    }, {
+                        ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
+                    })
+                }
             }
         }
 
