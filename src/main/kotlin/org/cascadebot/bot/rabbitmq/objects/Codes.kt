@@ -49,6 +49,7 @@ object InvalidErrorCodes {
     val InvalidUser = ErrorCode("invalid_user")
     val InvalidRole = ErrorCode("invalid_role")
     val InvalidChannel = ErrorCode("invalid_channel")
+    val InvalidSlot = ErrorCode("invalid_slot")
 
     val InvalidPermission = ErrorCode("invalid_Permission")
 
@@ -64,6 +65,7 @@ object MiscErrorCodes {
     val UserNotFound = ErrorCode("user_not_found")
     val GuildNotFound = ErrorCode("guild_not_found")
     val ChannelNotFound = ErrorCode("channel_not_found")
+    val SlotNotFound= ErrorCode("slot_not_found")
     val UnexpectedError = ErrorCode("unexpected")
     val BotDoesNotOwnMessage = ErrorCode("unowned_message")
 }

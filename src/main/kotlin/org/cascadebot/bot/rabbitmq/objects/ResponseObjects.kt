@@ -173,7 +173,7 @@ interface SlotEntry : IRMQResponse {
 
 data class CustomCommandResponse(
     override val slotId: UUID,
-    override val enabled: Boolean?,
+    override val enabled: Boolean,
     val name: String,
     val description: String?,
     val marketplaceReference: UUID?,
@@ -185,10 +185,10 @@ data class CustomCommandResponse(
 
     companion object {
 
-        fun fromEntity(slot: GuildSlotEntity, entity: CustomCommandEntity): CustomCommandResponse {
+        fun fromEntity(enabled: Boolean, entity: CustomCommandEntity): CustomCommandResponse {
             return CustomCommandResponse(
                 entity.slotId,
-                slot.enabled,
+                enabled,
                 entity.name,
                 entity.description,
                 entity.marketplaceRef,
