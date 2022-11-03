@@ -9,6 +9,7 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionProcessors
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQException
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
@@ -53,14 +54,18 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
 
         val actionParts = action.removePrefix(consumerEnum.root).split(":")
 
-        consumerEnum.processor.consume(
-            actionParts,
-            jsonBody,
-            envelope,
-            properties,
-            channel,
-            jda
-        )?.sendAndAck(channel, properties, envelope)
+        try {
+            consumerEnum.processor.consume(
+                actionParts,
+                jsonBody,
+                envelope,
+                properties,
+                channel,
+                jda
+            )?.sendAndAck(channel, properties, envelope)
+        } catch (e: RabbitMQException) {
+            e.response.sendAndAck(channel, properties, envelope)
+        }
     }
 
     private fun validateGuildId(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Boolean {

@@ -67,3 +67,13 @@ data class RabbitMQResponse<T> constructor(
  */
 interface IRMQResponse
 interface IRMQRequest
+
+class RabbitMQException(val response: RabbitMQResponse<Nothing>) : Exception(response.error!!.message) {
+
+    init {
+        if (!response.isError) {
+            throw IllegalArgumentException("Exception cannot be used for non-error responses")
+        }
+    }
+
+}
