@@ -52,6 +52,9 @@ class CommandOptionEntity(): Serializable {
     @Enumerated(EnumType.STRING)
     var optionType: OptionType = OptionType.STRING
 
+    @Column(name = "required")
+    var required: Boolean? = false
+
     @Column(name = "constraints")
     @Type(JsonType::class)
     var constraints: JsonNode? = null
@@ -64,6 +67,8 @@ class CommandOptionEntity(): Serializable {
 
     @Column(name = "ephemeral")
     var ephemeral: Boolean? = null
+
+    // TODO: Need to handle choices at some point
 
     @OneToMany
     @JoinTable(name = "option_join", joinColumns = [JoinColumn(name = "parent_option")], inverseJoinColumns = [JoinColumn(name = "child_option")])

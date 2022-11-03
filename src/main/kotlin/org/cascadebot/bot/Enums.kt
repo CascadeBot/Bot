@@ -4,6 +4,7 @@ import dev.minn.jda.ktx.messages.EmbedBuilder
 import dev.minn.jda.ktx.messages.InlineEmbed
 import org.cascadebot.bot.utils.Colors
 import java.awt.Color
+import net.dv8tion.jda.api.interactions.commands.OptionType as JdaOptionType
 
 enum class SlotType {
     CUSTOM_CMD,
@@ -23,17 +24,17 @@ enum class ScriptLang {
     TEXT
 }
 
-enum class OptionType {
-    SUB_COMMAND,
-    SUBCOMMAND_GROUP,
-    USER,
-    MEMBER,
-    ATTACHMENT,
-    ROLE,
-    STRING,
-    NUMBER,
-    CHANNEL,
-    BOOLEAN
+enum class OptionType(val jdaOptionType: JdaOptionType) {
+    SUB_COMMAND(JdaOptionType.SUB_COMMAND),
+    SUBCOMMAND_GROUP(JdaOptionType.SUB_COMMAND_GROUP),
+    USER(JdaOptionType.USER),
+    MEMBER(JdaOptionType.USER),
+    ATTACHMENT(JdaOptionType.ATTACHMENT),
+    ROLE(JdaOptionType.ROLE),
+    STRING(JdaOptionType.STRING),
+    NUMBER(JdaOptionType.NUMBER),
+    CHANNEL(JdaOptionType.CHANNEL),
+    BOOLEAN(JdaOptionType.BOOLEAN)
 }
 
 enum class MessageType {
