@@ -54,7 +54,7 @@ class MessageProcessor : Processor {
             when (parts[0]) {
                 // message:edit
                 "edit" -> {
-                    it.editMessage(rmqMessage.toDiscordEditMessage()).queue({
+                    it.editMessage(rmqMessage.messageEditData).queue({
                         RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
                     },
                         { error ->

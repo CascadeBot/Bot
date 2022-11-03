@@ -75,7 +75,7 @@ class InteractionProcessor : Processor {
                         val message = body.get("message")
                         if (message.has("embeds")) {
                             builder.setEmbeds(message.get("embeds").map {
-                                Main.json.treeToValue(it, EmbedData::class.java).toDiscordEmbed()
+                                Main.json.treeToValue(it, EmbedData::class.java).messageEmbed
                             })
                         }
                         if (message.has("content")) {

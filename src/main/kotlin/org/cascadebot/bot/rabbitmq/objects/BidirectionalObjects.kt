@@ -157,7 +157,7 @@ data class MessageData(val messageId: Long, val channelId: Long, val content: St
         builder.build()
     }
 
-    val discordEditData by lazy {
+    val messageEditData by lazy {
         val builder = MessageEditBuilder()
         builder.embeds.clear()
         for (embedObj in embeds) {
