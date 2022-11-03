@@ -4,8 +4,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
+import dev.minn.jda.ktx.interactions.commands.Subcommand
+import dev.minn.jda.ktx.interactions.commands.SubcommandGroup
+import dev.minn.jda.ktx.interactions.commands.option
+import dev.minn.jda.ktx.interactions.commands.upsertCommand
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.interactions.commands.Command
+import net.dv8tion.jda.api.interactions.commands.build.CommandData
+import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
+import org.cascadebot.bot.CustomCommandType
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.OptionType
 import org.cascadebot.bot.db.entities.AutoResponderEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
 import org.cascadebot.bot.db.entities.GuildSlotEntity
@@ -168,6 +178,92 @@ class SlotProcessor : Processor {
             }
 
             "enable" -> {
+                val slot = getSlot(body, guildId)
+
+                when {
+                    slot.isCustomCommand -> {
+                        val command = Main.postgresManager.transaction {
+                            tryOrNull {
+                                queryEntity(CustomCommandEntity::class.java) { root ->
+                                    equal(root.get<UUID>("slotId"), slot.slotId)
+                                }.singleResult
+                            }
+                        }
+
+                        if (command == null) {
+                            return RabbitMQResponse.failure(
+                                StatusCode.NotFound,
+                                MiscErrorCodes.SlotNotFound,
+                                "A custom command for the slot specified could not be found"
+                            )
+                        }
+
+                        val commandData = when (command.type) {
+                            CustomCommandType.SLASH -> {
+                                val data = Commands.slash(command.name, command.description ?: "No description")
+                                data.isGuildOnly = true
+                                command.options.forEach { option ->
+                                    when (option.optionType) {
+                                        OptionType.SUB_COMMAND -> {
+                                            data.addSubcommands(Subcommand(option.name, option.description) {
+                                                option.subOptions.forEach { subOption ->
+                                                    data.addOption(subOption.optionType.jdaOptionType, subOption.name, subOption.description, subOption.required ?: false, subOption.autocomplete ?: false)
+                                                }
+                                            })
+                                        }
+                                        OptionType.SUBCOMMAND_GROUP -> {
+                                            data.addSubcommandGroups(SubcommandGroup(option.name, option.description) {
+                                                option.subOptions.forEach { subCommand ->
+                                                    data.addOption(subCommand.optionType.jdaOptionType, subCommand.name, subCommand.description, subCommand.required ?: false, subCommand.autocomplete ?: false)
+                                                    subCommand.subOptions.forEach { subOption ->
+                                                        data.addOption(subOption.optionType.jdaOptionType, subOption.name, subOption.description, subOption.required ?: false, subOption.autocomplete ?: false)
+                                                    }
+                                                }
+                                            })
+                                        }
+                                        else -> {
+                                            data.addOption(option.optionType.jdaOptionType, option.name, option.description, option.required ?: false, option.autocomplete ?: false)
+                                        }
+                                    }
+                                }
+                                data
+                            }
+                            CustomCommandType.CONTEXT_USER -> {
+                                val data = Commands.user(command.name)
+                                data.isGuildOnly = true
+                                data
+                            }
+                            CustomCommandType.CONTEXT_MESSAGE -> {
+                                val data = Commands.message(command.name)
+                                data.isGuildOnly = true
+                                data
+                            }
+                        }
+
+                        guild.upsertCommand(commandData).queue {
+
+                        }
+
+                        guild.retrieveCommands().queue { commands ->
+                            val exists =
+                                commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
+
+                            RabbitMQResponse.success("enabled", exists)
+                        }
+                    }
+
+                    slot.isAutoResponder -> {
+                        return RabbitMQResponse.success("enabled", slot.enabled)
+                    }
+
+                    else -> {
+                        return RabbitMQResponse.failure(
+                            StatusCode.ServerException,
+                            MiscErrorCodes.UnexpectedError,
+                            "Slot is an unsupported type"
+                        )
+                    }
+                }
 
             }
         }
