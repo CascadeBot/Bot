@@ -14,6 +14,7 @@ import org.cascadebot.bot.CustomCommandType
 import org.cascadebot.bot.ScriptLang
 import org.cascadebot.bot.db.entities.AutoResponderEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
+import org.cascadebot.bot.db.entities.GuildSlotEntity
 import java.awt.Color
 import java.util.UUID
 
@@ -167,10 +168,12 @@ data class MutualGuildResponse(
 interface SlotEntry : IRMQResponse {
 
     val slotId: UUID
+    val enabled: Boolean?
 }
 
 data class CustomCommandResponse(
     override val slotId: UUID,
+    override val enabled: Boolean?,
     val name: String,
     val description: String?,
     val marketplaceReference: UUID?,
@@ -182,9 +185,10 @@ data class CustomCommandResponse(
 
     companion object {
 
-        fun fromEntity(entity: CustomCommandEntity): CustomCommandResponse {
+        fun fromEntity(slot: GuildSlotEntity, entity: CustomCommandEntity): CustomCommandResponse {
             return CustomCommandResponse(
                 entity.slotId,
+                slot.enabled,
                 entity.name,
                 entity.description,
                 entity.marketplaceRef,
@@ -200,15 +204,17 @@ data class CustomCommandResponse(
 
 data class AutoResponderResponse(
     override val slotId: UUID,
+    override val enabled: Boolean?,
     val text: JsonNode,
     val matchText: List<String>?
 ) : IRMQResponse, SlotEntry {
 
     companion object {
 
-        fun fromEntity(entity: AutoResponderEntity): AutoResponderResponse {
+        fun fromEntity(slot: GuildSlotEntity, entity: AutoResponderEntity): AutoResponderResponse {
             return AutoResponderResponse(
                 entity.slotId,
+                slot.enabled,
                 entity.text,
                 entity.match
             )
