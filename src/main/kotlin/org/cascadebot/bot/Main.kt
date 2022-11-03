@@ -13,6 +13,7 @@ import kotlinx.cli.ArgParser
 import kotlinx.cli.ArgType
 import net.dv8tion.jda.api.JDABuilder
 import net.dv8tion.jda.api.entities.Activity
+import net.dv8tion.jda.api.entities.ApplicationInfo
 import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.requests.GatewayIntent
 import net.dv8tion.jda.api.sharding.DefaultShardManagerBuilder
@@ -42,6 +43,9 @@ object Main {
         Caffeine.newBuilder().expireAfterWrite(20, TimeUnit.MINUTES).build()
 
     lateinit var shardManager: ShardManager
+        private set
+
+    lateinit var applicationInfo: ApplicationInfo
         private set
 
     lateinit var commandManager: CommandManager
@@ -98,7 +102,7 @@ object Main {
         commandManager = CommandManager()
 
         shardManager = buildShardManager()
-
+        applicationInfo = shardManager.retrieveApplicationInfo().complete()
     }
 
     private fun loadConfig(): Config {
