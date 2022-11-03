@@ -1,5 +1,7 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
@@ -11,7 +13,7 @@ data class RabbitMQError(
     val message: String
 )
 
-data class RabbitMQResponse<T : Any> constructor(
+data class RabbitMQResponse<T> constructor(
     val statusCode: StatusCode,
     val data: T?,
     val error: RabbitMQError?
@@ -19,15 +21,21 @@ data class RabbitMQResponse<T : Any> constructor(
 
     companion object {
 
-        fun <T : Any> success(data: T): RabbitMQResponse<T> {
-            return RabbitMQResponse(StatusCode.Success, data, null)
+        fun <T : IRMQResponse> success(data: T) = RabbitMQResponse(StatusCode.Success, data, null)
+
+        fun <T : IRMQResponse> success(data: List<T>) = RabbitMQResponse(StatusCode.Success, data, null)
+
+        fun success(jsonObj: JsonNode) = RabbitMQResponse(StatusCode.Success, jsonObj, null)
+
+        fun success(key: String, value: Any?): RabbitMQResponse<ObjectNode> {
+            val node = Main.json.createObjectNode()
+            node.putPOJO(key, value)
+            return RabbitMQResponse(StatusCode.Success, node, null)
         }
 
-        fun success(): RabbitMQResponse<Void> {
-            return RabbitMQResponse(StatusCode.Success, null, null)
-        }
+        fun success() = RabbitMQResponse(StatusCode.Success, null, null)
 
-        fun failure(statusCode: StatusCode, errorCode: ErrorCode, message: String): RabbitMQResponse<Unit> {
+        fun failure(statusCode: StatusCode, errorCode: ErrorCode, message: String): RabbitMQResponse<Nothing> {
             return RabbitMQResponse(statusCode, null, RabbitMQError(errorCode, message))
         }
     }
@@ -49,3 +57,9 @@ data class RabbitMQResponse<T : Any> constructor(
     }
 
 }
+
+/*
+ * Marker interfaces to mark objects which are designed to be used for response/request logic
+ */
+interface IRMQResponse
+interface IRMQRequest

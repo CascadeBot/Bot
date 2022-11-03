@@ -6,7 +6,6 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
-import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -61,9 +60,7 @@ class UserProcessor : Processor {
                 Color.BLACK.rgb
                 // user:color:get
                 if (parts[1] == "get") {
-                    val node = Main.json.createObjectNode()
-                    node.replace("color", Main.json.valueToTree(member.color))
-                    return RabbitMQResponse.success(node)
+                    return RabbitMQResponse.success("color", member.color)
                 }
             }
 
@@ -79,9 +76,7 @@ class UserProcessor : Processor {
                     )
                 }
                 if (parts[1] == "has") {
-                    val node = Main.json.createObjectNode()
-                    node.put("hasPerm", member.hasPermission(permission))
-                    return RabbitMQResponse.success(node)
+                    return RabbitMQResponse.success("has_perm", member.hasPermission(permission))
                 }
             }
 
@@ -134,10 +129,7 @@ class UserProcessor : Processor {
                     }
                     // user:role:has
                     "has" -> {
-                        val hasRole = member.roles.contains(role)
-                        val node = Main.json.createObjectNode()
-                        node.put("hasRole", hasRole)
-                        return RabbitMQResponse.success(node)
+                        return RabbitMQResponse.success("has_role", member.roles.contains(role))
                     }
 
                 }

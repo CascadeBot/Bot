@@ -31,7 +31,6 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
         // If this is a broadcast request, send to a separate processor
         if (envelope.routingKey == "shard.all") {
             onShardBroadcast(
-                consumerTag,
                 envelope,
                 properties,
                 jsonBody

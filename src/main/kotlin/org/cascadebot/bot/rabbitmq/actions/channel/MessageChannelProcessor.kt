@@ -77,7 +77,7 @@ class MessageChannelProcessor : Processor {
                         if (message.has("embeds")) {
                             for (embedObj in message.get("embeds")) {
                                 val embed = Main.json.treeToValue(embedObj, EmbedData::class.java)
-                                builder.addEmbeds(embed.toDiscordEmbed())
+                                builder.addEmbeds(embed.messageEmbed)
                             }
                         }
                         if (message.has("content")) {
@@ -101,7 +101,7 @@ class MessageChannelProcessor : Processor {
                         val params = PaginationUtil.parsePaginationParameters(body)
                         channel.getHistoryBefore(params.start, params.count).queue({ history ->
                             RabbitMQResponse.success(history
-                                .retrievedHistory.map { MessageData.fromDiscordMessage(it) })
+                                .retrievedHistory.map { MessageData.fromMessage(it) })
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         }, {
                             ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
@@ -112,7 +112,7 @@ class MessageChannelProcessor : Processor {
                     "id" -> {
                         val messageId = body.get("message_id").asLong()
                         channel.retrieveMessageById(messageId).queue({
-                            RabbitMQResponse.success(MessageData.fromDiscordMessage(it))
+                            RabbitMQResponse.success(MessageData.fromMessage(it))
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
                         },
                             {

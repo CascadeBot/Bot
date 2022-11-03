@@ -9,9 +9,11 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.db.entities.AutoResponderEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
 import org.cascadebot.bot.db.entities.GuildSlotEntity
-import org.cascadebot.bot.db.entities.SlotEntry
+import org.cascadebot.bot.rabbitmq.objects.AutoResponderResponse
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
+import org.cascadebot.bot.rabbitmq.objects.CustomCommandResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.SlotEntry
 import org.cascadebot.bot.utils.QueryUtils.queryJoinedEntities
 
 class SlotProcessor : Processor {
@@ -34,12 +36,14 @@ class SlotProcessor : Processor {
         when (parts[0]) {
             "getAll" -> {
                 val list: List<SlotEntry> = Main.postgresManager.transaction {
-                    val customCommands = queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
-                        equal(join.get<Long>("guildId"), guildId)
-                    }.list()
-                    val autoResponders = queryJoinedEntities(AutoResponderEntity::class.java, GuildSlotEntity::class.java) { _, join ->
-                        equal(join.get<Long>("guildId"), guildId)
-                    }.list()
+                    val customCommands =
+                        queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
+                            equal(join.get<Long>("guildId"), guildId)
+                        }.list().map { CustomCommandResponse.fromEntity(it) }
+                    val autoResponders =
+                        queryJoinedEntities(AutoResponderEntity::class.java, GuildSlotEntity::class.java) { _, join ->
+                            equal(join.get<Long>("guildId"), guildId)
+                        }.list().map { AutoResponderResponse.fromEntity(it) }
 
                     customCommands + autoResponders
                 }
@@ -52,6 +56,6 @@ class SlotProcessor : Processor {
         *
         */
 
-        TODO("Not yet implemented")
+        return CommonResponses.UNSUPPORTED_ACTION
     }
 }

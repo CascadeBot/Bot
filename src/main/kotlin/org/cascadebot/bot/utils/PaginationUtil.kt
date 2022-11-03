@@ -1,9 +1,8 @@
 package org.cascadebot.bot.utils
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import net.dv8tion.jda.api.entities.IMentionable
 import net.dv8tion.jda.api.entities.ISnowflake
-import kotlin.streams.toList
+import org.cascadebot.bot.rabbitmq.objects.IRMQResponse
 
 object PaginationUtil {
 
@@ -21,12 +20,13 @@ object PaginationUtil {
         )
     }
 
-    data class PaginationResult<T : ISnowflake>(val start: Long, val end: Long, val count: Int, val items: List<T>)
+    data class PaginationResult<T : ISnowflake>(val start: Long, val end: Long, val count: Int, val items: List<T>) :
+        IRMQResponse
 
     data class PaginationParameters(val start: Long, val count: Int) {
 
-        fun <T : ISnowflake> paginate(list: List<T>) {
-            paginate(list, this)
+        fun <T : ISnowflake> paginate(list: List<T>): PaginationResult<T> {
+            return paginate(list, this)
         }
     }
 

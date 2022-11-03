@@ -45,9 +45,7 @@ class TextChannelProcessor : Processor {
                 when (parts[1]) {
                     // channel:text:topic:get
                     "get" -> {
-                        val node = Main.json.createObjectNode()
-                        node.put("topic", channel.topic)
-                        return RabbitMQResponse.success(node)
+                        return RabbitMQResponse.success("topic", channel.topic)
                     }
                     // channel:text:topic:set
                     "set" -> {

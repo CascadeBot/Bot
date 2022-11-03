@@ -1,5 +1,6 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Envelope
@@ -14,7 +15,6 @@ import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject
 
 fun ShardConsumer.onShardBroadcast(
-    consumerTag: String,
     envelope: Envelope,
     properties: AMQP.BasicProperties,
     body: ObjectNode
@@ -72,6 +72,8 @@ fun ShardConsumer.onShardBroadcast(
         }
     }
 
-    val wrappedResponse = RabbitMQResponse.success(response)
+    val jsonResponse = Main.json.valueToTree<JsonNode>(response)
+
+    val wrappedResponse = RabbitMQResponse.success(jsonResponse)
     wrappedResponse.sendAndAck(channel, properties, envelope)
 }

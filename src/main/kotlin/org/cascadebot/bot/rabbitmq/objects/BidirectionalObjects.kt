@@ -8,9 +8,7 @@ import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.entities.PermissionOverride
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
-import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
-import net.dv8tion.jda.api.utils.messages.MessageEditData
 import org.cascadebot.bot.MessageType
 import java.awt.Color
 import java.time.Instant
@@ -32,7 +30,7 @@ data class PermissionOverrideData(
     val holderId: Long,
     val holderType: HolderType,
     val permissions: List<PermissionOverridePermission>
-) : ISnowflake {
+) : ISnowflake, IRMQResponse, IRMQRequest {
 
     companion object {
 
@@ -80,12 +78,12 @@ data class EmbedData(
     val fields: List<EmbedFieldData>?,
     val messageType: MessageType?,
     @JsonProperty("color") private val col: Color?
-) {
+) : IRMQResponse, IRMQRequest {
 
     val color
         get() = if (messageType != null) messageType.color else col
 
-    fun toDiscordEmbed(): MessageEmbed {
+    val messageEmbed by lazy {
         val builder = EmbedBuilder()
         builder.setTitle(title, url)
         builder.setDescription(description)
@@ -106,7 +104,7 @@ data class EmbedData(
             builder.addField(it.name, it.value, it.inline)
         }
 
-        return builder.build()
+        builder.build()
     }
 
     companion object {
@@ -148,39 +146,39 @@ data class EmbedData(
 }
 
 data class MessageData(val messageId: Long, val channelId: Long, val content: String, val embeds: List<EmbedData>) :
-    ISnowflake {
+    ISnowflake, IRMQResponse, IRMQRequest {
 
-    companion object {
-
-        fun fromDiscordMessage(message: Message): MessageData {
-            val embeds = message.embeds.map {
-                EmbedData.fromDiscordEmbed(it)
-            }
-            return MessageData(message.idLong, message.channel.idLong, message.contentRaw, embeds)
+    val messageCreateData by lazy {
+        val builder = MessageCreateBuilder()
+        for (embedObj in embeds) {
+            builder.addEmbeds(embedObj.messageEmbed)
         }
+        builder.setContent(content)
+        builder.build()
+    }
+
+    val discordEditData by lazy {
+        val builder = MessageEditBuilder()
+        builder.embeds.clear()
+        for (embedObj in embeds) {
+            builder.embeds.add(embedObj.messageEmbed)
+        }
+        builder.setContent(content)
+        builder.build()
     }
 
     override fun getIdLong(): Long {
         return messageId
     }
 
-    fun toDiscordCreateMessage(): MessageCreateData {
-        val builder = MessageCreateBuilder()
-        for (embedObj in embeds) {
-            builder.addEmbeds(embedObj.toDiscordEmbed())
-        }
-        builder.setContent(content)
-        return builder.build()
-    }
+    companion object {
 
-    fun toDiscordEditMessage(): MessageEditData {
-        val builder = MessageEditBuilder()
-        builder.embeds.clear()
-        for (embedObj in embeds) {
-            builder.embeds.add(embedObj.toDiscordEmbed())
+        fun fromMessage(message: Message): MessageData {
+            val embeds = message.embeds.map {
+                EmbedData.fromDiscordEmbed(it)
+            }
+            return MessageData(message.idLong, message.channel.idLong, message.contentRaw, embeds)
         }
-        builder.setContent(content)
-        return builder.build()
     }
 
 }

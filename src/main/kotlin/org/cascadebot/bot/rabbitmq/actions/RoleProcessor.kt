@@ -11,6 +11,7 @@ import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleMoved
 import org.cascadebot.bot.rabbitmq.objects.RolePermission
+import org.cascadebot.bot.rabbitmq.objects.RoleTagsResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 
@@ -105,7 +106,7 @@ class RoleProcessor : Processor {
             "tags" -> {
                 // role:tags:get
                 if (parts[1] == "get") {
-                    return RabbitMQResponse.success(role.tags)
+                    return RabbitMQResponse.success(RoleTagsResponse.fromTags(role.tags))
                 }
             }
         }

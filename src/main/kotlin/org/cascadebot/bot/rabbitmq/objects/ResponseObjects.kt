@@ -1,21 +1,24 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import com.fasterxml.jackson.databind.JsonNode
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.ISnowflake
 import net.dv8tion.jda.api.entities.Member
-import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.Role
+import net.dv8tion.jda.api.entities.Role.RoleTags
 import net.dv8tion.jda.api.entities.User
 import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
-import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
-import net.dv8tion.jda.api.utils.messages.MessageCreateData
-import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
-import net.dv8tion.jda.api.utils.messages.MessageEditData
+import org.cascadebot.bot.CustomCommandType
+import org.cascadebot.bot.ScriptLang
+import org.cascadebot.bot.db.entities.AutoResponderEntity
+import org.cascadebot.bot.db.entities.CustomCommandEntity
 import java.awt.Color
+import java.util.UUID
 
-data class UserResponse(val id: String, val name: String, val avatarUrl: String, val discriminator: String) {
+data class UserResponse(val id: String, val name: String, val avatarUrl: String, val discriminator: String) :
+    IRMQResponse {
 
     companion object {
 
@@ -32,7 +35,7 @@ data class MemberResponse(
     val avatarUrl: String,
     val nickname: String?,
     val discriminator: String
-) : ISnowflake {
+) : ISnowflake, IRMQResponse {
 
     companion object {
 
@@ -62,7 +65,7 @@ data class RoleResponse(
     val emoji: String?,
     val mentionable: Boolean = false,
     val hoisted: Boolean = false
-) : ISnowflake {
+) : ISnowflake, IRMQResponse {
 
     companion object {
 
@@ -85,11 +88,34 @@ data class RoleResponse(
     }
 }
 
-data class RolePermission(val permission: Permission, val state: Boolean)
+data class RoleTagsResponse(
+    val botId: String?,
+    val integrationId: String?,
+    val bot: Boolean,
+    val boost: Boolean,
+    val integration: Boolean
+) : IRMQResponse {
 
-data class RoleMoved(val prevPos: Int, val newPos: Int)
+    companion object {
 
-data class ChannelResponse(val id: Long, val name: String, val type: String, val position: Int) : ISnowflake {
+        fun fromTags(tags: RoleTags) = RoleTagsResponse(
+            tags.botId,
+            tags.integrationId,
+            tags.isBot,
+            tags.isBoost,
+            tags.isIntegration,
+        )
+    }
+
+}
+
+data class RolePermission(val permission: Permission, val state: Boolean) : IRMQResponse
+
+data class RoleMoved(val prevPos: Int, val newPos: Int) : IRMQResponse
+
+data class ChannelResponse(val id: Long, val name: String, val type: String, val position: Int) : ISnowflake,
+    IRMQResponse {
+
     companion object {
 
         fun fromChannel(channel: StandardGuildChannel): ChannelResponse {
@@ -122,7 +148,7 @@ data class MutualGuildResponse(
     val iconUrl: String?,
     val memberCount: Int,
     val onlineCount: Int
-) {
+) : IRMQResponse {
 
     companion object {
 
@@ -138,4 +164,57 @@ data class MutualGuildResponse(
     }
 }
 
+interface SlotEntry : IRMQResponse {
+
+    val slotId: UUID
+}
+
+data class CustomCommandResponse(
+    override val slotId: UUID,
+    val name: String,
+    val description: String?,
+    val marketplaceReference: UUID?,
+    val type: CustomCommandType,
+    val scriptLang: ScriptLang,
+    val entrypoint: UUID?,
+    val ephemeral: Boolean?
+) : IRMQResponse, SlotEntry {
+
+    companion object {
+
+        fun fromEntity(entity: CustomCommandEntity): CustomCommandResponse {
+            return CustomCommandResponse(
+                entity.slotId,
+                entity.name,
+                entity.description,
+                entity.marketplaceRef,
+                entity.type,
+                entity.lang,
+                entity.entrypoint,
+                entity.ephemeral
+            )
+        }
+    }
+
+}
+
+data class AutoResponderResponse(
+    override val slotId: UUID,
+    val text: JsonNode,
+    val matchText: List<String>?
+) : IRMQResponse, SlotEntry {
+
+    companion object {
+
+        fun fromEntity(entity: AutoResponderEntity): AutoResponderResponse {
+            return AutoResponderResponse(
+                entity.slotId,
+                entity.text,
+                entity.match
+            )
+        }
+
+    }
+
+}
 

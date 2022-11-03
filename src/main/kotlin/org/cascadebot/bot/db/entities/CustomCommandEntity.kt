@@ -18,9 +18,9 @@ import java.util.UUID
 
 @Entity
 @Table(name = "custom_command")
-class CustomCommandEntity(): Serializable, SlotEntry {
+class CustomCommandEntity() : Serializable {
 
-    constructor(slotId: UUID, name: String, description: String, lang: ScriptLang): this() {
+    constructor(slotId: UUID, name: String, description: String, lang: ScriptLang) : this() {
         this.slotId = slotId
         this.name = name
         this.description = description
@@ -28,7 +28,7 @@ class CustomCommandEntity(): Serializable, SlotEntry {
         this.lang = lang
     }
 
-    constructor(slotId: UUID, name: String, customCommandType: CustomCommandType, lang: ScriptLang): this() {
+    constructor(slotId: UUID, name: String, customCommandType: CustomCommandType, lang: ScriptLang) : this() {
         if (customCommandType == CustomCommandType.SLASH) {
             throw UnsupportedOperationException("Cannot provide custom command type of slash for this constructor")
         }
@@ -40,7 +40,8 @@ class CustomCommandEntity(): Serializable, SlotEntry {
 
     @Id
     @Column(name = "slot_id")
-    override var slotId: UUID = UUID.randomUUID()
+    var slotId: UUID = UUID.randomUUID()
+        private set
 
     @Column(name = "name")
     var name: String = ""
