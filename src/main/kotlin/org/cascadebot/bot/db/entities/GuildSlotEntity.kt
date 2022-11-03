@@ -33,4 +33,10 @@ class GuildSlotEntity(slotType: SlotType, guildId: Long): Serializable {
     @Column(name = "enabled")
     var enabled: Boolean? = null
 
+    val isCustomCommand
+        get() = slotType == SlotType.CUSTOM_CMD || slotType == SlotType.TEXT || slotType == SlotType.PROVIDED
+
+    val isAutoResponder
+        get() = slotType == SlotType.AUTO_REPLY
+
 }

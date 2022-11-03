@@ -19,6 +19,10 @@ data class RabbitMQResponse<T> constructor(
     val error: RabbitMQError?
 ) {
 
+    val isError by lazy { error != null }
+
+    val isData by lazy { data != null }
+
     companion object {
 
         fun <T : IRMQResponse> success(data: T) = RabbitMQResponse(StatusCode.Success, data, null)
