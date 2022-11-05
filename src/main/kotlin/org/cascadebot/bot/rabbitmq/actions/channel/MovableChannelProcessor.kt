@@ -6,11 +6,11 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.attribute.IPositionableChannel
-import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
+import org.cascadebot.bot.utils.createJsonObject
 
 class MovableChannelProcessor : Processor {
 
@@ -45,9 +45,10 @@ class MovableChannelProcessor : Processor {
                     val old = channel.position
                     val newPos = body.get("pos").asInt()
                     channel.manager.setPosition(newPos).queue({
-                        val node = Main.json.createObjectNode()
-                        node.put("old_pos", old)
-                        node.put("new_pos", newPos)
+                        val node = createJsonObject(
+                            "old_pos" to old,
+                            "new_pos" to newPos
+                        )
                         RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
                     }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                 }

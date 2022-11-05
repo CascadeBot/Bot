@@ -16,6 +16,7 @@ import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideState
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
+import org.cascadebot.bot.utils.createJsonObject
 
 class GenericChannelProcessor : Processor {
 
@@ -45,12 +46,13 @@ class GenericChannelProcessor : Processor {
             "name" -> {
                 // channel:general:name:set
                 if (parts[1] == "set") {
-                    val old = channel.name
+                    val oldName = channel.name
                     val newName = body.get("name").asText()
                     channel.manager.setName(newName).queue({
-                        val node = Main.json.createObjectNode()
-                        node.put("old_name", old)
-                        node.put("new_name", newName)
+                        val node = createJsonObject(
+                            "old_name" to oldName,
+                            "new_name" to newName
+                        )
                         RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
                     }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                 }

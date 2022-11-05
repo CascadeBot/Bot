@@ -7,6 +7,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.utils.RabbitMQUtil
+import org.cascadebot.bot.utils.createJsonObject
 
 data class RabbitMQError(
     val errorCode: ErrorCode,
@@ -32,9 +33,10 @@ data class RabbitMQResponse<T> constructor(
         fun success(jsonObj: JsonNode) = RabbitMQResponse(StatusCode.Success, jsonObj, null)
 
         fun success(key: String, value: Any?): RabbitMQResponse<ObjectNode> {
-            val node = Main.json.createObjectNode()
-            node.putPOJO(key, value)
-            return RabbitMQResponse(StatusCode.Success, node, null)
+            val obj = createJsonObject(
+                key to value
+            )
+            return RabbitMQResponse(StatusCode.Success, obj, null)
         }
 
         fun success() = RabbitMQResponse(StatusCode.Success, null, null)

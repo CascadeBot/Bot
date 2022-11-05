@@ -1,6 +1,5 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
-import com.fasterxml.jackson.databind.node.IntNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
@@ -8,6 +7,7 @@ import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import org.cascadebot.bot.utils.createJsonObject
 
 class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
@@ -19,27 +19,26 @@ class MetaConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
     ) {
         if (!assertReplyTo(properties, envelope)) return
 
-        val response = Main.json.createObjectNode()
+        val responseProps = mutableListOf<Pair<String, Any?>>()
 
         val property = properties.headers["action"].toString()
 
         when (property) {
             "shard_count" -> {
-                response.set("shard_count", IntNode(Main.shardManager.shardsTotal))
+                responseProps.add("shard_count" to Main.shardManager.shardsTotal)
             }
 
             else -> {
-                val responseObject = RabbitMQResponse.failure(
+                RabbitMQResponse.failure(
                     StatusCode.BadRequest,
                     InvalidErrorCodes.InvalidProperty,
                     "The property '$property' is invalid"
-                )
-                responseObject.sendAndAck(channel, properties, envelope)
+                ).sendAndAck(channel, properties, envelope)
                 return
             }
         }
 
-        val responseObject = RabbitMQResponse.success(response)
+        val responseObject = RabbitMQResponse.success(createJsonObject(responseProps))
         responseObject.sendAndAck(channel, properties, envelope)
     }
 

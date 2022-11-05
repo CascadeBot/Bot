@@ -6,13 +6,13 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
-import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
+import org.cascadebot.bot.utils.createJsonObject
 
 class TextChannelProcessor : Processor {
 
@@ -52,9 +52,10 @@ class TextChannelProcessor : Processor {
                         val old = channel.topic
                         val newVal = body.get("topic").asText()
                         channel.manager.setTopic(newVal).queue({
-                            val node = Main.json.createObjectNode()
-                            node.put("old_topic", old)
-                            node.put("new_topic", newVal)
+                            val node = createJsonObject(
+                                "old_topic" to old,
+                                "new_topic" to newVal
+                            )
                             RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
                         }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         return null
