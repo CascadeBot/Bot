@@ -55,7 +55,7 @@ class InteractionListener : ListenerAdapter() {
         }
 
         val name = event.name
-        val command = Main.postgresManager.transaction {
+        val command = Main.postgres.transaction {
             queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { root, join ->
                 and(
                     equal(join.get<Long>("guildId"), event.guild!!.idLong),
@@ -82,7 +82,7 @@ class InteractionListener : ListenerAdapter() {
         context: CommandContext,
         command: CustomCommandEntity
     ) {
-        val files = Main.postgresManager.transaction {
+        val files = Main.postgres.transaction {
             queryEntity(ScriptFileEntity::class.java) { root ->
                 equal(root.get<UUID>("slotId"), command.slotId)
             }.list()

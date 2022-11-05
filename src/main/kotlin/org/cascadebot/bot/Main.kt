@@ -51,7 +51,7 @@ object Main {
     lateinit var commandManager: CommandManager
         private set
 
-    lateinit var postgresManager: PostgresManager
+    lateinit var postgres: PostgresManager
         private set
 
     var rabbitMQManager: RabbitMQManager? = null
@@ -82,7 +82,7 @@ object Main {
         componentCache = ComponentCache(config.values.maxComponentsCachedPerChannel)
 
         try {
-            postgresManager = PostgresManager(config.database)
+            postgres = PostgresManager(config.database)
         } catch (e: HibernateException) {
             // Get the root Hibernate exception
             var exception = e
