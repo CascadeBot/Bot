@@ -49,9 +49,7 @@ class MovableChannelProcessor : Processor {
                         node.put("old_pos", old)
                         node.put("new_pos", newPos)
                         RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, {
-                        ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                    })
+                    }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                 }
             }
         }

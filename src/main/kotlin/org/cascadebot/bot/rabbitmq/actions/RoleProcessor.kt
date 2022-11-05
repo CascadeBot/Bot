@@ -90,7 +90,7 @@ class RoleProcessor : Processor {
                                     InvalidErrorCodes.InvalidPosition,
                                     "The specified position is out of bounds!"
                                 )
-                            } else ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                            } else ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
                         }
                     )
                     return null

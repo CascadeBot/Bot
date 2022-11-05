@@ -73,9 +73,7 @@ class MessageProcessor : Processor {
             }
 
             CommonResponses.UNSUPPORTED_ACTION.sendAndAck(rabbitMqChannel, properties, envelope)
-        }, {
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-        })
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
 
         return null
     }
