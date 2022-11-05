@@ -8,6 +8,12 @@ object CommonResponses {
         "The specified action is not supported"
     )
 
+    val UNSUPPORTED_SLOT = RabbitMQResponse.failure(
+        StatusCode.ServerException,
+        MiscErrorCodes.UnexpectedError,
+        "Slot is an unsupported type"
+    )
+
     val CHANNEL_NOT_FOUND = RabbitMQResponse.failure(
         StatusCode.NotFound,
         MiscErrorCodes.ChannelNotFound,
