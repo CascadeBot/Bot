@@ -52,9 +52,7 @@ class GenericChannelProcessor : Processor {
                         node.put("old_name", old)
                         node.put("new_name", newName)
                         RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, {
-                        ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                    })
+                    }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                 }
             }
 
@@ -95,12 +93,12 @@ class GenericChannelProcessor : Processor {
                             }
                         }
                         val cal = calcPermsOverrides(override.permissions)
-                        channel.permissionContainer.manager.putPermissionOverride(holder, cal.allow, cal.deny).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        },
+                        channel.permissionContainer.manager.putPermissionOverride(holder, cal.allow, cal.deny).queue(
                             {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                     }
                 }
             }

@@ -13,15 +13,14 @@ import org.cascadebot.bot.rabbitmq.objects.PermissionsErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
-class ErrorHandler {
-    companion object {
+object ErrorHandler {
 
-        fun handleError(
-            envelope: Envelope,
-            properties: AMQP.BasicProperties,
-            channel: Channel,
-            throwable: Throwable
-        ) {
+    fun handleError(
+        envelope: Envelope,
+        properties: AMQP.BasicProperties,
+        channel: Channel
+    ): (Throwable) -> Unit {
+        return { throwable ->
             when (throwable) {
                 is ErrorResponseException -> {
                     if (throwable.errorResponse == ErrorResponse.UNKNOWN_MESSAGE) {
@@ -59,4 +58,4 @@ class ErrorHandler {
             }
         }
     }
-}
+    }

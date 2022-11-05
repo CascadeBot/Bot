@@ -62,12 +62,12 @@ class MessageChannelProcessor : Processor {
                             embeds += MessageType.INFO.embed.apply {
                                 description = body.get("message").asText()
                             }.build()
-                        }.build()).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        },
+                        }.build()).queue(
                             {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                         return null
                     }
                     // channel:message:send:complex
@@ -86,9 +86,7 @@ class MessageChannelProcessor : Processor {
 
                         channel.sendMessage(builder.build()).queue({
                             RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, {
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                        })
+                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         return null
                     }
                 }
@@ -103,21 +101,19 @@ class MessageChannelProcessor : Processor {
                             RabbitMQResponse.success(history
                                 .retrievedHistory.map { MessageData.fromMessage(it) })
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, {
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                        })
+                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         return null
                     }
                     // channel:message:messages:id
                     "id" -> {
                         val messageId = body.get("message_id").asLong()
-                        channel.retrieveMessageById(messageId).queue({
-                            RabbitMQResponse.success(MessageData.fromMessage(it))
-                                .sendAndAck(rabbitMqChannel, properties, envelope)
-                        },
+                        channel.retrieveMessageById(messageId).queue(
                             {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                                RabbitMQResponse.success(MessageData.fromMessage(it))
+                                    .sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                     }
                 }
             }

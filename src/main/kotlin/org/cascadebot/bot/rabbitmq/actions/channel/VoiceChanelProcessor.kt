@@ -71,12 +71,12 @@ class VoiceChanelProcessor : Processor {
 
                 when (parts[1]) {
                     "move" -> {
-                        guild.moveVoiceMember(member, channel).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        },
+                        guild.moveVoiceMember(member, channel).queue(
                             {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                         return null
                     }
                 }

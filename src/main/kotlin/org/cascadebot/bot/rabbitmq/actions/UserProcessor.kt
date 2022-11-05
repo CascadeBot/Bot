@@ -87,9 +87,7 @@ class UserProcessor : Processor {
                     member.modifyNickname(nick).queue({
                         RabbitMQResponse.success()
                             .sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, {
-                        ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                    })
+                    }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                     return null
                 }
             }
@@ -109,12 +107,13 @@ class UserProcessor : Processor {
                 when (parts[1]) {
                     // user:role:add
                     "add" -> {
-                        guild.addRoleToMember(member, role).queue({
-                            RabbitMQResponse.success()
-                                .sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, {
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                        })
+                        guild.addRoleToMember(member, role).queue(
+                            {
+                                RabbitMQResponse.success()
+                                    .sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                         return null
                     }
                     // user:role:remove
@@ -122,9 +121,7 @@ class UserProcessor : Processor {
                         guild.removeRoleFromMember(member, role).queue({
                             RabbitMQResponse.success()
                                 .sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, {
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                        })
+                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         return null
                     }
                     // user:role:has
@@ -139,23 +136,23 @@ class UserProcessor : Processor {
                 when (parts[1]) {
                     "deafen" -> {
                         val state = body.get("deafen").asBoolean()
-                        member.deafen(state).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        },
+                        member.deafen(state).queue(
                             {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                         return null
                     }
 
                     "mute" -> {
                         val state = body.get("mute").asBoolean()
-                        member.deafen(state).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        },
+                        member.deafen(state).queue(
                             {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            },
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                        )
                         return null
                     }
                 }

@@ -62,15 +62,11 @@ class RoleProcessor : Processor {
                         if (state) {
                             role.manager.givePermissions(perm).queue({
                                 RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            }, {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                            }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         } else {
                             role.manager.revokePermissions(perm).queue({
                                 RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            }, {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            })
+                            }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         }
                         return null
                     }
@@ -94,9 +90,7 @@ class RoleProcessor : Processor {
                                     InvalidErrorCodes.InvalidPosition,
                                     "The specified position is out of bounds!"
                                 )
-                            } else {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            }
+                            } else ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
                         }
                     )
                     return null

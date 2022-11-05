@@ -60,9 +60,7 @@ class InteractionProcessor : Processor {
                             {
                                 RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
                             },
-                            {
-                                ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                            }
+                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
                         )
 
                         // We can't reply to an interaction twice, so we should invalidate this after it's been used
@@ -84,9 +82,7 @@ class InteractionProcessor : Processor {
 
                         interactionHook.editOriginal(builder.build()).queue({
                             RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, {
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel, it)
-                        })
+                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
 
                         // We can't reply to an interaction twice, so we should invalidate this after it's been used
                         Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
