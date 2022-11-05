@@ -9,6 +9,11 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
+import net.dv8tion.jda.api.interactions.commands.build.CommandData
+import net.dv8tion.jda.api.interactions.commands.build.Commands
+import net.dv8tion.jda.api.interactions.commands.build.OptionData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
+import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
 import org.cascadebot.bot.CustomCommandType
 import org.cascadebot.bot.ScriptLang
 import org.cascadebot.bot.db.EnumDBType
@@ -69,7 +74,34 @@ class CustomCommandEntity() : Serializable {
     var ephemeral: Boolean? = null
 
     @OneToMany
-    @JoinTable(name = "command_option_join", joinColumns = [JoinColumn(name = "slot_id")], inverseJoinColumns = [JoinColumn(name = "option_id")])
+    @JoinTable(
+        name = "command_option_join",
+        joinColumns = [JoinColumn(name = "slot_id")],
+        inverseJoinColumns = [JoinColumn(name = "option_id")]
+    )
     var options: MutableList<CommandOptionEntity> = mutableListOf()
+
+    fun toDiscordCommand(): CommandData {
+        when (type) {
+            CustomCommandType.SLASH -> {
+                val data = Commands.slash(name, description ?: "No description")
+                options.map { it.toDiscord() }.forEach {
+                    when (it) {
+                        is SubcommandData -> data.addSubcommands(it)
+                        is SubcommandGroupData -> data.addSubcommandGroups(it)
+                        is OptionData -> data.addOptions(it)
+                        else -> throw IllegalStateException("Unexpected type ${it::class.simpleName}")
+                    }
+                }
+                return data
+            }
+
+            CustomCommandType.CONTEXT_USER -> return Commands.user(name)
+
+            CustomCommandType.CONTEXT_MESSAGE -> return Commands.message(name)
+
+            else -> throw IllegalStateException("Unexpected command type $type")
+        }
+    }
 
 }
