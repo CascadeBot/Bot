@@ -19,6 +19,9 @@ enum class ActionProcessors(val root: String, val processor: Processor, val requ
     INTERACTION("channel:interaction", InteractionProcessor(), true),
     TEXT_CHANNEL("channel:text", TextChannelProcessor(), true),
     VOICE_CHANNEL("channel:voice", VoiceChanelProcessor(), true),
-    MESSAGE("message", MessageProcessor(), true)
+    MESSAGE("message", MessageProcessor(), true),
+    SLOT("slot", SlotProcessor(), true),
+    COMMAND("command", CommandProcessor(), true),
+    AUTO_RESPONDER("auto_responder", AutoResponderProcessor(), true)
 
 }
