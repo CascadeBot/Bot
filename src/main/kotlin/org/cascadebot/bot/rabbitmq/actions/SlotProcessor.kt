@@ -19,6 +19,7 @@ import org.cascadebot.bot.rabbitmq.objects.RabbitMQException
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
+import org.cascadebot.bot.utils.QueryUtils.deleteEntity
 import org.cascadebot.bot.utils.QueryUtils.queryEntity
 import org.cascadebot.bot.utils.QueryUtils.queryJoinedEntities
 import org.cascadebot.bot.utils.createJsonObject
@@ -289,6 +290,25 @@ class SlotProcessor : Processor {
 
             }
 
+            "delete" -> {
+                val slotId = getSlotId(body)
+                
+                val numDeleted = dbTransaction {
+                    deleteEntity(GuildSlotEntity::class.java) { root ->
+                        equal(root.get<UUID>("slotId"), slotId)
+                    }
+                }
+
+                if (numDeleted == 0) {
+                    return RabbitMQResponse.failure(
+                        StatusCode.NotFound,
+                        MiscErrorCodes.SlotNotFound,
+                        "Slot could not be found"
+                    )
+                }
+
+                return RabbitMQResponse.success(createJsonObject("slot_id" to slotId))
+            }
 
         }
 
