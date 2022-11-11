@@ -44,7 +44,7 @@ class SlotProcessor : Processor {
 
         when (parts[0]) {
             "getAll" -> {
-                val (slots, commands, responders) = Main.postgres.transaction {
+                val (slots, commands, responders) = dbTransaction {
                     val guildSlots = queryEntity(GuildSlotEntity::class.java) { root ->
                         equal(root.get<Long>("guildId"), guildId)
                     }.list()
@@ -72,7 +72,7 @@ class SlotProcessor : Processor {
             "get" -> {
                 val slot = getSlot(body, guildId)
 
-                val (command, responder) = Main.postgres.transaction {
+                val (command, responder) = dbTransaction {
                     val customCommand = tryOrNull {
                         queryEntity(CustomCommandEntity::class.java) { root ->
                             equal(root.get<UUID>("slotId"), slot.slotId)
@@ -131,7 +131,7 @@ class SlotProcessor : Processor {
 
                 when {
                     slot.isCustomCommand -> {
-                        val command = Main.postgres.transaction {
+                        val command = dbTransaction {
                             tryOrNull {
                                 queryEntity(CustomCommandEntity::class.java) { root ->
                                     equal(root.get<UUID>("slotId"), slot.slotId)
@@ -179,7 +179,7 @@ class SlotProcessor : Processor {
 
                 when {
                     slot.isCustomCommand -> {
-                        val command = Main.postgres.transaction {
+                        val command = dbTransaction {
                             tryOrNull {
                                 queryEntity(CustomCommandEntity::class.java) { root ->
                                     equal(root.get<UUID>("slotId"), slot.slotId)
@@ -215,7 +215,7 @@ class SlotProcessor : Processor {
                     slot.isAutoResponder -> {
                         slot.enabled = true
 
-                        Main.postgres.transaction {
+                        dbTransaction {
                             persist(slot)
                         }
 
@@ -237,7 +237,7 @@ class SlotProcessor : Processor {
 
                 when {
                     slot.isCustomCommand -> {
-                        val command = Main.postgres.transaction {
+                        val command = dbTransaction {
                             tryOrNull {
                                 queryEntity(CustomCommandEntity::class.java) { root ->
                                     equal(root.get<UUID>("slotId"), slot.slotId)
@@ -274,7 +274,7 @@ class SlotProcessor : Processor {
                     slot.isAutoResponder -> {
                         slot.enabled = false
 
-                        Main.postgres.transaction {
+                        dbTransaction {
                             persist(slot)
                         }
 
@@ -303,20 +303,9 @@ class SlotProcessor : Processor {
         body: ObjectNode,
         guildId: Long
     ): GuildSlotEntity {
-        // If slot_id is not present, or UUID is invalid, then this will return null (aka invalid)
-        val slotId = body.get("slot_id")?.asText()?.let { tryOrNull { UUID.fromString(it) } }
-
-        if (slotId == null) {
-            throw RabbitMQException(
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidSlot,
-                    "Slot ID must be provided and in UUID format"
-                )
-            )
-        }
-
-        val slot = Main.postgres.transaction {
+        val slotId = getSlotId(body)
+        
+        val slot = dbTransaction {
             tryOrNull {
                 queryEntity(GuildSlotEntity::class.java) { root ->
                     equal(root.get<Long>("guildId"), guildId)
@@ -336,6 +325,22 @@ class SlotProcessor : Processor {
         }
 
         return slot
+    }
+
+    private fun getSlotId(body: ObjectNode): UUID {
+        // If slot_id is not present, or UUID is invalid, then this will return null (aka invalid)
+        val slotId = body.get("slot_id")?.asText()?.let { tryOrNull { UUID.fromString(it) } }
+
+        if (slotId == null) {
+            throw RabbitMQException(
+                RabbitMQResponse.failure(
+                    StatusCode.BadRequest,
+                    InvalidErrorCodes.InvalidSlot,
+                    "Slot ID must be provided and in UUID format"
+                )
+            )
+        }
+        return slotId
     }
 
 }

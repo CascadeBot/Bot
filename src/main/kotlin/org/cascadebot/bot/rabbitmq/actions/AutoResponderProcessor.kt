@@ -40,7 +40,7 @@ class AutoResponderProcessor : Processor {
                 val autoResponder =
                     AutoResponderEntity(slot.slotId, createRequest.text, createRequest.matchText.toMutableList())
 
-                Main.postgres.transaction {
+                dbTransaction {
                     persist(slot)
                     persist(autoResponder)
                 }
