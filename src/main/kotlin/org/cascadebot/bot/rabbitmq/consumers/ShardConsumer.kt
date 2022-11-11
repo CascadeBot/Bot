@@ -52,7 +52,9 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             if (!validateGuildId(jsonBody, properties, envelope)) return
         }
 
-        val actionParts = action.removePrefix(consumerEnum.root).split(":")
+        val actionParts = action.removePrefix(consumerEnum.root + ":") // Remove the prefix followed by its colon
+            .split(":")
+            .filter { it.isNotBlank() } // Remove any blank sections or empty sections caused by ::
 
         try {
             consumerEnum.processor.consume(
