@@ -1,5 +1,6 @@
 package org.cascadebot.bot.rabbitmq.objects
 
+import com.fasterxml.jackson.databind.JsonNode
 import org.cascadebot.bot.OptionType
 import org.cascadebot.bot.ScriptLang
 import java.util.UUID
@@ -19,3 +20,10 @@ data class ExecCommandRequest(
     val channel: ChannelResponse,
     val interactionId: String
 )
+
+data class CreateAutoResponderRequest(
+    val text: JsonNode,
+    val matchText: List<String>,
+    val enabled: Boolean
+)
+
