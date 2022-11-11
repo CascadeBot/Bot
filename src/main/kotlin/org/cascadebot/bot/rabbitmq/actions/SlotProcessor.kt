@@ -308,8 +308,10 @@ class SlotProcessor : Processor {
         val slot = dbTransaction {
             tryOrNull {
                 queryEntity(GuildSlotEntity::class.java) { root ->
-                    equal(root.get<Long>("guildId"), guildId)
-                    equal(root.get<UUID>("slotId"), slotId)
+                    and(
+                        equal(root.get<Long>("guildId"), guildId),
+                        equal(root.get<UUID>("slotId"), slotId)
+                    )
                 }.singleResult
             }
         }
