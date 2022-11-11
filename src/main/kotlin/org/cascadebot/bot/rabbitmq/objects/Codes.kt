@@ -68,6 +68,7 @@ object MiscErrorCodes {
     val SlotNotFound= ErrorCode("slot_not_found")
     val UnexpectedError = ErrorCode("unexpected")
     val BotDoesNotOwnMessage = ErrorCode("unowned_message")
+    val JsonProcessingError = ErrorCode("json_processing_error")
 }
 
 object PermissionsErrorCodes {
