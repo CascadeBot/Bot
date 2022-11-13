@@ -2,10 +2,10 @@ package org.cascadebot.bot
 
 import ch.qos.logback.classic.Level
 import com.fasterxml.jackson.databind.DeserializationFeature
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
-import com.fasterxml.jackson.databind.module.SimpleModule
-import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.module.kotlin.jsonMapper
+import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import dev.minn.jda.ktx.util.SLF4J
@@ -27,6 +27,7 @@ import org.cascadebot.bot.rabbitmq.RabbitMQManager
 import org.cascadebot.bot.utils.ColorDeserializer
 import org.cascadebot.bot.utils.ColorSerializer
 import org.cascadebot.bot.utils.LogbackUtil
+import org.cascadebot.bot.utils.addModule
 import org.hibernate.HibernateException
 import java.awt.Color
 import java.util.concurrent.TimeUnit
@@ -60,14 +61,15 @@ object Main {
     lateinit var config: Config
         private set
 
-    val json: ObjectMapper = ObjectMapper().apply {
-        registerModule(KotlinModule.Builder().build())
+    val json: JsonMapper = jsonMapper {
         configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        val module = SimpleModule()
-        module.addSerializer(Color::class.java, ColorSerializer())
-        module.addDeserializer(Color::class.java, ColorDeserializer())
-        registerModule(module)
-        propertyNamingStrategy = PropertyNamingStrategies.SNAKE_CASE
+        propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
+
+        addModule(kotlinModule())
+        addModule {
+            addSerializer(Color::class.java, ColorSerializer())
+            addDeserializer(Color::class.java, ColorDeserializer())
+        }
     }
 
     private fun runBot() {
