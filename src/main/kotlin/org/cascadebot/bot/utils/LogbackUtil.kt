@@ -15,28 +15,28 @@ import java.io.InputStream
 object LogbackUtil {
 
     /**
-     * Gets the root logger defined by `Logger.ROOT_LOGGER_NAME`.
+     * Gets the root logger defined by [Logger.ROOT_LOGGER_NAME].
      *
-     * @return The root logger
+     * @return The root logger.
      * @see LoggerFactory.getLogger
      */
     val rootLogger: Logger
         get() = LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME) as Logger
 
     /**
-     * Gets the Logback LoggerContext from the SLF4J's LoggerFactory.
+     * Gets the Logback [LoggerContext] from the SLF4J's [LoggerFactory].
      *
-     * @return The LogBack logger context
+     * @return The LogBack logger context.
      */
     val loggerContext: LoggerContext
         get() = LoggerFactory.getILoggerFactory() as LoggerContext
 
     /**
-     * Sets the level of the root logger defined by `Logger.ROOT_LOGGER_NAME`.
+     * Sets the level of the root logger defined by [Logger.ROOT_LOGGER_NAME].
      *
      * @param level Which level to set for the root logger.
      * @see Logger.setLevel
-     * @see LogbackUtils.getRootLogger
+     * @see LogbackUtil.rootLogger
      */
     fun setRootLoggerLevel(level: Level) {
         val root = rootLogger
@@ -57,8 +57,10 @@ object LogbackUtil {
     }
 
     /**
-     * Gets a logger by the specified name from SLF4J's `LoggerFactory`.
-     * <br></br>*Warning: If the logger does not exist the LoggerFactory will just create a new logger. No exception will be thrown.*
+     * Gets a logger by the specified name from SLF4J's [LoggerFactory].
+     *
+     *
+     * *Warning: If the logger does not exist the LoggerFactory will just create a new logger. No exception will be thrown.*
      *
      * @param name The name of the logger to retrieve.
      * @return The requested logger.
@@ -69,7 +71,7 @@ object LogbackUtil {
     }
 
     /**
-     * Sets the specified appender's level by disabling all other ThresholdFilters and programmatically adding
+     * Sets the specified appender level by disabling all other [ThresholdFilter]s and programmatically adding
      * a threshold filter set at the specified level.
      *
      * @param name  The name of the appender to add to change the level of.
@@ -90,17 +92,12 @@ object LogbackUtil {
             throw IllegalArgumentException("The provided name does not have a defined appender")
         }
     }
+
     /**
-     * Reloads the logback configuration from the specified InputStream.
+     * Reloads the logback configuration from the specified [InputStream].
      *
      * @param inputStream The input stream to read the configuration from.
      * @throws JoranException If the configurator encounters an issue with the config.
-     */
-    /**
-     * Reloads the logback configuration from the logback.xml resource.
-     *
-     * @throws JoranException If the configurator encounters an issue with the config.
-     * @see LogbackUtils.reloadFromConfig
      */
     @JvmOverloads
     @Throws(JoranException::class)
