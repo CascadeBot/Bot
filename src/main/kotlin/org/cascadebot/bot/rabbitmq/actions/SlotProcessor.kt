@@ -64,7 +64,8 @@ class SlotProcessor : Processor {
                 val slotsMap = slots.associateBy { it.slotId }
 
                 // !! is okay here because the existence of the slot ID is enforced at DB level for each slot item
-                val commandsResponse = commands.map { CustomCommandResponse.fromEntity(slotsMap[it.slotId]!!.enabled ?: false, it) }
+                // TODO Query Discord
+                val commandsResponse = commands.map { CustomCommandResponse.fromEntity(slotsMap[it.slotId]?.enabled ?: false, it) }
                 val autoResponse = responders.map { AutoResponderResponse.fromEntity(slotsMap[it.slotId]!!, it) }
 
                 return RabbitMQResponse.success(commandsResponse + autoResponse)
