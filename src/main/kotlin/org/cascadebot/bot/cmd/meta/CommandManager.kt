@@ -64,9 +64,9 @@ class CommandManager {
                 .onErrorMap { Pair(path, Result.failure(it)) }
         }
         val combinedRestAction = RestAction.allOf(commandActions)
-        combinedRestAction.queue { pair ->
-            val successful = pair.count { it.second.isSuccess }
-            pair.forEach { (path, result) ->
+        combinedRestAction.queue { pairs ->
+            val successful = pairs.count { it.second.isSuccess }
+            pairs.forEach { (path, result) ->
                 if (result.isSuccess) {
                     val cmd = result.get()
                     logger.debug("Registered command '${path}' with Discord successfully. ID: ${cmd.id}")
