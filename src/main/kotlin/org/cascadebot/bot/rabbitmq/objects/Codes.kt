@@ -1,14 +1,12 @@
 package org.cascadebot.bot.rabbitmq.objects
 
-/*
-    Status Codes
-
-    0   -  99   Success
-    100 - 199   Data Error
-    200 - 299   Server Error
-    300 - 399   Scripting Error
-    400 - 499   ?
-
+/**
+ * ## Status Codes
+ * -    0 - 99   Success
+ * -    100 - 199   Data Error<br />
+ * -    200 - 299   Server Error<br />
+ * -    300 - 399   Scripting Error<br />
+ * -    400 - 499   ?
  */
 @JvmInline
 value class StatusCode private constructor(val code: Int) {
@@ -38,7 +36,6 @@ value class ErrorCode internal constructor(val code: String) {
 }
 
 object InvalidErrorCodes {
-
     val InvalidInteraction = ErrorCode("invalid_interaction")
     val InvalidProperty = ErrorCode("invalid_property")
     val InvalidMethod = ErrorCode("invalid_method")
@@ -60,7 +57,6 @@ object InvalidErrorCodes {
 }
 
 object MiscErrorCodes {
-
     val InteractionTokenNotFound = ErrorCode("interaction_token_not_found")
     val UserNotFound = ErrorCode("user_not_found")
     val GuildNotFound = ErrorCode("guild_not_found")
@@ -72,7 +68,6 @@ object MiscErrorCodes {
 }
 
 object PermissionsErrorCodes {
-
     val MissingPermission = ErrorCode("missing_permission")
     val CannotInteract = ErrorCode("cannot_interact")
 }
