@@ -73,6 +73,11 @@ fun createJsonObject(properties: Collection<Pair<String, Any?>>): ObjectNode {
 /**
  * Creates a [ObjectNode] using each provided pair of [String] and [Any] as properties.
  *
+ * The preferred way to construct pairs is the inline function syntax:
+ * ```kt
+ * "key" to value
+ * ```
+ *
  * @param properties The pairs of properties to be added to the object.
  * @return An [ObjectNode] with the added [properties].
  * @see createJsonObject
