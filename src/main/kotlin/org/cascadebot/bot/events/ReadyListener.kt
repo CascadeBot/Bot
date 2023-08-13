@@ -25,11 +25,11 @@ class ReadyListener : ListenerAdapter() {
                 shardId
             )
 
-            rabbitMQManager.channel.queueDeclare("shard-$shardId", true, false, false, mapOf())
-            rabbitMQManager.channel.queueBind("shard-$shardId", "amq.direct", "shard.$shardId")
-            rabbitMQManager.channel.queueBind("shard-$shardId", "amq.direct", "shard.all")
+            rabbitMQManager.channel.queueDeclare("shard.$shardId", true, false, false, mapOf())
+            rabbitMQManager.channel.queueBind("shard.$shardId", "amq.direct", "shard.$shardId")
+            rabbitMQManager.channel.queueBind("shard.$shardId", "amq.direct", "shard.all")
 
-            rabbitMQManager.channel.basicConsume("shard-$shardId", ShardConsumer(rabbitMQManager.channel, shardId, event.jda))
+            rabbitMQManager.channel.basicConsume("shard.$shardId", ShardConsumer(rabbitMQManager.channel, shardId, event.jda))
         }
 
         if (Main.config.development?.registerCommandsOnBoot == true) {
