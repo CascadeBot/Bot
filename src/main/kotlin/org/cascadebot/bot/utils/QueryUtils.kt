@@ -12,28 +12,17 @@ import org.hibernate.query.sqm.tree.SqmJoinType
 object QueryUtils {
 
     /**
-     * Selects all entities with the specified [clazz] with no condition. [clazz] must be a valid Hibernate table.
-     *
-     * @param clazz The class of the entity to query.
-     */
-    fun <T> Session.getEntities(clazz: Class<T>): Query<T> {
-        val query = criteriaBuilder.createQuery(clazz)
-        query.select(query.from(clazz))
-
-        return createQuery(query)
-    }
-
-    /**
      * Selects entities of type [clazz] which match the provided [whereClause]. [clazz] must be a valid Hibernate table.
      *
      * [whereClause] has [HibernateCriteriaBuilder] as the receiver with [JpaRoot] provided as a parameter.
      *
      * @param clazz The class of the entity to query.
      * @param whereClause The function which is used to construct a [Predicate] for the [CriteriaQuery.where] function.
+     *                    Defaults to always true resulting in selecting all entities
      */
     fun <T> Session.queryEntity(
         clazz: Class<T>,
-        whereClause: HibernateCriteriaBuilder.(JpaRoot<T>) -> Predicate
+        whereClause: HibernateCriteriaBuilder.(JpaRoot<T>) -> Predicate = { isTrue(literal(true)) }
     ): Query<T> {
         val query = criteriaBuilder.createQuery(clazz)
         val root = query.from(clazz)
