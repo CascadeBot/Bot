@@ -7,6 +7,7 @@ import org.hibernate.query.Query
 import org.hibernate.query.criteria.HibernateCriteriaBuilder
 import org.hibernate.query.criteria.JpaEntityJoin
 import org.hibernate.query.criteria.JpaRoot
+import org.hibernate.query.sqm.tree.SqmJoinType
 
 object QueryUtils {
 
@@ -28,7 +29,7 @@ object QueryUtils {
     fun <T, J> Session.queryJoinedEntities(clazz: Class<T>, joiningClazz: Class<J>, whereClause: HibernateCriteriaBuilder.(JpaRoot<T>, JpaEntityJoin<J>) -> Predicate): Query<T> {
         val query = criteriaBuilder.createQuery(clazz)
         val root = query.from(clazz)
-        val join = root.join(joiningClazz)
+        val join = root.join(joiningClazz, SqmJoinType.CROSS)
         query.where(whereClause(criteriaBuilder, root, join))
 
         return createQuery(query)
