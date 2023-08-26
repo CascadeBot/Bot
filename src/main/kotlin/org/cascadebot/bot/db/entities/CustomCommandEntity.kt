@@ -8,6 +8,7 @@ import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.OneToMany
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands
@@ -80,6 +81,10 @@ class CustomCommandEntity() : Serializable {
         inverseJoinColumns = [JoinColumn(name = "option_id")]
     )
     var options: MutableList<CommandOptionEntity> = mutableListOf()
+
+    @OneToOne
+    @JoinColumn(name = "slot_id", referencedColumnName = "slot_id")
+    lateinit var slot: GuildSlotEntity
 
     fun toDiscordCommand(): CommandData {
         when (type) {

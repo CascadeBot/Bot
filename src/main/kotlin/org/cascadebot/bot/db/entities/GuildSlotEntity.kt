@@ -5,12 +5,14 @@ import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.cascadebot.bot.SlotType
 import org.cascadebot.bot.db.EnumDBType
 import org.hibernate.annotations.Type
 import java.io.Serializable
 import java.util.UUID
+
 
 @Entity
 @Table(name = "guild_slot")
@@ -32,6 +34,9 @@ class GuildSlotEntity(slotType: SlotType, guildId: Long): Serializable {
 
     @Column(name = "enabled")
     var enabled: Boolean? = null
+
+    @OneToOne(mappedBy = "slot")
+    lateinit var customCommandEntity: CustomCommandEntity
 
     val isCustomCommand
         get() = slotType == SlotType.CUSTOM_CMD || slotType == SlotType.TEXT || slotType == SlotType.PROVIDED
