@@ -183,4 +183,4 @@ data class MessageData(val messageId: Long, val channelId: Long, val content: St
 
 }
 
-data class InteractionData(val interactionId: String, val content: String, val embeds: List<EmbedData>)
+data class InteractionData(val interactionId: String)
