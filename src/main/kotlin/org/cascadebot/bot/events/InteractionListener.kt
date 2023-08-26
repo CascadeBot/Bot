@@ -170,7 +170,8 @@ class InteractionListener : ListenerAdapter() {
             options,
             MemberResponse.fromMember(event.member!!),
             ChannelResponse.fromChannel(event.channel.asTextChannel()),
-            interactionId
+            interactionId,
+            event.guild!!.id
         )
 
         val bodyBytes = Main.json.writeValueAsBytes(req)

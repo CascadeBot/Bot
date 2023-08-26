@@ -18,7 +18,8 @@ data class ExecCommandRequest(
     val options: Map<String, List<CommandOption<Any>>>,
     val member: MemberResponse,
     val channel: ChannelResponse,
-    val interactionId: String
+    val interactionId: String,
+    var guildId: String
 )
 
 data class CreateAutoResponderRequest(
