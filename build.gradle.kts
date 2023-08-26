@@ -60,6 +60,7 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-cli:0.3.5")
     implementation("com.fasterxml.jackson.core:jackson-databind:${Versions.jackson}")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin:${Versions.jackson}")
+    implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${Versions.jackson}")
     implementation("com.github.ben-manes.caffeine:caffeine:3.1.7")
     implementation("com.auth0:java-jwt:4.4.0")
 

@@ -4,6 +4,7 @@ import ch.qos.logback.classic.Level
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.PropertyNamingStrategies
 import com.fasterxml.jackson.databind.json.JsonMapper
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.fasterxml.jackson.module.kotlin.jsonMapper
 import com.fasterxml.jackson.module.kotlin.kotlinModule
 import com.github.benmanes.caffeine.cache.Cache
@@ -66,6 +67,7 @@ object Main {
         propertyNamingStrategy(PropertyNamingStrategies.SNAKE_CASE)
 
         addModule(kotlinModule())
+        addModule(JavaTimeModule())
         addModule {
             addSerializer(Color::class.java, ColorSerializer())
             addDeserializer(Color::class.java, ColorDeserializer())
