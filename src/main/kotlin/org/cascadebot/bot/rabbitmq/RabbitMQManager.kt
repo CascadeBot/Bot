@@ -85,6 +85,7 @@ class RabbitMQManager(config: RabbitMQ) {
     private fun setupGlobalObjects(): GlobalObjectNames {
         channel.exchangeDeclare("bot.broadcast", BuiltinExchangeType.FANOUT, true)
 
+
         val broadcastQueueName = channel.queueDeclare().queue
 
         // Bind to the broadcast exchange - Routing key can be empty as a fanout exchange ignores the routing key
@@ -92,9 +93,11 @@ class RabbitMQManager(config: RabbitMQ) {
 
         channel.queueDeclare("meta", true, false, false, mapOf())
         channel.queueDeclare("resource", true, false, false, mapOf())
+        channel.queueDeclare("custom_command", true, false, false, mapOf())
 
         channel.queueBind("meta", "amq.direct", "meta")
         channel.queueBind("resource", "amq.direct", "resource")
+        channel.queueBind("custom_command", "amq.direct", "custom_command")
 
         return GlobalObjectNames(broadcastQueueName)
     }
