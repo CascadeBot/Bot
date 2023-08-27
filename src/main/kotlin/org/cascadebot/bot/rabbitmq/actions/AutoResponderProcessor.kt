@@ -33,9 +33,13 @@ class AutoResponderProcessor : Processor {
                 val createRequest = Main.json.treeToValue(body, CreateAutoResponderRequest::class.java)
 
                 val slot = GuildSlotEntity(SlotType.AUTO_REPLY, guild.idLong)
-                slot.enabled = createRequest.enabled
                 val autoResponder =
-                    AutoResponderEntity(slot.slotId, createRequest.text, createRequest.matchText.toMutableList())
+                    AutoResponderEntity(
+                        slot.slotId,
+                        createRequest.text,
+                        createRequest.matchText.toMutableList(),
+                        createRequest.enabled
+                    )
 
                 dbTransaction {
                     persist(slot)
@@ -45,7 +49,7 @@ class AutoResponderProcessor : Processor {
                 return RabbitMQResponse.success(
                     AutoResponderResponse(
                         slot.slotId,
-                        slot.enabled,
+                        autoResponder.enabled,
                         autoResponder.text,
                         autoResponder.match
                     )

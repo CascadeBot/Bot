@@ -168,12 +168,10 @@ data class MutualGuildResponse(
 interface SlotEntry : IRMQResponse {
 
     val slotId: UUID
-    val enabled: Boolean?
 }
 
 data class CustomCommandResponse(
     override val slotId: UUID,
-    override val enabled: Boolean,
     val name: String,
     val description: String?,
     val marketplaceReference: UUID?,
@@ -188,7 +186,6 @@ data class CustomCommandResponse(
         fun fromEntity(enabled: Boolean, entity: CustomCommandEntity): CustomCommandResponse {
             return CustomCommandResponse(
                 entity.slotId,
-                enabled,
                 entity.name,
                 entity.description,
                 entity.marketplaceRef,
@@ -204,7 +201,7 @@ data class CustomCommandResponse(
 
 data class AutoResponderResponse(
     override val slotId: UUID,
-    override val enabled: Boolean?,
+    val enabled: Boolean,
     val text: JsonNode,
     val matchText: List<String>?
 ) : IRMQResponse, SlotEntry {
@@ -214,7 +211,7 @@ data class AutoResponderResponse(
         fun fromEntity(slot: GuildSlotEntity, entity: AutoResponderEntity): AutoResponderResponse {
             return AutoResponderResponse(
                 entity.slotId,
-                slot.enabled,
+                entity.enabled,
                 entity.text,
                 entity.match
             )

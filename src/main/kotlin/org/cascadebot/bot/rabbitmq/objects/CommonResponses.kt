@@ -20,4 +20,10 @@ object CommonResponses {
         "The specified channel was not found"
     )
 
+    val AUTORESPONDER_NOT_FOUND = RabbitMQResponse.failure(
+        StatusCode.NotFound,
+        MiscErrorCodes.SlotNotFound,
+        "An auto responder for the slot specified could not be found"
+    )
+
 }

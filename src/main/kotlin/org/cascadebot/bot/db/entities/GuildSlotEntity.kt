@@ -32,9 +32,6 @@ class GuildSlotEntity(slotType: SlotType, guildId: Long): Serializable {
     @Column(name = "guild_id")
     var guildId: Long = guildId
 
-    @Column(name = "enabled")
-    var enabled: Boolean? = null
-
     @OneToOne(mappedBy = "slot")
     lateinit var customCommandEntity: CustomCommandEntity
 

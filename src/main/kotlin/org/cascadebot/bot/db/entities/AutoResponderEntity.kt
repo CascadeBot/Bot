@@ -14,13 +14,16 @@ import java.util.UUID
 
 @Entity
 @Table(name = "auto_responder")
-class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<String>) : Serializable {
+class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<String>, enabled: Boolean) : Serializable {
 
-    constructor() : this(UUID.randomUUID(), createJsonObject(), mutableListOf())
+    constructor() : this(UUID.randomUUID(), createJsonObject(), mutableListOf(), false)
 
     @Id
     @Column(name = "slot_id")
     var slotId: UUID = slotId
+
+    @Column(name = "enabled")
+    var enabled: Boolean = enabled
 
     @Column(name = "text")
     @Type(JsonType::class)

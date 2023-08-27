@@ -62,7 +62,7 @@ class SlotProcessor : Processor {
 
                 // !! is okay here because the existence of the slot ID is enforced at DB level for each slot item
                 // TODO Query Discord
-                val commandsResponse = commands.map { CustomCommandResponse.fromEntity(slotsMap[it.slotId]?.enabled ?: false, it) }
+                val commandsResponse = commands.map { CustomCommandResponse.fromEntity(false, it) }
                 val autoResponse = responders.map { AutoResponderResponse.fromEntity(slotsMap[it.slotId]!!, it) }
 
                 return RabbitMQResponse.success(commandsResponse + autoResponse)
@@ -130,13 +130,7 @@ class SlotProcessor : Processor {
 
                 when {
                     slot.isCustomCommand -> {
-                        val command = dbTransaction {
-                            tryOrNull {
-                                queryEntity(CustomCommandEntity::class.java) { root ->
-                                    equal(root.get<UUID>("slotId"), slot.slotId)
-                                }.singleResult
-                            }
-                        }
+                        val command = getCommand(slot)
 
                         if (command == null) {
                             return RabbitMQResponse.failure(
@@ -161,9 +155,15 @@ class SlotProcessor : Processor {
                     }
 
                     slot.isAutoResponder -> {
+                        val autoResponder = getAutoResponder(slot)
+
+                        if (autoResponder == null) {
+                            return CommonResponses.AUTORESPONDER_NOT_FOUND
+                        }
+
                         val response = createJsonObject(
                             "slot_id" to slot.slotId,
-                            "enabled" to slot.enabled
+                            "enabled" to autoResponder.enabled
                         )
                         return RabbitMQResponse.success(response)
                     }
@@ -178,13 +178,7 @@ class SlotProcessor : Processor {
 
                 when {
                     slot.isCustomCommand -> {
-                        val command = dbTransaction {
-                            tryOrNull {
-                                queryEntity(CustomCommandEntity::class.java) { root ->
-                                    equal(root.get<UUID>("slotId"), slot.slotId)
-                                }.singleResult
-                            }
-                        }
+                        val command = getCommand(slot)
 
                         if (command == null) {
                             return RabbitMQResponse.failure(
@@ -212,15 +206,21 @@ class SlotProcessor : Processor {
                     }
 
                     slot.isAutoResponder -> {
-                        slot.enabled = true
+                        val autoResponder = getAutoResponder(slot)
+
+                        if (autoResponder == null) {
+                            return CommonResponses.AUTORESPONDER_NOT_FOUND
+                        }
+
+                        autoResponder.enabled = true
 
                         dbTransaction {
-                            persist(slot)
+                            persist(autoResponder)
                         }
 
                         val response = createJsonObject(
                             "slot_id" to slot.slotId,
-                            "enabled" to slot.enabled
+                            "enabled" to autoResponder.enabled
                         )
 
                         return RabbitMQResponse.success(response)
@@ -236,13 +236,7 @@ class SlotProcessor : Processor {
 
                 when {
                     slot.isCustomCommand -> {
-                        val command = dbTransaction {
-                            tryOrNull {
-                                queryEntity(CustomCommandEntity::class.java) { root ->
-                                    equal(root.get<UUID>("slotId"), slot.slotId)
-                                }.singleResult
-                            }
-                        }
+                        val command = getCommand(slot)
 
                         if (command == null) {
                             return RabbitMQResponse.failure(
@@ -271,15 +265,21 @@ class SlotProcessor : Processor {
                     }
 
                     slot.isAutoResponder -> {
-                        slot.enabled = false
+                        val autoResponder = getAutoResponder(slot)
+
+                        if (autoResponder == null) {
+                            return CommonResponses.AUTORESPONDER_NOT_FOUND
+                        }
+
+                        autoResponder.enabled = false
 
                         dbTransaction {
-                            persist(slot)
+                            persist(autoResponder)
                         }
 
                         val response = createJsonObject(
                             "slot_id" to slot.slotId,
-                            "enabled" to slot.enabled
+                            "enabled" to autoResponder.enabled
                         )
 
                         return RabbitMQResponse.success(response)
@@ -317,12 +317,36 @@ class SlotProcessor : Processor {
         return CommonResponses.UNSUPPORTED_ACTION
     }
 
+    private fun getCommand(slot: GuildSlotEntity): CustomCommandEntity? {
+        val command = dbTransaction {
+            tryOrNull {
+                queryEntity(CustomCommandEntity::class.java) { root ->
+                    equal(root.get<UUID>("slotId"), slot.slotId)
+                }.singleResult
+            }
+        }
+
+        return command
+    }
+
+    private fun getAutoResponder(slot: GuildSlotEntity): AutoResponderEntity? {
+        val autoResponder = dbTransaction {
+            tryOrNull {
+                queryEntity(AutoResponderEntity::class.java) { root ->
+                    equal(root.get<UUID>("slotId"), slot.slotId)
+                }.singleResult
+            }
+        }
+
+        return autoResponder
+    }
+
     private fun getSlot(
         body: ObjectNode,
         guildId: Long
     ): GuildSlotEntity {
         val slotId = getSlotId(body)
-        
+
         val slot = dbTransaction {
             tryOrNull {
                 queryEntity(GuildSlotEntity::class.java) { root ->
