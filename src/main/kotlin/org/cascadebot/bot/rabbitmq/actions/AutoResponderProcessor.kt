@@ -49,6 +49,7 @@ class AutoResponderProcessor : Processor {
                 return RabbitMQResponse.success(
                     AutoResponderResponse(
                         slot.slotId,
+                        slot.slotType,
                         autoResponder.enabled,
                         autoResponder.text,
                         autoResponder.match
