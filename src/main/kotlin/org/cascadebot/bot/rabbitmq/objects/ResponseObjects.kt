@@ -12,6 +12,7 @@ import net.dv8tion.jda.api.entities.channel.concrete.ThreadChannel
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
 import org.cascadebot.bot.CustomCommandType
 import org.cascadebot.bot.ScriptLang
+import org.cascadebot.bot.SlotType
 import org.cascadebot.bot.db.entities.AutoResponderEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
 import org.cascadebot.bot.db.entities.GuildSlotEntity
@@ -168,11 +169,14 @@ data class MutualGuildResponse(
 interface SlotEntry : IRMQResponse {
 
     val slotId: UUID
+    val slotType: SlotType
 }
 
 data class CustomCommandResponse(
     override val slotId: UUID,
+    override val slotType: SlotType,
     val name: String,
+    var enabled: Boolean,
     val description: String?,
     val marketplaceReference: UUID?,
     val type: CustomCommandType,
@@ -186,7 +190,9 @@ data class CustomCommandResponse(
         fun fromEntity(enabled: Boolean, entity: CustomCommandEntity): CustomCommandResponse {
             return CustomCommandResponse(
                 entity.slotId,
+                SlotType.CUSTOM_CMD,
                 entity.name,
+                enabled,
                 entity.description,
                 entity.marketplaceRef,
                 entity.type,
@@ -201,6 +207,7 @@ data class CustomCommandResponse(
 
 data class AutoResponderResponse(
     override val slotId: UUID,
+    override val slotType: SlotType,
     val enabled: Boolean,
     val text: JsonNode,
     val matchText: List<String>?
@@ -208,9 +215,10 @@ data class AutoResponderResponse(
 
     companion object {
 
-        fun fromEntity(slot: GuildSlotEntity, entity: AutoResponderEntity): AutoResponderResponse {
+        fun fromEntity(entity: AutoResponderEntity): AutoResponderResponse {
             return AutoResponderResponse(
                 entity.slotId,
+                SlotType.AUTO_REPLY,
                 entity.enabled,
                 entity.text,
                 entity.match

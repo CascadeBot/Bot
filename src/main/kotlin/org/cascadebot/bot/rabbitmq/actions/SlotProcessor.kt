@@ -42,10 +42,7 @@ class SlotProcessor : Processor {
 
         when (parts[0]) {
             "getAll" -> {
-                val (slots, commands, responders) = dbTransaction {
-                    val guildSlots = queryEntity(GuildSlotEntity::class.java) { root ->
-                        equal(root.get<Long>("guildId"), guild.idLong)
-                    }.list()
+                val (commands, responders) = dbTransaction {
                     val customCommands =
                         queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
                             equal(join.get<Long>("guildId"), guild.idLong)
@@ -55,15 +52,12 @@ class SlotProcessor : Processor {
                             equal(join.get<Long>("guildId"), guild.idLong)
                         }.list()
 
-                    Triple(guildSlots, customCommands, autoResponders)
+                    Pair(customCommands, autoResponders)
                 }
 
-                val slotsMap = slots.associateBy { it.slotId }
-
-                // !! is okay here because the existence of the slot ID is enforced at DB level for each slot item
                 // TODO Query Discord
                 val commandsResponse = commands.map { CustomCommandResponse.fromEntity(false, it) }
-                val autoResponse = responders.map { AutoResponderResponse.fromEntity(slotsMap[it.slotId]!!, it) }
+                val autoResponse = responders.map { AutoResponderResponse.fromEntity(it) }
 
                 return RabbitMQResponse.success(commandsResponse + autoResponse)
             }
@@ -110,7 +104,7 @@ class SlotProcessor : Processor {
                                 "A auto responder for the slot specified could not be found"
                             )
                         }
-                        return RabbitMQResponse.success(AutoResponderResponse.fromEntity(slot, responder))
+                        return RabbitMQResponse.success(AutoResponderResponse.fromEntity(responder))
                     }
 
                     else -> RabbitMQResponse.failure(
