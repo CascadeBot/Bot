@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -23,16 +23,14 @@ class UserProcessor : Processor {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
-        shard: JDA
+        guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val userId = body.get("user_id").asLong()
-        val guildId = body.get("guild_id").asLong()
 
-        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
         val member = guild.getMemberById(userId)
 
         if (member == null) {

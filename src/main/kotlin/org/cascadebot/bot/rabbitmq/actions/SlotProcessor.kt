@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.interactions.commands.Command
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.db.entities.AutoResponderEntity
@@ -34,28 +34,25 @@ class SlotProcessor : Processor {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
-        shard: JDA
+        guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.size != 1) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
-        val guildId = body.get("guild_id").asLong()
-        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
-
         when (parts[0]) {
             "getAll" -> {
                 val (slots, commands, responders) = dbTransaction {
                     val guildSlots = queryEntity(GuildSlotEntity::class.java) { root ->
-                        equal(root.get<Long>("guildId"), guildId)
+                        equal(root.get<Long>("guildId"), guild.idLong)
                     }.list()
                     val customCommands =
                         queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
-                            equal(join.get<Long>("guildId"), guildId)
+                            equal(join.get<Long>("guildId"), guild.idLong)
                         }.list()
                     val autoResponders =
                         queryJoinedEntities(AutoResponderEntity::class.java, GuildSlotEntity::class.java) { _, join ->
-                            equal(join.get<Long>("guildId"), guildId)
+                            equal(join.get<Long>("guildId"), guild.idLong)
                         }.list()
 
                     Triple(guildSlots, customCommands, autoResponders)
@@ -72,7 +69,7 @@ class SlotProcessor : Processor {
             }
 
             "get" -> {
-                val slot = getSlot(body, guildId)
+                val slot = getSlot(body, guild.idLong)
 
                 val (command, responder) = dbTransaction {
                     val customCommand = tryOrNull {
@@ -129,7 +126,7 @@ class SlotProcessor : Processor {
             }
 
             "isEnabled" -> {
-                val slot = getSlot(body, guildId)
+                val slot = getSlot(body, guild.idLong)
 
                 when {
                     slot.isCustomCommand -> {
@@ -177,7 +174,7 @@ class SlotProcessor : Processor {
             }
 
             "enable" -> {
-                val slot = getSlot(body, guildId)
+                val slot = getSlot(body, guild.idLong)
 
                 when {
                     slot.isCustomCommand -> {
@@ -235,7 +232,7 @@ class SlotProcessor : Processor {
             }
 
             "disable" -> {
-                val slot = getSlot(body, guildId)
+                val slot = getSlot(body, guild.idLong)
 
                 when {
                     slot.isCustomCommand -> {

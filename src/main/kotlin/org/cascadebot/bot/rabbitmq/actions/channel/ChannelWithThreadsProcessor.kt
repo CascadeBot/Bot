@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.attribute.IThreadContainer
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
@@ -20,12 +20,8 @@ class ChannelWithThreadsProcessor : Processor {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
-        shard: JDA
+        guild: Guild
     ): RabbitMQResponse<*> {
-        val guildId = body.get("guild_id").asLong()
-
-        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
-
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {

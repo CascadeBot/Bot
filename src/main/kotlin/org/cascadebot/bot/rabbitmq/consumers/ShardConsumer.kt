@@ -5,12 +5,14 @@ import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionProcessors
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
+import java.util.Optional
 
 class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda: JDA) : ErrorHandledConsumer(channel) {
 
@@ -40,16 +42,16 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
 
         val action = properties.headers["action"].toString()
 
-        val consumerEnum = ActionProcessors.values().firstOrNull { action.startsWith(it.root) }
+        val consumerEnum = ActionProcessors.entries.firstOrNull { action.startsWith(it.root) }
 
         if (consumerEnum == null) {
             CommonResponses.UNSUPPORTED_ACTION.sendAndAck(channel, properties, envelope)
             return
         }
 
-        if (consumerEnum.requiresGuild) {
-            if (!validateGuildId(jsonBody, properties, envelope)) return
-        }
+        val guildResult = validateGuildId(jsonBody, properties, envelope);
+
+        if (guildResult.isEmpty) return
 
         val actionParts = action.removePrefix(consumerEnum.root + ":") // Remove the prefix followed by its colon
             .split(":")
@@ -61,11 +63,11 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             envelope,
             properties,
             channel,
-            jda
+            guildResult.get()
         )?.sendAndAck(channel, properties, envelope)
     }
 
-    private fun validateGuildId(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Boolean {
+    private fun validateGuildId(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Optional<Guild> {
         val guildIdField = jsonBody.get("guild_id")
 
         if (guildIdField == null) {
@@ -74,7 +76,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 InvalidErrorCodes.InvalidGuild,
                 "Guild must be specified in the request"
             ).sendAndAck(channel, properties, envelope)
-            return false
+            return Optional.empty()
         }
 
         val guildId = guildIdField.asText().toLongOrNull()
@@ -85,7 +87,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 InvalidErrorCodes.InvalidGuild,
                 "Guild ID must be a 64-bit int contained in a string"
             ).sendAndAck(channel, properties, envelope)
-            return false
+            return Optional.empty()
         }
 
         val guildShardId = ((guildId shr 22) % Main.shardManager.shardsTotal).toInt()
@@ -96,19 +98,21 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 InvalidErrorCodes.InvalidShard,
                 "Shard mismatch. Guild shard: $shardId. Requested shard: $shardId"
             ).sendAndAck(channel, properties, envelope)
-            return false
+            return Optional.empty()
         }
 
-        if (jda.getGuildById(guildId) == null) {
+        val guild = jda.getGuildById(guildId);
+
+        if (guild == null) {
             RabbitMQResponse.failure(
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidGuild,
                 "The specified guild does not exist"
             ).sendAndAck(channel, properties, envelope)
-            return false
+            return Optional.empty()
         }
 
-        return true
+        return Optional.of(guild)
     }
 
 }

@@ -18,7 +18,7 @@ class ChannelUtils {
             val typeStr = channelNode.get("type").asText()
             val id = channelNode.get("id").asLong()
 
-            val type = ChannelType.values().firstOrNull { it.name.equals(typeStr, true) }
+            val type = ChannelType.entries.firstOrNull { it.name.equals(typeStr, true) }
 
             if (type == null) {
                 return null

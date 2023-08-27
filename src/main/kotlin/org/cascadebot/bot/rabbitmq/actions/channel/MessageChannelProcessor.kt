@@ -5,7 +5,7 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.messages.MessageCreateBuilder
-import net.dv8tion.jda.api.JDA
+import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import org.cascadebot.bot.Main
@@ -26,12 +26,8 @@ class MessageChannelProcessor : Processor {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
-        shard: JDA
+        guild: Guild
     ): RabbitMQResponse<*>? {
-        val guildId = body.get("guild_id").asLong()
-
-        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
-
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {

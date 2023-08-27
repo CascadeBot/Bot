@@ -4,8 +4,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
-import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.Permission
+import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -23,16 +23,14 @@ class RoleProcessor : Processor {
         envelope: Envelope,
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
-        shard: JDA
+        guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
         val roleId = body.get("role_id").asLong()
-        val guildId = body.get("guild_id").asLong()
 
-        val guild = shard.getGuildById(guildId)!! // Shard Consumer runs checks, so should not be null
         val role = guild.getRoleById(roleId)
 
         if (role == null) {
@@ -49,7 +47,7 @@ class RoleProcessor : Processor {
                     // role:permissions:list
                     "list" -> {
                         val perms = mutableListOf<RolePermission>()
-                        for (perm in Permission.values()) {
+                        for (perm in Permission.entries) {
                             perms.add(RolePermission(perm, role.hasPermission(perm)))
                         }
                         return RabbitMQResponse.success(perms)
