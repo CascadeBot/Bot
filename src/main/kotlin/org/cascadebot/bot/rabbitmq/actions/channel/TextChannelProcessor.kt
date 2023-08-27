@@ -52,7 +52,7 @@ class TextChannelProcessor : Processor {
                                 "old_topic" to old,
                                 "new_topic" to newVal
                             )
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
                         }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
                         return null
                     }
