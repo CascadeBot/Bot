@@ -89,11 +89,7 @@ class SlotProcessor : Processor {
                 when {
                     slot.isCustomCommand -> {
                         if (command == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.NotFound,
-                                MiscErrorCodes.SlotNotFound,
-                                "A custom command for the slot specified could not be found"
-                            )
+                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
                         }
 
                         guild.retrieveCommands().queue { commands ->
@@ -133,11 +129,7 @@ class SlotProcessor : Processor {
                         val command = getCommand(slot)
 
                         if (command == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.NotFound,
-                                MiscErrorCodes.SlotNotFound,
-                                "A custom command for the slot specified could not be found"
-                            )
+                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
                         }
 
                         guild.retrieveCommands().queue({ commands ->
@@ -181,11 +173,7 @@ class SlotProcessor : Processor {
                         val command = getCommand(slot)
 
                         if (command == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.NotFound,
-                                MiscErrorCodes.SlotNotFound,
-                                "A custom command for the slot specified could not be found"
-                            )
+                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
                         }
 
                         val commandData = command.toDiscordCommand()
@@ -239,11 +227,7 @@ class SlotProcessor : Processor {
                         val command = getCommand(slot)
 
                         if (command == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.NotFound,
-                                MiscErrorCodes.SlotNotFound,
-                                "A custom command for the slot specified could not be found"
-                            )
+                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
                         }
 
                         val deleteCommand: (List<Command>) -> Unit = { commands: List<Command> ->

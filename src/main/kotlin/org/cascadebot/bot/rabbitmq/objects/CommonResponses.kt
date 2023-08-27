@@ -26,4 +26,10 @@ object CommonResponses {
         "An auto responder for the slot specified could not be found"
     )
 
+    val CUSTOM_COMMAND_NOT_FOUND = RabbitMQResponse.failure(
+        StatusCode.NotFound,
+        MiscErrorCodes.SlotNotFound,
+        "A custom command for the slot specified could not be found"
+    )
+
 }
