@@ -59,11 +59,7 @@ class InteractionListener : ListenerAdapter() {
             queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { root, join ->
                 and(
                     equal(join.get<Long>("guildId"), event.guild!!.idLong),
-                    equal(root.get<String>("name"), name),
-                    or(
-                        equal(join.get<Boolean>("enabled"), true),
-                        isNull(join.get<Boolean>("enabled"))
-                    )
+                    equal(root.get<String>("name"), name)
                 )
             }.singleResult
         }
