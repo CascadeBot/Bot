@@ -5,6 +5,7 @@ import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.channel.ChannelUtils
@@ -47,30 +48,37 @@ class MessageProcessor : Processor {
         }
 
         channel.retrieveMessageById(rmqMessage.messageId).queue({
-            when (parts[0]) {
-                // message:edit
-                "edit" -> {
-                    it.editMessage(rmqMessage.messageEditData).queue({
-                        RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                    },
-                        { error ->
-                            when (error) {
-                                is IllegalStateException -> {
-                                    RabbitMQResponse.failure(
-                                        StatusCode.BadRequest,
-                                        MiscErrorCodes.BotDoesNotOwnMessage,
-                                        "The bot does not own the message trying to be edited"
-                                    )
-                                }
-                                else -> ErrorHandler.handleError(envelope, properties, rabbitMqChannel, error)
-                            }
-                        })
-                }
+            when {
+                checkAction(parts, "edit") -> editMessage(it, rmqMessage, rabbitMqChannel, properties, envelope)
+                else -> CommonResponses.UNSUPPORTED_ACTION.sendAndAck(rabbitMqChannel, properties, envelope)
             }
-
-            CommonResponses.UNSUPPORTED_ACTION.sendAndAck(rabbitMqChannel, properties, envelope)
         }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
 
         return null
+    }
+
+    private fun editMessage(
+        message: Message,
+        rmqMessage: MessageData,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ) {
+        message.editMessage(rmqMessage.messageEditData).queue({
+            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+        },
+            { error ->
+                when (error) {
+                    is IllegalStateException -> {
+                        RabbitMQResponse.failure(
+                            StatusCode.BadRequest,
+                            MiscErrorCodes.BotDoesNotOwnMessage,
+                            "The bot does not own the message trying to be edited"
+                        )
+                    }
+
+                    else -> ErrorHandler.handleError(envelope, properties, rabbitMqChannel, error)
+                }
+            })
     }
 }

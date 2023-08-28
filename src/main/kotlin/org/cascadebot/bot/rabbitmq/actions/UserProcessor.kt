@@ -6,6 +6,8 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.Member
+import net.dv8tion.jda.api.entities.Role
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -13,7 +15,6 @@ import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
-import java.awt.Color
 
 class UserProcessor : Processor {
 
@@ -41,28 +42,11 @@ class UserProcessor : Processor {
             )
         }
 
-        when (parts[0]) {
-            "list" -> {
-                // TODO pagination
-                when (parts[1]) {
-                    // user:list:role
-                    "role" -> {
-                        val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(member.roles.map { RoleResponse.fromRole(it) })
-                        return RabbitMQResponse.success(response)
-                    }
-                }
-            }
+        return when {
+            checkAction(parts, "list", "role") -> listUserRoles(body, member)
+            checkAction(parts, "color", "get") -> RabbitMQResponse.success("color", member.color)
 
-            "color" -> {
-                Color.BLACK.rgb
-                // user:color:get
-                if (parts[1] == "get") {
-                    return RabbitMQResponse.success("color", member.color)
-                }
-            }
-
-            "permission" -> {
+            checkAction(parts, "permission") -> {
                 val permission: Permission
                 try {
                     permission = Permission.valueOf(body.get("permission").asText().uppercase())
@@ -73,24 +57,20 @@ class UserProcessor : Processor {
                         "The specified permission doesn't exist"
                     )
                 }
-                if (parts[1] == "has") {
-                    return RabbitMQResponse.success("has_perm", member.hasPermission(permission))
+
+                return when {
+                    checkAction(parts, "permission", "has") -> RabbitMQResponse.success(
+                        "has_perm",
+                        member.hasPermission(permission)
+                    )
+
+                    else -> CommonResponses.UNSUPPORTED_ACTION
                 }
             }
 
-            "nick" -> {
-                val nick = body.get("nick").asText()
-                // user:nick:set
-                if (parts[1] == "set") {
-                    member.modifyNickname(nick).queue({
-                        RabbitMQResponse.success()
-                            .sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                    return null
-                }
-            }
+            checkAction(parts, "nick", "set") -> setUserNickname(body, member, rabbitMqChannel, properties, envelope)
 
-            "role" -> {
+            checkAction(parts, "role") -> {
                 val roleId = body.get("role").asLong()
                 val role = guild.getRoleById(roleId)
 
@@ -102,62 +82,121 @@ class UserProcessor : Processor {
                     )
                 }
 
-                when (parts[1]) {
+                return when {
                     // user:role:add
-                    "add" -> {
-                        guild.addRoleToMember(member, role).queue(
-                            {
-                                RabbitMQResponse.success()
-                                    .sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
-                        return null
+                    checkAction(parts, "role", "add") -> {
+                        return addUserRole(guild, member, role, rabbitMqChannel, properties, envelope)
                     }
                     // user:role:remove
-                    "remove" -> {
-                        guild.removeRoleFromMember(member, role).queue({
-                            RabbitMQResponse.success()
-                                .sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
+                    checkAction(parts, "role", "remove") -> {
+                        return removeUserRole(guild, member, role, rabbitMqChannel, properties, envelope)
                     }
                     // user:role:has
-                    "has" -> {
+                    checkAction(parts, "role", "has") -> {
                         return RabbitMQResponse.success("has_role", member.roles.contains(role))
                     }
 
+                    else -> CommonResponses.UNSUPPORTED_ACTION
                 }
             }
 
-            "voice" -> {
-                when (parts[1]) {
-                    "deafen" -> {
-                        val state = body.get("deafen").asBoolean()
-                        member.deafen(state).queue(
-                            {
-                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
-                        return null
-                    }
+            checkAction(parts, "voice", "deafen") -> deafenUser(body, member, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "voice", "mute") -> muteUser(body, member, rabbitMqChannel, properties, envelope)
 
-                    "mute" -> {
-                        val state = body.get("mute").asBoolean()
-                        member.deafen(state).queue(
-                            {
-                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
-                        return null
-                    }
-                }
-            }
-
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+    private fun muteUser(
+        body: ObjectNode,
+        member: Member,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val state = body.get("mute").asBoolean()
+        member.deafen(state).queue(
+            {
+                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+        return null
+    }
+
+    private fun deafenUser(
+        body: ObjectNode,
+        member: Member,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val state = body.get("deafen").asBoolean()
+        member.deafen(state).queue(
+            {
+                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+        return null
+    }
+
+    private fun removeUserRole(
+        guild: Guild,
+        member: Member,
+        role: Role,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        guild.removeRoleFromMember(member, role).queue({
+            RabbitMQResponse.success()
+                .sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
+    }
+
+    private fun addUserRole(
+        guild: Guild,
+        member: Member,
+        role: Role,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        guild.addRoleToMember(member, role).queue(
+            {
+                RabbitMQResponse.success()
+                    .sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+        return null
+    }
+
+    private fun setUserNickname(
+        body: ObjectNode,
+        member: Member,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val nick = body.get("nick").asText()
+        member.modifyNickname(nick).queue({
+            RabbitMQResponse.success()
+                .sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
+    }
+
+
+    private fun listUserRoles(
+        body: ObjectNode,
+        member: Member
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<RoleResponse>> {
+        // TODO pagination
+        val params = PaginationUtil.parsePaginationParameters(body)
+        val response = params.paginate(member.roles.map { RoleResponse.fromRole(it) })
+        return RabbitMQResponse.success(response)
     }
 }

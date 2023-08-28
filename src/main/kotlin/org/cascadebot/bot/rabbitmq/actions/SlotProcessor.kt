@@ -1,5 +1,6 @@
 package org.cascadebot.bot.rabbitmq.actions
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
 import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
@@ -17,6 +18,7 @@ import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQException
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.SlotEntry
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.QueryUtils.deleteEntity
@@ -40,259 +42,268 @@ class SlotProcessor : Processor {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
-        when (parts[0]) {
-            "getAll" -> {
-                val (commands, responders) = dbTransaction {
-                    val customCommands =
-                        queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
-                            equal(join.get<Long>("guildId"), guild.idLong)
-                        }.list()
-                    val autoResponders =
-                        queryJoinedEntities(AutoResponderEntity::class.java, GuildSlotEntity::class.java) { _, join ->
-                            equal(join.get<Long>("guildId"), guild.idLong)
-                        }.list()
+        return when {
+            checkAction(parts, "getAll") -> getAllSlots(guild)
+            checkAction(parts, "get") -> getSingleSlot(body, guild)
+            checkAction(parts, "isEnabled") -> isSlotEnabled(body, guild, envelope, properties, rabbitMqChannel)
+            checkAction(parts, "enable") -> setSlotEnabled(body, guild, envelope, properties, rabbitMqChannel, true)
+            checkAction(parts, "disable") -> setSlotEnabled(body, guild, envelope, properties, rabbitMqChannel, false)
+            checkAction(parts, "delete") -> deleteSlot(body)
+            else -> CommonResponses.UNSUPPORTED_ACTION
+        }
+    }
 
-                    Pair(customCommands, autoResponders)
+    private fun deleteSlot(body: ObjectNode): RabbitMQResponse<out JsonNode> {
+        val slotId = getSlotId(body)
+
+        val numDeleted = dbTransaction {
+            deleteEntity(GuildSlotEntity::class.java) { root ->
+                equal(root.get<UUID>("slotId"), slotId)
+            }
+        }
+
+        // TODO: Delete custom command from Discord
+
+        if (numDeleted == 0) {
+            return RabbitMQResponse.failure(
+                StatusCode.NotFound,
+                MiscErrorCodes.SlotNotFound,
+                "Slot could not be found"
+            )
+        }
+
+        return RabbitMQResponse.success(createJsonObject("slot_id" to slotId))
+    }
+
+    private fun disableCustomCommand(
+        slot: GuildSlotEntity,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope,
+        guild: Guild
+    ): RabbitMQResponse<Nothing>? {
+        val command = getCommand(slot)
+
+        if (command == null) {
+            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
+        }
+
+        val deleteCommand: (List<Command>) -> Unit = { commands: List<Command> ->
+            val cmd =
+                commands.find { it.name == command.name && it.applicationIdLong == Main.applicationInfo.idLong }
+
+            cmd?.delete()?.queue({
+                val response = createJsonObject(
+                    "slot_id" to slot.slotId,
+                    "enabled" to false
+                )
+                RabbitMQResponse.success(response).sendAndAck(rabbitMqChannel, properties, envelope)
+            }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        }
+
+        guild.retrieveCommands()
+            .queue(deleteCommand, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
+    }
+
+    private fun setSlotEnabled(
+        body: ObjectNode,
+        guild: Guild,
+        envelope: Envelope,
+        properties: AMQP.BasicProperties,
+        rabbitMqChannel: Channel,
+        enabled: Boolean
+    ): RabbitMQResponse<out JsonNode>? {
+        val slot = getSlot(body, guild.idLong)
+
+        when {
+            slot.isCustomCommand -> {
+                return if (enabled) {
+                    enableCustomCommand(slot, guild, envelope, properties, rabbitMqChannel)
+                } else {
+                    disableCustomCommand(slot, rabbitMqChannel, properties, envelope, guild)
                 }
-
-                // TODO Query Discord
-                val commandsResponse = commands.map { CustomCommandResponse.fromEntity(false, it) }
-                val autoResponse = responders.map { AutoResponderResponse.fromEntity(it) }
-
-                return RabbitMQResponse.success(commandsResponse + autoResponse)
             }
 
-            "get" -> {
-                val slot = getSlot(body, guild.idLong)
+            slot.isAutoResponder -> {
+                val autoResponder = getAutoResponder(slot)
 
-                val (command, responder) = dbTransaction {
-                    val customCommand = tryOrNull {
-                        queryEntity(CustomCommandEntity::class.java) { root ->
-                            equal(root.get<UUID>("slotId"), slot.slotId)
-                        }.singleResult
-                    }
-                    val autoResponder = tryOrNull {
-                        queryEntity(AutoResponderEntity::class.java) { root ->
-                            equal(root.get<UUID>("slotId"), slot.slotId)
-                        }.singleResult
-                    }
-
-                    Pair(customCommand, autoResponder)
+                if (autoResponder == null) {
+                    return CommonResponses.AUTORESPONDER_NOT_FOUND
                 }
 
-                when {
-                    slot.isCustomCommand -> {
-                        if (command == null) {
-                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
-                        }
+                autoResponder.enabled = enabled
 
-                        guild.retrieveCommands().queue { commands ->
-                            val exists =
-                                commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
+                dbTransaction {
+                    persist(autoResponder)
+                }
 
-                            RabbitMQResponse.success(CustomCommandResponse.fromEntity(exists, command))
-                        }
+                val response = createJsonObject(
+                    "slot_id" to slot.slotId,
+                    "enabled" to autoResponder.enabled
+                )
 
-                        return null
-                    }
+                return RabbitMQResponse.success(response)
+            }
 
-                    slot.isAutoResponder -> {
-                        if (responder == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.NotFound,
-                                MiscErrorCodes.SlotNotFound,
-                                "A auto responder for the slot specified could not be found"
-                            )
-                        }
-                        return RabbitMQResponse.success(AutoResponderResponse.fromEntity(responder))
-                    }
+            else -> return CommonResponses.UNSUPPORTED_SLOT
+        }
+    }
 
-                    else -> RabbitMQResponse.failure(
-                        StatusCode.ServerException,
-                        MiscErrorCodes.UnexpectedError,
-                        "Slot is an unsupported type"
+    private fun enableCustomCommand(
+        slot: GuildSlotEntity,
+        guild: Guild,
+        envelope: Envelope,
+        properties: AMQP.BasicProperties,
+        rabbitMqChannel: Channel
+    ): RabbitMQResponse<Nothing>? {
+        val command = getCommand(slot)
+
+        if (command == null) {
+            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
+        }
+
+        val commandData = command.toDiscordCommand()
+
+        // Important! ALl custom commands are guild-only.
+        commandData.isGuildOnly = true
+
+        guild.upsertCommand(commandData).queue({
+            val obj = createJsonObject(
+                "slot_id" to slot.slotId,
+                "enabled" to true,
+                "command_id" to it.id,
+                "name" to it.name
+            )
+            RabbitMQResponse.success(obj)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
+    }
+
+    private fun isSlotEnabled(
+        body: ObjectNode,
+        guild: Guild,
+        envelope: Envelope,
+        properties: AMQP.BasicProperties,
+        rabbitMqChannel: Channel
+    ): RabbitMQResponse<out JsonNode>? {
+        val slot = getSlot(body, guild.idLong)
+
+        when {
+            slot.isCustomCommand -> {
+                val command = getCommand(slot)
+
+                if (command == null) {
+                    return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
+                }
+
+                guild.retrieveCommands().queue({ commands ->
+                    val exists =
+                        commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
+
+                    val response = createJsonObject(
+                        "slot_id" to slot.slotId,
+                        "enabled" to exists
                     )
-                }
+
+                    RabbitMQResponse.success(response)
+                }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+                return null
             }
 
-            "isEnabled" -> {
-                val slot = getSlot(body, guild.idLong)
+            slot.isAutoResponder -> {
+                val autoResponder = getAutoResponder(slot)
 
-                when {
-                    slot.isCustomCommand -> {
-                        val command = getCommand(slot)
-
-                        if (command == null) {
-                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
-                        }
-
-                        guild.retrieveCommands().queue({ commands ->
-                            val exists =
-                                commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
-
-                            val response = createJsonObject(
-                                "slot_id" to slot.slotId,
-                                "enabled" to exists
-                            )
-
-                            RabbitMQResponse.success(response)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
-                    }
-
-                    slot.isAutoResponder -> {
-                        val autoResponder = getAutoResponder(slot)
-
-                        if (autoResponder == null) {
-                            return CommonResponses.AUTORESPONDER_NOT_FOUND
-                        }
-
-                        val response = createJsonObject(
-                            "slot_id" to slot.slotId,
-                            "enabled" to autoResponder.enabled
-                        )
-                        return RabbitMQResponse.success(response)
-                    }
-
-                    else -> return CommonResponses.UNSUPPORTED_SLOT
+                if (autoResponder == null) {
+                    return CommonResponses.AUTORESPONDER_NOT_FOUND
                 }
 
+                val response = createJsonObject(
+                    "slot_id" to slot.slotId,
+                    "enabled" to autoResponder.enabled
+                )
+                return RabbitMQResponse.success(response)
             }
 
-            "enable" -> {
-                val slot = getSlot(body, guild.idLong)
+            else -> return CommonResponses.UNSUPPORTED_SLOT
+        }
+    }
 
-                when {
-                    slot.isCustomCommand -> {
-                        val command = getCommand(slot)
+    private fun getSingleSlot(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out AutoResponderResponse>? {
+        val slot = getSlot(body, guild.idLong)
 
-                        if (command == null) {
-                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
-                        }
-
-                        val commandData = command.toDiscordCommand()
-
-                        // Important! ALl custom commands are guild-only.
-                        commandData.isGuildOnly = true
-
-                        guild.upsertCommand(commandData).queue({
-                            val obj = createJsonObject(
-                                "slot_id" to slot.slotId,
-                                "enabled" to true,
-                                "command_id" to it.id,
-                                "name" to it.name
-                            )
-                            RabbitMQResponse.success(obj)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
-                    }
-
-                    slot.isAutoResponder -> {
-                        val autoResponder = getAutoResponder(slot)
-
-                        if (autoResponder == null) {
-                            return CommonResponses.AUTORESPONDER_NOT_FOUND
-                        }
-
-                        autoResponder.enabled = true
-
-                        dbTransaction {
-                            persist(autoResponder)
-                        }
-
-                        val response = createJsonObject(
-                            "slot_id" to slot.slotId,
-                            "enabled" to autoResponder.enabled
-                        )
-
-                        return RabbitMQResponse.success(response)
-                    }
-
-                    else -> return CommonResponses.UNSUPPORTED_SLOT
-                }
-
+        val (command, responder) = dbTransaction {
+            val customCommand = tryOrNull {
+                queryEntity(CustomCommandEntity::class.java) { root ->
+                    equal(root.get<UUID>("slotId"), slot.slotId)
+                }.singleResult
+            }
+            val autoResponder = tryOrNull {
+                queryEntity(AutoResponderEntity::class.java) { root ->
+                    equal(root.get<UUID>("slotId"), slot.slotId)
+                }.singleResult
             }
 
-            "disable" -> {
-                val slot = getSlot(body, guild.idLong)
+            Pair(customCommand, autoResponder)
+        }
 
-                when {
-                    slot.isCustomCommand -> {
-                        val command = getCommand(slot)
-
-                        if (command == null) {
-                            return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
-                        }
-
-                        val deleteCommand: (List<Command>) -> Unit = { commands: List<Command> ->
-                            val cmd =
-                                commands.find { it.name == command.name && it.applicationIdLong == Main.applicationInfo.idLong }
-
-                            cmd?.delete()?.queue({
-                                val response = createJsonObject(
-                                    "slot_id" to slot.slotId,
-                                    "enabled" to false
-                                )
-                                RabbitMQResponse.success(response).sendAndAck(rabbitMqChannel, properties, envelope)
-                            }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        }
-
-                        guild.retrieveCommands()
-                            .queue(deleteCommand, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
-                    }
-
-                    slot.isAutoResponder -> {
-                        val autoResponder = getAutoResponder(slot)
-
-                        if (autoResponder == null) {
-                            return CommonResponses.AUTORESPONDER_NOT_FOUND
-                        }
-
-                        autoResponder.enabled = false
-
-                        dbTransaction {
-                            persist(autoResponder)
-                        }
-
-                        val response = createJsonObject(
-                            "slot_id" to slot.slotId,
-                            "enabled" to autoResponder.enabled
-                        )
-
-                        return RabbitMQResponse.success(response)
-                    }
+        when {
+            slot.isCustomCommand -> {
+                if (command == null) {
+                    return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
                 }
 
+                guild.retrieveCommands().queue { commands ->
+                    val exists =
+                        commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
+
+                    RabbitMQResponse.success(CustomCommandResponse.fromEntity(exists, command))
+                }
+
+                return null
             }
 
-            "delete" -> {
-                val slotId = getSlotId(body)
-                
-                val numDeleted = dbTransaction {
-                    deleteEntity(GuildSlotEntity::class.java) { root ->
-                        equal(root.get<UUID>("slotId"), slotId)
-                    }
-                }
-
-                if (numDeleted == 0) {
+            slot.isAutoResponder -> {
+                if (responder == null) {
                     return RabbitMQResponse.failure(
                         StatusCode.NotFound,
                         MiscErrorCodes.SlotNotFound,
-                        "Slot could not be found"
+                        "A auto responder for the slot specified could not be found"
                     )
                 }
-
-                return RabbitMQResponse.success(createJsonObject("slot_id" to slotId))
+                return RabbitMQResponse.success(AutoResponderResponse.fromEntity(responder))
             }
 
+            else -> return RabbitMQResponse.failure(
+                StatusCode.ServerException,
+                MiscErrorCodes.UnexpectedError,
+                "Slot is an unsupported type"
+            )
+        }
+    }
+
+    private fun getAllSlots(guild: Guild): RabbitMQResponse<List<SlotEntry>> {
+        val (commands, responders) = dbTransaction {
+            val customCommands =
+                queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
+                    equal(join.get<Long>("guildId"), guild.idLong)
+                }.list()
+            val autoResponders =
+                queryJoinedEntities(AutoResponderEntity::class.java, GuildSlotEntity::class.java) { _, join ->
+                    equal(join.get<Long>("guildId"), guild.idLong)
+                }.list()
+
+            Pair(customCommands, autoResponders)
         }
 
-        /*
-        *
-        */
+        // TODO Query Discord
+        val commandsResponse = commands.map { CustomCommandResponse.fromEntity(false, it) }
+        val autoResponse = responders.map { AutoResponderResponse.fromEntity(it) }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+        return RabbitMQResponse.success(commandsResponse + autoResponse)
     }
 
     private fun getCommand(slot: GuildSlotEntity): CustomCommandEntity? {

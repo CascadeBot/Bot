@@ -34,18 +34,21 @@ class ChannelWithThreadsProcessor : Processor {
 
         channel as IThreadContainer
 
-        when (parts[0]) {
-            // channel:threaded:list
-            "list" -> {
-                val params = PaginationUtil.parsePaginationParameters(body)
-                return RabbitMQResponse.success(params.paginate(channel.threadChannels.map {
-                    ChannelResponse.fromThread(
-                        it
-                    )
-                }))
-            }
+        return when {
+            checkAction(parts, "list") -> listThreads(body, channel)
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+    private fun listThreads(
+        body: ObjectNode,
+        channel: IThreadContainer
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<ChannelResponse>> {
+        val params = PaginationUtil.parsePaginationParameters(body)
+        return RabbitMQResponse.success(params.paginate(channel.threadChannels.map {
+            ChannelResponse.fromThread(
+                it
+            )
+        }))
     }
 }

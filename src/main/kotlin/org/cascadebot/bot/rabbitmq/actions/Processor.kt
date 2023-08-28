@@ -24,4 +24,14 @@ interface Processor {
         return Main.postgres.transaction(work)
     }
 
+    fun checkAction(parts: List<String>, vararg actionParts: String): Boolean {
+        if (parts.size < actionParts.size) return false
+
+        for ((index, s) in actionParts.withIndex()) {
+            if (parts[index] != s) return false
+        }
+
+        return true
+    }
+
 }

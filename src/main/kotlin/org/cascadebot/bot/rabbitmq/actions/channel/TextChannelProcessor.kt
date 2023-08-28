@@ -30,43 +30,40 @@ class TextChannelProcessor : Processor {
             return CommonResponses.CHANNEL_NOT_FOUND
         }
 
-        if (parts.size <= 1) {
-            return CommonResponses.UNSUPPORTED_ACTION
-        }
-
         channel as TextChannel
 
-        when (parts[0]) {
-            "topic" -> {
-                when (parts[1]) {
-                    // channel:text:topic:get
-                    "get" -> {
-                        return RabbitMQResponse.success("topic", channel.topic)
-                    }
-                    // channel:text:topic:set
-                    "set" -> {
-                        val old = channel.topic
-                        val newVal = body.get("topic").asText()
-                        channel.manager.setTopic(newVal).queue({
-                            val node = createJsonObject(
-                                "old_topic" to old,
-                                "new_topic" to newVal
-                            )
-                            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
-                    }
-                }
-            }
-
-            "users" -> {
-                if (parts[1] == "list") {
-                    val params = PaginationUtil.parsePaginationParameters(body)
-                    return RabbitMQResponse.success(params.paginate(channel.members.map { MemberResponse.fromMember(it) }))
-                }
-            }
+        return when {
+            checkAction(parts, "topic", "get") -> RabbitMQResponse.success("topic", channel.topic)
+            checkAction(parts, "topic", "set") -> setChannelTopic(channel, body, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "members", "list") -> listChannelMembers(body, channel)
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+    private fun listChannelMembers(
+        body: ObjectNode,
+        channel: TextChannel
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<MemberResponse>> {
+        val params = PaginationUtil.parsePaginationParameters(body)
+        return RabbitMQResponse.success(params.paginate(channel.members.map { MemberResponse.fromMember(it) }))
+    }
+
+    private fun setChannelTopic(
+        channel: TextChannel,
+        body: ObjectNode,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val old = channel.topic
+        val newVal = body.get("topic").asText()
+        channel.manager.setTopic(newVal).queue({
+            val node = createJsonObject(
+                "old_topic" to old,
+                "new_topic" to newVal
+            )
+            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
     }
 }

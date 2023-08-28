@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.messages.MessageEditBuilder
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.interactions.InteractionHook
 import net.dv8tion.jda.api.utils.messages.MessageEditBuilder
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.MessageType
@@ -27,7 +28,7 @@ class InteractionProcessor : Processor {
         rabbitMqChannel: Channel,
         guild: Guild
     ): RabbitMQResponse<*>? {
-        if (parts.isEmpty()) {
+        if (parts.size <= 1) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
@@ -43,53 +44,78 @@ class InteractionProcessor : Processor {
             )
         }
 
-        when (parts[0]) {
-            "reply" -> {
-                when (parts[1]) {
-                    // channel:interaction:reply:simple
-                    "simple" -> {
-                        interactionHook.editOriginal(MessageEditBuilder {
-                            embeds += MessageType.INFO.embed.apply {
-                                description = body.get("message").asText()
-                            }.build()
-                        }.build()).queue(
-                            {
-                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
+        return when {
+            checkAction(parts, "reply", "simple") -> replySimple(
+                interactionHook,
+                body,
+                rabbitMqChannel,
+                properties,
+                envelope,
+                rmqInteraction
+            )
 
-                        // We can't reply to an interaction twice, so we should invalidate this after it's been used
-                        Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
-                        return null
-                    }
-                    // channel:interaction:reply:complex
-                    "complex" -> {
-                        val builder = MessageEditBuilder()
-                        val message = body.get("message")
-                        if (message.has("embeds")) {
-                            builder.setEmbeds(message.get("embeds").map {
-                                Main.json.treeToValue(it, EmbedData::class.java).messageEmbed
-                            })
-                        }
-                        if (message.has("content")) {
-                            builder.setContent(message.get("content").asText())
-                        }
+            checkAction(parts, "reply", "complex") -> replyComplex(
+                interactionHook,
+                body,
+                rabbitMqChannel,
+                properties,
+                envelope,
+                rmqInteraction
+            )
 
-                        interactionHook.editOriginal(builder.build()).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            else -> CommonResponses.UNSUPPORTED_ACTION
+        }
+    }
 
-                        // We can't reply to an interaction twice, so we should invalidate this after it's been used
-                        Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
-                        return null
-                    }
-                }
-            }
+    private fun replyComplex(
+        interactionHook: InteractionHook,
+        body: ObjectNode,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope,
+        rmqInteraction: InteractionData
+    ): Nothing? {
+        val builder = MessageEditBuilder()
+        val message = body.get("message")
+        if (message.has("embeds")) {
+            builder.setEmbeds(message.get("embeds").map {
+                Main.json.treeToValue(it, EmbedData::class.java).messageEmbed
+            })
+        }
+        if (message.has("content")) {
+            builder.setContent(message.get("content").asText())
         }
 
-        // TODO Actually do stuff and things
+        interactionHook.editOriginal(builder.build()).queue({
+            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
 
-        return CommonResponses.UNSUPPORTED_ACTION
+        // We can't reply to an interaction twice, so we should invalidate this after it's been used
+        Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
+        return null
+    }
+
+    private fun replySimple(
+        interactionHook: InteractionHook,
+        body: ObjectNode,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope,
+        rmqInteraction: InteractionData
+    ): Nothing? {
+        interactionHook.editOriginal(MessageEditBuilder {
+            embeds += MessageType.INFO.embed.apply {
+                description = body.get("message").asText()
+            }.build()
+        }.build()).queue(
+            {
+                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+
+        // We can't reply to an interaction twice, so we should invalidate this after it's been used
+        Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
+        return null
     }
 }

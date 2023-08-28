@@ -37,15 +37,9 @@ class VoiceChanelProcessor : Processor {
 
         channel as AudioChannel
 
-        when (parts[0]) {
-            "list" -> {
-                if (parts[1] == "user") {
-                    val params = PaginationUtil.parsePaginationParameters(body)
-                    return RabbitMQResponse.success(params.paginate(channel.members.map { MemberResponse.fromMember(it) }))
-                }
-            }
-
-            "user" -> {
+        return when {
+            checkAction(parts, "members", "list") -> listChannelMembers(body, channel)
+            checkAction(parts, "member") -> {
                 val userId = body.get("user_id").asLong()
                 val member = guild.getMemberById(userId)
 
@@ -65,8 +59,8 @@ class VoiceChanelProcessor : Processor {
                     )
                 }
 
-                when (parts[1]) {
-                    "move" -> {
+                when  {
+                    checkAction(parts, "member", "move") -> {
                         guild.moveVoiceMember(member, channel).queue(
                             {
                                 RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
@@ -75,10 +69,18 @@ class VoiceChanelProcessor : Processor {
                         )
                         return null
                     }
+                    else -> CommonResponses.UNSUPPORTED_ACTION
                 }
             }
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+    private fun listChannelMembers(
+        body: ObjectNode,
+        channel: AudioChannel
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<MemberResponse>> {
+        val params = PaginationUtil.parsePaginationParameters(body)
+        return RabbitMQResponse.success(params.paginate(channel.members.map { MemberResponse.fromMember(it) }))
     }
 }

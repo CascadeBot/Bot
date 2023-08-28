@@ -6,6 +6,7 @@ import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
+import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
@@ -34,75 +35,91 @@ class GenericChannelProcessor : Processor {
             return CommonResponses.CHANNEL_NOT_FOUND
         }
 
-        if (parts.size <= 1) {
-            return CommonResponses.UNSUPPORTED_ACTION
+        return when {
+            checkAction(parts, "name", "set") -> setChannelName(channel, body, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "permissions", "list") -> listChannelPermissions(body, channel)
+            checkAction(parts, "permissions", "create") -> createChannelPermission(
+                body,
+                guild,
+                channel,
+                rabbitMqChannel,
+                properties,
+                envelope
+            )
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        when (parts[0]) {
-            "name" -> {
-                // channel:general:name:set
-                if (parts[1] == "set") {
-                    val oldName = channel.name
-                    val newName = body.get("name").asText()
-                    channel.manager.setName(newName).queue({
-                        val node = createJsonObject(
-                            "old_name" to oldName,
-                            "new_name" to newName
-                        )
-                        RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+    private fun createChannelPermission(
+        body: ObjectNode,
+        guild: Guild,
+        channel: GuildChannel,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val override =
+            Main.json.treeToValue(body.get("override"), PermissionOverrideData::class.java)
+        val holder = when (override.holderType) {
+            HolderType.ROLE -> {
+                val role = guild.getRoleById(override.holderId)
+                if (role == null) {
+                    return null
                 }
+                role
             }
 
-            "permissions" -> {
-                when (parts[1]) {
-                    // channel:general:permissions:list
-                    "list" -> {
-                        val params = PaginationUtil.parsePaginationParameters(body)
-                        return RabbitMQResponse.success(
-                            params.paginate(
-                                channel.permissionContainer.permissionOverrides.map {
-                                    PermissionOverrideData.fromPermissionOverride(
-                                        it
-                                    )
-                                }
-                            )
-                        )
-                    }
-                    // channel:general:permissions:put
-                    "put" -> {
-                        val override =
-                            Main.json.treeToValue(body.get("override"), PermissionOverrideData::class.java)
-                        val holder = when (override.holderType) {
-                            HolderType.ROLE -> {
-                                val role = guild.getRoleById(override.holderId)
-                                if (role == null) {
-                                    return null
-                                }
-                                role
-                            }
-
-                            HolderType.USER -> {
-                                val member = guild.getMemberById(override.holderId)
-                                if (member == null) {
-                                    return null
-                                }
-                                member
-                            }
-                        }
-                        val cal = calcPermsOverrides(override.permissions)
-                        channel.permissionContainer.manager.putPermissionOverride(holder, cal.allow, cal.deny).queue(
-                            {
-                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
-                    }
+            HolderType.USER -> {
+                val member = guild.getMemberById(override.holderId)
+                if (member == null) {
+                    return null
                 }
+                member
             }
         }
+        val cal = calcPermsOverrides(override.permissions)
+        channel.permissionContainer.manager.putPermissionOverride(holder, cal.allow, cal.deny).queue(
+            {
+                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+        return null
+    }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+    private fun listChannelPermissions(
+        body: ObjectNode,
+        channel: GuildChannel
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<PermissionOverrideData>> {
+        val params = PaginationUtil.parsePaginationParameters(body)
+        return RabbitMQResponse.success(
+            params.paginate(
+                channel.permissionContainer.permissionOverrides.map {
+                    PermissionOverrideData.fromPermissionOverride(
+                        it
+                    )
+                }
+            )
+        )
+    }
+
+    private fun setChannelName(
+        channel: GuildChannel,
+        body: ObjectNode,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val oldName = channel.name
+        val newName = body.get("name").asText()
+        channel.manager.setName(newName).queue({
+            val node = createJsonObject(
+                "old_name" to oldName,
+                "new_name" to newName
+            )
+            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
     }
 
     private fun calcPermsOverrides(overrides: List<PermissionOverridePermission>): CalculatedPermissionOverride {

@@ -23,41 +23,46 @@ class AutoResponderProcessor : Processor {
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
         guild: Guild
-    ): RabbitMQResponse<*>? {
+    ): RabbitMQResponse<*> {
         if (parts.isEmpty()) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
-        when (parts[0]) {
-            "create" -> {
-                val createRequest = Main.json.treeToValue(body, CreateAutoResponderRequest::class.java)
+        return when {
+            checkAction(parts, "create") -> createAutoResponder(body, guild)
 
-                val slot = GuildSlotEntity(SlotType.AUTO_REPLY, guild.idLong)
-                val autoResponder =
-                    AutoResponderEntity(
-                        slot.slotId,
-                        createRequest.text,
-                        createRequest.matchText.toMutableList(),
-                        createRequest.enabled
-                    )
+            else -> CommonResponses.UNSUPPORTED_ACTION
+        }
+    }
 
-                dbTransaction {
-                    persist(slot)
-                    persist(autoResponder)
-                }
+    private fun createAutoResponder(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<AutoResponderResponse> {
+        val createRequest = Main.json.treeToValue(body, CreateAutoResponderRequest::class.java)
 
-                return RabbitMQResponse.success(
-                    AutoResponderResponse(
-                        slot.slotId,
-                        slot.slotType,
-                        autoResponder.enabled,
-                        autoResponder.text,
-                        autoResponder.match
-                    )
-                )
-            }
+        val slot = GuildSlotEntity(SlotType.AUTO_REPLY, guild.idLong)
+        val autoResponder =
+            AutoResponderEntity(
+                slot.slotId,
+                createRequest.text,
+                createRequest.matchText.toMutableList(),
+                createRequest.enabled
+            )
+
+        dbTransaction {
+            persist(slot)
+            persist(autoResponder)
         }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+        return RabbitMQResponse.success(
+            AutoResponderResponse(
+                slot.slotId,
+                slot.slotType,
+                autoResponder.enabled,
+                autoResponder.text,
+                autoResponder.match
+            )
+        )
     }
 }

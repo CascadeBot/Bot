@@ -24,147 +24,146 @@ class GlobalProcessor : Processor {
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
         guild: Guild
-    ): RabbitMQResponse<*>? {
-        if (parts.isEmpty()) {
-            return CommonResponses.UNSUPPORTED_ACTION
-        }
-
-        if (parts[0] == "test") {
-            // This is an example of a request to global that does not have further parts to it. Currently not used
-            return null
-        }
-
+    ): RabbitMQResponse<*> {
         if (parts.size <= 1) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
-        when (parts[0]) {
-            "user" -> {
-                when (parts[1]) {
-                    // global:user:byId
-                    "byId" -> {
-                        val userId = body.get("user").asLong()
-                        val member =
-                            guild.getMemberById(userId)
+        return when {
+            checkAction(parts, "user", "byId") -> getUserById(body, guild)
+            checkAction(parts, "user", "byName") -> getUserByName(body, guild)
+            checkAction(parts, "role", "byId") -> getRoleById(body, guild)
+            checkAction(parts, "role", "byName") -> getRoleByName(body, guild)
+            checkAction(parts, "channel", "byId") -> getChannelById(body, guild)
+            checkAction(parts, "channel", "byName") -> getChannelByName(body, guild)
+            else -> CommonResponses.UNSUPPORTED_ACTION
+        }
+    }
 
-                        if (member == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidUser,
-                                "User was not found"
-                            )
-                        }
-
-                        return RabbitMQResponse.success(
-                            MemberResponse.fromMember(member)
-                        )
-                    }
-                    // global:user:byName
-                    "byName" -> {
-                        val name = body.get("name").asText()
-                        if (name == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidName,
-                                "Name was not found"
-                            )
-                        }
-
-                        val members = guild.members
-                            .filter {
-                                (it.nickname?.startsWith(name, true) ?: false) || (it.user.name.startsWith(name, true))
-                            }
-
-                        val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(members.map { MemberResponse.fromMember(it) })
-                        return RabbitMQResponse.success(response)
-                    }
-                }
-            }
-
-            "role" -> {
-                when (parts[1]) {
-                    // global:role:byId
-                    "byId" -> {
-                        val roleId = body.get("role").asLong()
-                        val role =
-                            guild.getRoleById(roleId)
-
-                        if (role == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidRole,
-                                "Role was not found"
-                            )
-                        }
-
-                        return RabbitMQResponse.success(
-                            RoleResponse.fromRole(role)
-                        )
-                    }
-                    // global:role:byName
-                    "byName" -> {
-                        val name = body.get("name").asText()
-                        if (name == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidName,
-                                "Name was not found"
-                            )
-                        }
-
-                        val roles = guild.getRolesByName(name, true)
-
-                        val params = PaginationUtil.parsePaginationParameters(body)
-                        val response = params.paginate(roles.map { RoleResponse.fromRole(it) })
-                        return RabbitMQResponse.success(response)
-                    }
-                }
-            }
-
-            "channel" -> {
-                when (parts[1]) {
-                    // global:channel:byId
-                    "byId" -> {
-                        val channelId = body.get("channel").asLong()
-                        val discordChannel =
-                            guild.getGuildChannelById(channelId)
-
-                        if (discordChannel == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidChannel,
-                                "Channel was not found"
-                            )
-                        }
-
-                        return RabbitMQResponse.success(
-                            ChannelResponse.fromChannel(discordChannel as StandardGuildChannel)
-                        )
-                    }
-                    // global:channel:byName
-                    "byName" -> {
-                        val name = body.get("name").asText()
-                        if (name == null) {
-                            return RabbitMQResponse.failure(
-                                StatusCode.BadRequest,
-                                InvalidErrorCodes.InvalidName,
-                                "Name was not found"
-                            )
-                        }
-
-                        val channels = guild.channels.filter { it.name.equals(name, true) }
-
-                        val params = PaginationUtil.parsePaginationParameters(body)
-                        val response =
-                            params.paginate(channels.map { ChannelResponse.fromChannel(it as StandardGuildChannel) })
-                        return RabbitMQResponse.success(response)
-                    }
-                }
-            }
+    private fun getChannelByName(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out PaginationUtil.PaginationResult<ChannelResponse>> {
+        val name = body.get("name").asText()
+        if (name == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidName,
+                "Name was not found"
+            )
         }
 
-        // If it gets to this point, action was not found
-        return CommonResponses.UNSUPPORTED_ACTION
+        val channels = guild.channels.filter { it.name.equals(name, true) }
+
+        val params = PaginationUtil.parsePaginationParameters(body)
+        val response =
+            params.paginate(channels.map { ChannelResponse.fromChannel(it as StandardGuildChannel) })
+        return RabbitMQResponse.success(response)
+    }
+
+    private fun getChannelById(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out ChannelResponse> {
+        val channelId = body.get("channel").asLong()
+        val discordChannel =
+            guild.getGuildChannelById(channelId)
+
+        if (discordChannel == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidChannel,
+                "Channel was not found"
+            )
+        }
+
+        return RabbitMQResponse.success(
+            ChannelResponse.fromChannel(discordChannel as StandardGuildChannel)
+        )
+    }
+
+    private fun getRoleByName(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out PaginationUtil.PaginationResult<RoleResponse>> {
+        val name = body.get("name").asText()
+        if (name == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidName,
+                "Name was not found"
+            )
+        }
+
+        val roles = guild.getRolesByName(name, true)
+
+        val params = PaginationUtil.parsePaginationParameters(body)
+        val response = params.paginate(roles.map { RoleResponse.fromRole(it) })
+        return RabbitMQResponse.success(response)
+    }
+
+    private fun getRoleById(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out RoleResponse> {
+        val roleId = body.get("role").asLong()
+        val role =
+            guild.getRoleById(roleId)
+
+        if (role == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidRole,
+                "Role was not found"
+            )
+        }
+
+        return RabbitMQResponse.success(
+            RoleResponse.fromRole(role)
+        )
+    }
+
+    private fun getUserByName(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out PaginationUtil.PaginationResult<MemberResponse>> {
+        val name = body.get("name").asText()
+        if (name == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidName,
+                "Name was not found"
+            )
+        }
+
+        val members = guild.members
+            .filter {
+                (it.nickname?.startsWith(name, true) ?: false) || (it.user.name.startsWith(name, true))
+            }
+
+        val params = PaginationUtil.parsePaginationParameters(body)
+        val response = params.paginate(members.map { MemberResponse.fromMember(it) })
+        return RabbitMQResponse.success(response)
+    }
+
+    private fun getUserById(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<out MemberResponse> {
+        val userId = body.get("user").asLong()
+        val member =
+            guild.getMemberById(userId)
+
+        if (member == null) {
+            return RabbitMQResponse.failure(
+                StatusCode.BadRequest,
+                InvalidErrorCodes.InvalidUser,
+                "User was not found"
+            )
+        }
+
+        return RabbitMQResponse.success(
+            MemberResponse.fromMember(member)
+        )
     }
 }

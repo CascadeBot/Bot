@@ -21,7 +21,7 @@ class MovableChannelProcessor : Processor {
         properties: AMQP.BasicProperties,
         rabbitMqChannel: Channel,
         guild: Guild
-    ): RabbitMQResponse<*> {
+    ): RabbitMQResponse<*>? {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 
         if (channel == null) {
@@ -30,27 +30,35 @@ class MovableChannelProcessor : Processor {
 
         channel as IPositionableChannel
 
-        if (parts.size <= 1) {
-            return CommonResponses.UNSUPPORTED_ACTION
-        }
+        return when {
+            checkAction(parts, "position", "set") -> setChannelPosition(
+                channel,
+                body,
+                rabbitMqChannel,
+                properties,
+                envelope
+            )
 
-        when (parts[0]) {
-            "position" -> {
-                // channel:general:name:set
-                if (parts[1] == "set") {
-                    val old = channel.position
-                    val newPos = body.get("pos").asInt()
-                    channel.manager.setPosition(newPos).queue({
-                        val node = createJsonObject(
-                            "old_pos" to old,
-                            "new_pos" to newPos
-                        )
-                        RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-                    }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                }
-            }
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+    private fun setChannelPosition(
+        channel: IPositionableChannel,
+        body: ObjectNode,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val old = channel.position
+        val newPos = body.get("pos").asInt()
+        channel.manager.setPosition(newPos).queue({
+            val node = createJsonObject(
+                "old_pos" to old,
+                "new_pos" to newPos
+            )
+            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
     }
 }

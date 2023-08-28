@@ -36,85 +36,105 @@ class MessageChannelProcessor : Processor {
 
         channel as MessageChannel
 
-        // TODO I'm keeping this around for any basic actions we might have, maybe remove if this isn't used
-        /*if (parts.isEmpty()) {
-            return RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidAction,
-                "The specified action is not supported"
+        return when {
+            checkAction(parts, "send", "simple") -> sendSimpleMessage(
+                channel,
+                body,
+                rabbitMqChannel,
+                properties,
+                envelope
             )
-        }*/
 
-        if (parts.size <= 1) {
-            return CommonResponses.UNSUPPORTED_ACTION
+            checkAction(parts, "send", "complex") -> sendComplexMessage(
+                body,
+                channel,
+                rabbitMqChannel,
+                properties,
+                envelope
+            )
+
+            checkAction(parts, "list") -> listMessages(body, channel, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "byId") -> getMessageById(body, channel, rabbitMqChannel, properties, envelope)
+            else -> CommonResponses.UNSUPPORTED_ACTION
         }
+    }
 
-        when (parts[0]) {
-            "send" -> {
-                when (parts[1]) {
-                    // channel:message:send:simple
-                    "simple" -> {
-                        channel.sendMessage(MessageCreateBuilder {
-                            embeds += MessageType.INFO.embed.apply {
-                                description = body.get("message").asText()
-                            }.build()
-                        }.build()).queue(
-                            {
-                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
-                        return null
-                    }
-                    // channel:message:send:complex
-                    "complex" -> {
-                        val builder = MessageCreateBuilder()
-                        val message = body.get("message")
-                        if (message.has("embeds")) {
-                            for (embedObj in message.get("embeds")) {
-                                val embed = Main.json.treeToValue(embedObj, EmbedData::class.java)
-                                builder.addEmbeds(embed.messageEmbed)
-                            }
-                        }
-                        if (message.has("content")) {
-                            builder.setContent(message.get("content").asText())
-                        }
+    private fun getMessageById(
+        body: ObjectNode,
+        channel: MessageChannel,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val messageId = body.get("message_id").asLong()
+        channel.retrieveMessageById(messageId).queue(
+            {
+                RabbitMQResponse.success(MessageData.fromMessage(it))
+                    .sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+        return null
+    }
 
-                        channel.sendMessage(builder.build()).queue({
-                            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
-                    }
-                }
-            }
+    private fun listMessages(
+        body: ObjectNode,
+        channel: MessageChannel,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val params = PaginationUtil.parsePaginationParameters(body)
+        channel.getHistoryBefore(params.start, params.count).queue({ history ->
+            RabbitMQResponse.success(history
+                .retrievedHistory.map { MessageData.fromMessage(it) })
+                .sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
+    }
 
-            "messages" -> {
-                when (parts[1]) {
-                    // channel:message:messages:list
-                    "list" -> {
-                        val params = PaginationUtil.parsePaginationParameters(body)
-                        channel.getHistoryBefore(params.start, params.count).queue({ history ->
-                            RabbitMQResponse.success(history
-                                .retrievedHistory.map { MessageData.fromMessage(it) })
-                                .sendAndAck(rabbitMqChannel, properties, envelope)
-                        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
-                        return null
-                    }
-                    // channel:message:messages:id
-                    "id" -> {
-                        val messageId = body.get("message_id").asLong()
-                        channel.retrieveMessageById(messageId).queue(
-                            {
-                                RabbitMQResponse.success(MessageData.fromMessage(it))
-                                    .sendAndAck(rabbitMqChannel, properties, envelope)
-                            },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
-                        )
-                    }
-                }
+    private fun sendComplexMessage(
+        body: ObjectNode,
+        channel: MessageChannel,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        val builder = MessageCreateBuilder()
+        val message = body.get("message")
+        if (message.has("embeds")) {
+            for (embedObj in message.get("embeds")) {
+                val embed = Main.json.treeToValue(embedObj, EmbedData::class.java)
+                builder.addEmbeds(embed.messageEmbed)
             }
         }
+        if (message.has("content")) {
+            builder.setContent(message.get("content").asText())
+        }
 
-        return CommonResponses.UNSUPPORTED_ACTION
+        channel.sendMessage(builder.build()).queue({
+            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        return null
+    }
+
+    private fun sendSimpleMessage(
+        channel: MessageChannel,
+        body: ObjectNode,
+        rabbitMqChannel: Channel,
+        properties: AMQP.BasicProperties,
+        envelope: Envelope
+    ): Nothing? {
+        channel.sendMessage(MessageCreateBuilder {
+            embeds += MessageType.INFO.embed.apply {
+                description = body.get("message").asText()
+            }.build()
+        }.build()).queue(
+            {
+                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+            },
+            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+        )
+        return null
     }
 }
