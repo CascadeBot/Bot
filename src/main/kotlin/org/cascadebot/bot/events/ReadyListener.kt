@@ -1,7 +1,7 @@
 package org.cascadebot.bot.events
 
 import dev.minn.jda.ktx.util.SLF4J
-import net.dv8tion.jda.api.events.ReadyEvent
+import net.dv8tion.jda.api.events.session.ReadyEvent
 import net.dv8tion.jda.api.hooks.ListenerAdapter
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.consumers.ShardConsumer
