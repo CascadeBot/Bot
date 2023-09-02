@@ -15,7 +15,6 @@ import org.cascadebot.bot.ScriptLang
 import org.cascadebot.bot.SlotType
 import org.cascadebot.bot.db.entities.AutoResponderEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
-import org.cascadebot.bot.db.entities.GuildSlotEntity
 import java.awt.Color
 import java.util.UUID
 
@@ -33,7 +32,8 @@ data class UserResponse(val id: String, val name: String, val avatarUrl: String,
 
 data class MemberResponse(
     val id: Long,
-    val name: String,
+    val username: String,
+    val displayName: String?,
     val avatarUrl: String,
     val nickname: String?,
     val discriminator: String
@@ -45,6 +45,7 @@ data class MemberResponse(
             return MemberResponse(
                 member.idLong,
                 member.user.name,
+                member.user.globalName,
                 member.effectiveAvatarUrl,
                 member.nickname,
                 member.user.discriminator
