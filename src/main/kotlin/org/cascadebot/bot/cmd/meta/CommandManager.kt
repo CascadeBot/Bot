@@ -21,7 +21,7 @@ class CommandManager {
     private val registeredCommands: AtomicBoolean = AtomicBoolean(false)
 
     fun getCommand(path: String): ExecutableCommand? {
-        val parts = path.split("/")
+        val parts = path.split(" ")
         return _commands.filter { entry -> parts == entry.key.path }.map { it.value }.firstOrNull()
     }
 
