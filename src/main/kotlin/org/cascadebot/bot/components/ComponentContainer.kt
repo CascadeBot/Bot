@@ -1,7 +1,6 @@
-package org.cascadebot.cascadebot.utils.interactions
+package org.cascadebot.bot.components
 
 import net.dv8tion.jda.api.interactions.components.ActionRow
-import org.cascadebot.bot.components.CascadeActionRow
 import org.cascadebot.bot.utils.ChannelId
 
 class ComponentContainer {

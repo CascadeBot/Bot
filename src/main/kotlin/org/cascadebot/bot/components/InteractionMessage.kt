@@ -5,7 +5,6 @@ import net.dv8tion.jda.api.entities.MessageEmbed
 import net.dv8tion.jda.api.requests.restaction.AuditableRestAction
 import net.dv8tion.jda.api.requests.restaction.MessageEditAction
 import net.dv8tion.jda.api.utils.messages.MessageEditData
-import org.cascadebot.cascadebot.utils.interactions.ComponentContainer
 
 class InteractionMessage(val message: Message, val container: ComponentContainer) {
 
