@@ -1,21 +1,19 @@
-package org.cascadebot.cascadebot.utils.interactions
+package org.cascadebot.bot.components
 
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import net.dv8tion.jda.api.entities.emoji.Emoji
 import net.dv8tion.jda.api.interactions.components.ActionComponent
 import net.dv8tion.jda.api.interactions.components.Component
-import net.dv8tion.jda.api.interactions.components.selections.SelectMenu
-import org.cascadebot.bot.components.CascadeComponent
-import org.cascadebot.bot.components.InteractionMessage
+import net.dv8tion.jda.api.interactions.components.selections.StringSelectMenu
 import org.cascadebot.bot.utils.idOrName
 
 typealias SelectionRunnable = (runner: Member, owner: Member, channel: TextChannel, message: InteractionMessage, selected: List<String>) -> Unit
 
-class CascadeSelectBox(uniqueId: String, persistent: Boolean, val consumer: SelectionRunnable) :
+class CascadeStringSelectBox(uniqueId: String, persistent: Boolean, val consumer: SelectionRunnable) :
     CascadeComponent(uniqueId, persistent) {
 
-    private val builder: SelectMenu.Builder = SelectMenu.create(uniqueId)
+    private val builder: StringSelectMenu.Builder = StringSelectMenu.create(uniqueId)
 
     var minSelect = 1
         set(value) {
@@ -42,28 +40,28 @@ class CascadeSelectBox(uniqueId: String, persistent: Boolean, val consumer: Sele
             return builder.build()
         }
 
-    override val componentType: Component.Type = Component.Type.SELECT_MENU
+    override val componentType: Component.Type = Component.Type.STRING_SELECT
 
-    fun addOption(label: String, default: Boolean = false): CascadeSelectBox {
+    fun addOption(label: String, default: Boolean = false): CascadeStringSelectBox {
         builder.addOption(label, label)
         handleDefault(label, default)
         return this
     }
 
-    fun addOption(label: String, description: String, default: Boolean = false): CascadeSelectBox {
+    fun addOption(label: String, description: String, default: Boolean = false): CascadeStringSelectBox {
         builder.addOption(label, label, description)
         handleDefault(label, default)
         return this
     }
 
-    fun addOption(label: String, emoji: Emoji, default: Boolean = false): CascadeSelectBox {
+    fun addOption(label: String, emoji: Emoji, default: Boolean = false): CascadeStringSelectBox {
         val value = "$label-" + emoji.idOrName
         builder.addOption(label, value, emoji)
         handleDefault(value, default)
         return this
     }
 
-    fun addOption(label: String, description: String, emoji: Emoji, default: Boolean = false): CascadeSelectBox {
+    fun addOption(label: String, description: String, emoji: Emoji, default: Boolean = false): CascadeStringSelectBox {
         val value = "$label-" + emoji.idOrName
         builder.addOption(label, value, description, emoji)
         handleDefault(value, default)
@@ -79,17 +77,17 @@ class CascadeSelectBox(uniqueId: String, persistent: Boolean, val consumer: Sele
         }
     }
 
-    fun setPlaceholder(placeHolder: String): CascadeSelectBox {
+    fun setPlaceholder(placeHolder: String): CascadeStringSelectBox {
         builder.placeholder = placeHolder
         return this
     }
 
-    fun persistent(persistent: Boolean = true): CascadeSelectBox {
+    fun persistent(persistent: Boolean = true): CascadeStringSelectBox {
         this.persistent = persistent
         return this
     }
 
-    fun addDefault(value: String): CascadeSelectBox {
+    fun addDefault(value: String): CascadeStringSelectBox {
         handleDefault(value, true)
         return this
     }
