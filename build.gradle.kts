@@ -4,7 +4,7 @@ object Versions {
 
     const val jackson = "2.15.2"
     const val prometheus = "0.16.0"
-    const val jda = "5.0.0-alpha.20"
+    const val jda = "5.0.0-beta.13"
     const val hibernate = "6.2.7.Final"
     const val postgres = "42.6.0"
     const val hoplite = "2.7.4"
