@@ -38,14 +38,14 @@ class InteractionListener : ListenerAdapter() {
         val args = CommandArgs(event.options.groupBy { it.name })
 
         if (event.isGlobalCommand) {
-            val command = Main.commandManager.getCommand(event.commandPath)
+            val command = Main.commandManager.getCommand(event.fullCommandName)
             if (command == null) {
                 context.reply("Command not recognised!", MessageType.DANGER)
                 return
             }
             logger.info(
-                "Command {} executed by {} with args: {}",
-                event.commandPath,
+                "Command \"{}\" executed by {} with args: {}",
+                event.fullCommandName,
                 context.user.asTag,
                 event.options.joinToString(", ", "[", "]") { it.name }
             )
