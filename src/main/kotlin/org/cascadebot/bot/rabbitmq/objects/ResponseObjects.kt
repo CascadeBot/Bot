@@ -36,6 +36,7 @@ data class MemberResponse(
     val name: String,
     val avatarUrl: String,
     val nickname: String?,
+    var effectiveName: String,
     val discriminator: String
 ) : ISnowflake, IRMQResponse {
 
@@ -47,6 +48,7 @@ data class MemberResponse(
                 member.user.name,
                 member.effectiveAvatarUrl,
                 member.nickname,
+                member.effectiveName,
                 member.user.discriminator
             )
         }
