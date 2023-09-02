@@ -36,7 +36,7 @@ object LogbackUtil {
      *
      * @param level Which level to set for the root logger.
      * @see Logger.setLevel
-     * @see LogbackUtil.rootLogger
+     * @see rootLogger
      */
     fun setRootLoggerLevel(level: Level) {
         val root = rootLogger
@@ -49,7 +49,7 @@ object LogbackUtil {
      * @param name  The name of the logger to set the level for.
      * @param level What level to set the logger at.
      * @see Logger.setLevel
-     * @see LogbackUtils.getLogger
+     * @see getLogger
      */
     fun setLoggerLevel(name: String, level: Level?) {
         val logger = getLogger(name)
@@ -94,10 +94,11 @@ object LogbackUtil {
     }
 
     /**
-     * Reloads the logback configuration from the specified [InputStream].
+     * Reloads the logback configuration from the specified InputStream (Defaulting to the logback.xml resource).
      *
      * @param inputStream The input stream to read the configuration from.
      * @throws JoranException If the configurator encounters an issue with the config.
+     * @see reloadFromConfig
      */
     @JvmOverloads
     @Throws(JoranException::class)
