@@ -9,7 +9,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.utils.messages.MessageCreateData
 import org.cascadebot.bot.MessageType
-import org.cascadebot.cascadebot.utils.interactions.ComponentContainer
+import org.cascadebot.bot.components.ComponentContainer
 
 class CommandContext(private val event: SlashCommandInteractionEvent) {
 

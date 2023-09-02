@@ -8,8 +8,8 @@ import org.cascadebot.bot.cmd.meta.CommandContext
 import org.cascadebot.bot.cmd.meta.RootCommand
 import org.cascadebot.bot.components.CascadeActionRow
 import org.cascadebot.bot.components.CascadeLinkButton
+import org.cascadebot.bot.components.ComponentContainer
 import org.cascadebot.bot.utils.JwtUtil
-import org.cascadebot.cascadebot.utils.interactions.ComponentContainer
 
 class DashboardCommand : RootCommand("dashboard", "Provides a link to login to the dashboard") {
 
