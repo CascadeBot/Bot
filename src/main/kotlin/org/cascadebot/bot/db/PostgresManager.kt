@@ -5,6 +5,7 @@ import jakarta.persistence.Entity
 import org.cascadebot.bot.Database
 import org.hibernate.Session
 import org.hibernate.SessionFactory
+import org.hibernate.Transaction
 import org.hibernate.cfg.Configuration
 import org.hibernate.dialect.PostgreSQLDialect
 import org.hibernate.hikaricp.internal.HikariCPConnectionProvider
@@ -83,7 +84,7 @@ class PostgresManager(config: Database) {
 
     fun <T : Any?> transaction(work: Session.() -> T): T {
         return sessionFactory.openSession().use { session ->
-            val transaction = session.beginTransaction()
+            val transaction: Transaction = session.beginTransaction()
             transaction.timeout = 3
 
             try {
@@ -93,7 +94,7 @@ class PostgresManager(config: Database) {
 
                 return@use value
             } catch (e: RuntimeException) {
-                transaction?.rollback()
+                transaction.rollback()
                 throw e // TODO: Or display error?
             }
         }
