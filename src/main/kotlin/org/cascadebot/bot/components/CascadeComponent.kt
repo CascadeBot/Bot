@@ -30,7 +30,7 @@ abstract class CascadeComponent(val uniqueId: String, persistent: Boolean) {
 
             return when (prefix) {
                 "persistent" -> {
-                    PersistentComponent.values().find { it.component.discordComponent == component }?.component
+                    PersistentComponent.entries.find { it.component.discordComponent == component }?.component
                 }
 
                 "cached" -> {

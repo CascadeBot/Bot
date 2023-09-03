@@ -36,7 +36,7 @@ data class PermissionOverrideData(
 
         fun fromPermissionOverride(override: PermissionOverride): PermissionOverrideData {
             val perms: MutableList<PermissionOverridePermission> = mutableListOf()
-            for (discordPerm in Permission.values()) {
+            for (discordPerm in Permission.entries) {
                 var state = PermissionOverrideState.NEUTRAL
                 if (override.allowed.contains(discordPerm)) {
                     state = PermissionOverrideState.ALLOW
