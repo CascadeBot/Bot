@@ -76,7 +76,7 @@ object LogbackUtil {
      *
      * @param name  The name of the appender to add to change the level of.
      * @param level The level to set the appender to.
-     * @throws IllegalArgumentException If the provided name does not map to a assigned appender.
+     * @throws IllegalArgumentException If the provided name does not map to an assigned appender.
      */
     fun setAppenderLevel(name: String, level: Level) {
         val root = rootLogger

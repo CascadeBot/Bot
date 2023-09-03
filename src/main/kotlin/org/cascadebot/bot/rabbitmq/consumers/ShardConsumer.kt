@@ -49,7 +49,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             return
         }
 
-        val guildResult = validateGuildId(jsonBody, properties, envelope);
+        val guildResult = validateGuildId(jsonBody, properties, envelope)
 
         if (guildResult.isEmpty) return
 
@@ -101,7 +101,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
             return Optional.empty()
         }
 
-        val guild = jda.getGuildById(guildId);
+        val guild = jda.getGuildById(guildId)
 
         if (guild == null) {
             RabbitMQResponse.failure(
