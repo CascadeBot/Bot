@@ -82,23 +82,20 @@ class PostgresManager(config: Database) {
     }
 
     fun <T : Any?> transaction(work: Session.() -> T): T {
-        val session = sessionFactory.openSession()
+        return sessionFactory.openSession().use { session ->
+            val transaction = session.beginTransaction()
+            transaction.timeout = 3
 
-        return createTransaction(session, work)
-    }
+            try {
+                val value = work(session)
 
-    private fun <T : Any?> createTransaction(session: Session, work: Session.() -> T): T {
-        try {
-            session.transaction.timeout = 3
-            session.transaction.begin()
+                transaction.commit();
 
-            val value = work(session)
-
-            session.transaction.commit()
-            return value
-        } catch (e: RuntimeException) {
-            session.transaction.rollback()
-            throw e // TODO: Or display error?
+                return@use value
+            } catch (e: RuntimeException) {
+                transaction?.rollback()
+                throw e // TODO: Or display error?
+            }
         }
     }
 
