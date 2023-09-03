@@ -63,7 +63,7 @@ enum class MessageType {
 
     companion object {
         fun fromColor(color: Color): MessageType? {
-            return values().firstOrNull { it.color == color }
+            return entries.firstOrNull { it.color == color }
         }
     }
 }
