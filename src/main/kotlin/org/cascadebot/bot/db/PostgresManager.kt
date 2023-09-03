@@ -20,7 +20,6 @@ class PostgresManager(config: Database) {
 
     private val logger by SLF4J
     private val sessionFactory: SessionFactory
-    val sessions: ThreadLocal<Session> = ThreadLocal()
 
     init {
         sessionFactory = createConfig(config).buildSessionFactory()
@@ -83,14 +82,7 @@ class PostgresManager(config: Database) {
     }
 
     fun <T : Any?> transaction(work: Session.() -> T): T {
-        var session = sessions.get()
-
-        if (session == null || !session.isOpen) {
-            sessionFactory.openSession().apply {
-                sessions.set(this)
-                session = this
-            }
-        }
+        val session = sessionFactory.openSession()
 
         return createTransaction(session, work)
     }
