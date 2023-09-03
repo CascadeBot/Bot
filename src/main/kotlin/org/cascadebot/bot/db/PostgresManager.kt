@@ -43,7 +43,7 @@ class PostgresManager(config: Database) {
         var password = config.password?.value
 
         // This section allows the use of username and password in the URL
-        // Hikari will not accept a URL with the userinfo so we parse it out, remove it from the url
+        // Hikari will not accept a URL with the userinfo, so we parse it out, remove it from the url
         // and pass it in separately
         val matches = urlCredentialsRegex.find(url)
         if (matches != null) {
