@@ -11,7 +11,11 @@ import net.dv8tion.jda.api.interactions.commands.OptionMapping
 
 @JvmInline
 value class CommandArgs(private val internal: Map<String, List<OptionMapping>>) {
-    
+
+    fun getAmount(): Int {
+        return internal.size;
+    }
+
     //region primitives
     fun getArgAsLong(name: String): Long? {
         return internal[name]?.firstOrNull()?.asLong
