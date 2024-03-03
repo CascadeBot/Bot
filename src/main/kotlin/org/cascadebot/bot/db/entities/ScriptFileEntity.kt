@@ -3,6 +3,8 @@ package org.cascadebot.bot.db.entities
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import java.io.Serializable
 import java.util.UUID
@@ -25,5 +27,9 @@ class ScriptFileEntity(slotId: UUID, fileName: String, script: String): Serializ
 
     @Column(name = "script")
     var script: String = script
+
+    @OneToOne
+    @JoinColumn(name = "slot_id", referencedColumnName = "slot_id")
+    lateinit var slot: GuildSlotEntity
 
 }

@@ -6,6 +6,8 @@ import org.cascadebot.bot.OptionType
 import org.cascadebot.bot.ScriptLang
 import java.util.UUID
 
+data class UUIDIDObject(val id: UUID)
+
 data class DiscordIDObject(val id: String)
 
 data class ScriptFileData(val id: UUID, val name: String, val code: String)

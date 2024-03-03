@@ -49,7 +49,7 @@ class SlotProcessor : Processor {
         }
     }
 
-    private fun deleteSlot(body: ObjectNode): RabbitMQResponse<out JsonNode> {
+    private fun deleteSlot(body: ObjectNode): RabbitMQResponse<JsonNode> {
         val slotId = getSlotId(body)
 
         val numDeleted = dbTransaction {
@@ -105,7 +105,7 @@ class SlotProcessor : Processor {
         guild: Guild,
         context: RabbitMQContext,
         enabled: Boolean
-    ): RabbitMQResponse<out JsonNode>? {
+    ): RabbitMQResponse<JsonNode>? {
         val slot = getSlot(body, guild.idLong)
 
         when {
@@ -174,7 +174,7 @@ class SlotProcessor : Processor {
         body: ObjectNode,
         guild: Guild,
         context: RabbitMQContext
-    ): RabbitMQResponse<out JsonNode>? {
+    ): RabbitMQResponse<JsonNode>? {
         val slot = getSlot(body, guild.idLong)
 
         when {
@@ -220,7 +220,7 @@ class SlotProcessor : Processor {
     private fun getSingleSlot(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out AutoResponderResponse>? {
+    ): RabbitMQResponse<AutoResponderResponse>? {
         val slot = getSlot(body, guild.idLong)
 
         val (command, responder) = dbTransaction {

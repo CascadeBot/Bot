@@ -15,6 +15,7 @@ import org.cascadebot.bot.ScriptLang
 import org.cascadebot.bot.SlotType
 import org.cascadebot.bot.db.entities.AutoResponderEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
+import org.cascadebot.bot.db.entities.ScriptFileEntity
 import java.awt.Color
 import java.util.UUID
 
@@ -223,6 +224,27 @@ data class AutoResponderResponse(
                 entity.enabled,
                 entity.text,
                 entity.match
+            )
+        }
+
+    }
+
+}
+
+data class ScriptFileResponse(
+    val scriptId: UUID,
+    val slotId: UUID,
+    val fileName: String,
+    val script: String
+) : IRMQResponse {
+
+    companion object {
+        fun fromEntity(entity: ScriptFileEntity): ScriptFileResponse {
+            return ScriptFileResponse(
+                entity.scriptId,
+                entity.slotId,
+                entity.fileName,
+                entity.script
             )
         }
 
