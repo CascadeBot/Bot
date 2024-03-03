@@ -30,6 +30,7 @@ class CustomCommandEntity() : Serializable {
         slotId: UUID,
         name: String,
         description: String?,
+        marketplaceRef: UUID?,
         customCommandType: CustomCommandType,
         lang: ScriptLang,
         ephemeral: Boolean?
@@ -37,6 +38,7 @@ class CustomCommandEntity() : Serializable {
         this.slotId = slotId
         this.name = name
         this.description = description
+        this.marketplaceRef = marketplaceRef
         this.type = customCommandType
         this.lang = lang
         this.ephemeral = ephemeral
