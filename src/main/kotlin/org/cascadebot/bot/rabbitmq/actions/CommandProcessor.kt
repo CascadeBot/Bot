@@ -22,11 +22,6 @@ class CommandProcessor : Processor {
         context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
-        /*
-        * Update
-        *
-        */
-
         if (parts.isEmpty()) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
