@@ -6,13 +6,14 @@ import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.requests.RestAction
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
+import org.cascadebot.bot.rabbitmq.objects.DiscordIDObject
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MutualGuildResponse
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.rabbitmq.objects.UserIDObject
 
 fun ShardConsumer.onShardBroadcast(
     context: RabbitMQContext,
@@ -23,19 +24,13 @@ fun ShardConsumer.onShardBroadcast(
     val response: Any = when (action) {
         "user:mutual_guilds" -> {
             if (!assertReplyTo(context)) return
-            val decodeResult = kotlin.runCatching { Main.json.treeToValue<UserIDObject>(body) }
+            val userId = Main.json.treeToValue<DiscordIDObject>(body).id.toLongOrNull()
 
-            if (decodeResult.isFailure) {
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidRequestFormat,
-                    "Invalid request format, please specify user_id"
-                ).sendAndAck(context)
+            if (userId == null) {
+                return CommonResponses.DISCORD_ID_INVALID.sendAndAck(context)
             }
 
-            val userId = decodeResult.getOrNull()?.userId
-
-            val user = userId?.let { Main.shardManager.getUserById(userId) }
+            val user = Main.shardManager.getUserById(userId)
 
             if (user == null) {
                 val response = RabbitMQResponse.failure(

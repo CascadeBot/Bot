@@ -50,8 +50,8 @@ object InvalidErrorCodes {
 
     val InvalidPermission = ErrorCode("invalid_Permission")
 
-    val InvalidJsonFormat = ErrorCode("invalid_json")
     val InvalidRequestFormat = ErrorCode("invalid_request")
+    val InvalidId = ErrorCode("invalid_id")
 
     val InvalidPosition = ErrorCode("invalid_position")
 }
