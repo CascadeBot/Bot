@@ -58,3 +58,18 @@ data class UpdateCustomCommandRequest(
     val ephemeral: Boolean?,
 )
 
+data class CreateScriptFileRequest(
+    val slotId: UUID,
+    val filename: String,
+    val script: String
+)
+
+data class UpdateScriptFileRequest(
+    val id: UUID,
+    val name: String,
+    val slotId: UUID,
+    val filename: String,
+    val script: String
+)
+
+
