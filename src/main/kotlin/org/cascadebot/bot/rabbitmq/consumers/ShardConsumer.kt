@@ -18,16 +18,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
     override fun onDeliver(consumerTag: String, context: RabbitMQContext, body: String) {
         if (!assertReplyTo(context)) return
 
-        val jsonBody = try {
-            Main.json.readValue(body, ObjectNode::class.java)
-        } catch (e: Exception) {
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidJsonFormat,
-                e.message ?: e.javaClass.simpleName
-            ).sendAndAck(context)
-            return
-        }
+        val jsonBody = Main.json.readValue(body, ObjectNode::class.java)
 
         // If this is a broadcast request, send to a separate processor
         if (context.envelope.routingKey == "shard.all") {

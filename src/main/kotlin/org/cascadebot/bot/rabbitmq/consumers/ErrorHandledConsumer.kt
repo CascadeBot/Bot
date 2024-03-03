@@ -7,7 +7,7 @@ import com.rabbitmq.client.DefaultConsumer
 import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.rabbitmq.objects.ErrorCode
-import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQException
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
@@ -41,7 +41,7 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
                 val response = when (e) {
                     is JsonProcessingException -> RabbitMQResponse.failure(
                         StatusCode.BadRequest,
-                        MiscErrorCodes.JsonProcessingError,
+                        InvalidErrorCodes.InvalidRequestFormat,
                         e.message!!
                     )
 

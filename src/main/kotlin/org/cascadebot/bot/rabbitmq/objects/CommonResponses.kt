@@ -32,4 +32,10 @@ object CommonResponses {
         "A custom command for the slot specified could not be found"
     )
 
+    val DISCORD_ID_INVALID = RabbitMQResponse.failure(
+        StatusCode.BadRequest,
+        InvalidErrorCodes.InvalidId,
+        "The ID provided is not a valid snowflake"
+    )
+
 }
