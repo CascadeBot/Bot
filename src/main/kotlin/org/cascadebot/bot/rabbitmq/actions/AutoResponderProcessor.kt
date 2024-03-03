@@ -12,6 +12,7 @@ import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.CreateAutoResponderRequest
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.UpdateAutoResponderRequest
 
 class AutoResponderProcessor : Processor {
 
@@ -27,6 +28,7 @@ class AutoResponderProcessor : Processor {
 
         return when {
             checkAction(parts, "create") -> createAutoResponder(body, guild)
+            checkAction(parts, "update") -> updateAutoResponder(body, guild)
 
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
@@ -55,5 +57,28 @@ class AutoResponderProcessor : Processor {
         return RabbitMQResponse.success(
             AutoResponderResponse.fromEntity(autoResponder)
         )
+    }
+
+    private fun updateAutoResponder(
+        body: ObjectNode,
+        guild: Guild
+    ): RabbitMQResponse<AutoResponderResponse> {
+        val updateRequest = Main.json.treeToValue<UpdateAutoResponderRequest>(body)
+
+        val autoResponder = dbTransaction {
+            get(AutoResponderEntity::class.java, updateRequest.slotId)
+        }
+
+        if (autoResponder == null || autoResponder.slot.guildId != guild.idLong) {
+            return CommonResponses.AUTORESPONDER_NOT_FOUND
+        }
+
+        autoResponder.apply {
+            text = updateRequest.text
+            match = updateRequest.matchText.toMutableList()
+            enabled = updateRequest.enabled
+        }
+
+        return RabbitMQResponse.success(AutoResponderResponse.fromEntity(autoResponder))
     }
 }

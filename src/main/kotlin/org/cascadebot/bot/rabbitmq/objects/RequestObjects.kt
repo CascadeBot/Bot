@@ -29,6 +29,13 @@ data class CreateAutoResponderRequest(
     val enabled: Boolean
 )
 
+data class UpdateAutoResponderRequest(
+    val slotId: UUID,
+    val text: JsonNode,
+    val matchText: List<String>,
+    val enabled: Boolean
+)
+
 data class CreateCustomCommandRequest(
     val name: String,
     val description: String?,
