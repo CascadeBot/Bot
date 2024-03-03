@@ -1,6 +1,7 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -27,7 +28,7 @@ class MessageProcessor : Processor {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
-        val rmqMessage = Main.json.treeToValue(body, MessageData::class.java)
+        val rmqMessage = Main.json.treeToValue<MessageData>(body)
 
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
 

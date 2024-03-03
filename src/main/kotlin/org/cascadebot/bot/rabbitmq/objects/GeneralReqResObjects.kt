@@ -16,7 +16,7 @@ data class RabbitMQError(
     val message: String
 )
 
-data class RabbitMQResponse<T>(
+data class RabbitMQResponse<out T>(
     val statusCode: StatusCode,
     val data: T?,
     val error: RabbitMQError?

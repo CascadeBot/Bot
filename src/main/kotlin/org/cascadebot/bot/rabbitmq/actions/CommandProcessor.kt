@@ -1,6 +1,7 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.SlotType
@@ -42,7 +43,7 @@ class CommandProcessor : Processor {
         body: ObjectNode,
         guild: Guild
     ): RabbitMQResponse<CustomCommandResponse> {
-        val createRequest = Main.json.treeToValue(body, CreateCustomCommandRequest::class.java)
+        val createRequest = Main.json.treeToValue<CreateCustomCommandRequest>(body)
 
         val slot = GuildSlotEntity(SlotType.CUSTOM_CMD, guild.idLong)
         val customCommand =
@@ -61,6 +62,7 @@ class CommandProcessor : Processor {
             persist(customCommand)
         }
 
+        // We've just created it, the command won't be enabled yet
         return RabbitMQResponse.success(CustomCommandResponse.fromEntity(false, customCommand))
     }
 
@@ -68,22 +70,24 @@ class CommandProcessor : Processor {
         body: ObjectNode,
         guild: Guild,
         context: RabbitMQContext
-    ): RabbitMQResponse<out CustomCommandResponse>? {
-        val updateRequest = Main.json.treeToValue(body, UpdateCustomCommandRequest::class.java)
+    ): RabbitMQResponse<CustomCommandResponse>? {
+        val updateRequest = Main.json.treeToValue<UpdateCustomCommandRequest>(body)
 
         val command: CustomCommandEntity? = dbTransaction {
             get(CustomCommandEntity::class.java, updateRequest.slotId)
         }
 
-        if (command == null) return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
+        if (command == null || command.slot.guildId != guild.idLong) return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
 
-        command.name = updateRequest.name
-        command.description = updateRequest.description
-        command.marketplaceRef = updateRequest.marketplaceRef
-        command.type = updateRequest.type
-        command.lang = updateRequest.lang
-        command.entrypoint = updateRequest.entrypoint
-        command.ephemeral = updateRequest.ephemeral
+        command.apply {
+            name = updateRequest.name
+            description = updateRequest.description
+            marketplaceRef = updateRequest.marketplaceRef
+            type = updateRequest.type
+            lang = updateRequest.lang
+            entrypoint = updateRequest.entrypoint
+            ephemeral = updateRequest.ephemeral
+        }
 
         dbTransaction {
             persist(command)

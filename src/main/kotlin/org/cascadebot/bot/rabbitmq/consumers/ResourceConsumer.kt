@@ -1,6 +1,7 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import com.rabbitmq.client.Channel
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
@@ -31,7 +32,7 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
         val response = when (action) {
             "user:get_by_id" -> {
-                val decodeResult = kotlin.runCatching { Main.json.treeToValue(jsonBody, UserIDObject::class.java) }
+                val decodeResult = kotlin.runCatching { Main.json.treeToValue<UserIDObject>(jsonBody) }
 
                 if (decodeResult.isFailure) {
                     RabbitMQResponse.failure(

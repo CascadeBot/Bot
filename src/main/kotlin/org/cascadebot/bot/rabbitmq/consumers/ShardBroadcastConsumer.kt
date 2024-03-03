@@ -2,6 +2,7 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.requests.RestAction
 import org.cascadebot.bot.Main
@@ -22,7 +23,7 @@ fun ShardConsumer.onShardBroadcast(
     val response: Any = when (action) {
         "user:mutual_guilds" -> {
             if (!assertReplyTo(context)) return
-            val decodeResult = kotlin.runCatching { Main.json.treeToValue(body, UserIDObject::class.java) }
+            val decodeResult = kotlin.runCatching { Main.json.treeToValue<UserIDObject>(body) }
 
             if (decodeResult.isFailure) {
                 RabbitMQResponse.failure(
