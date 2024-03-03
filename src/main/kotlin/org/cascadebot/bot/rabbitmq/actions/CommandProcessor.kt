@@ -1,9 +1,6 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.SlotType
@@ -12,18 +9,18 @@ import org.cascadebot.bot.db.entities.GuildSlotEntity
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.CreateCustomCommandRequest
 import org.cascadebot.bot.rabbitmq.objects.CustomCommandResponse
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
+import org.cascadebot.bot.rabbitmq.objects.UpdateCustomCommandRequest
 
 class CommandProcessor : Processor {
 
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
-    ): RabbitMQResponse<*> {
+    ): RabbitMQResponse<*>? {
         /*
         * Update
         *
@@ -35,6 +32,7 @@ class CommandProcessor : Processor {
 
         return when {
             checkAction(parts, "create") -> createCustomCommand(body, guild)
+            checkAction(parts, "update") -> updateCustomCommand(body, guild, context)
 
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
@@ -52,6 +50,7 @@ class CommandProcessor : Processor {
                 slot.slotId,
                 createRequest.name,
                 createRequest.description,
+                createRequest.marketplaceRef,
                 createRequest.type,
                 createRequest.lang,
                 createRequest.ephemeral
@@ -63,6 +62,45 @@ class CommandProcessor : Processor {
         }
 
         return RabbitMQResponse.success(CustomCommandResponse.fromEntity(false, customCommand))
+    }
+
+    private fun updateCustomCommand(
+        body: ObjectNode,
+        guild: Guild,
+        context: RabbitMQContext
+    ): RabbitMQResponse<out CustomCommandResponse>? {
+        val updateRequest = Main.json.treeToValue(body, UpdateCustomCommandRequest::class.java)
+
+        val command: CustomCommandEntity? = dbTransaction {
+            get(CustomCommandEntity::class.java, updateRequest.slotId)
+        }
+
+        if (command == null) return CommonResponses.CUSTOM_COMMAND_NOT_FOUND
+
+        command.name = updateRequest.name
+        command.description = updateRequest.description
+        command.marketplaceRef = updateRequest.marketplaceRef
+        command.type = updateRequest.type
+        command.lang = updateRequest.lang
+        command.entrypoint = updateRequest.entrypoint
+        command.ephemeral = updateRequest.ephemeral
+
+        dbTransaction {
+            persist(command)
+        }
+
+        guild.retrieveCommands().queue({ commands ->
+            val exists =
+                commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
+
+            RabbitMQResponse.success(CustomCommandResponse.fromEntity(exists, command))
+                .sendAndAck(context)
+        }, {
+            RabbitMQResponse.success(CustomCommandResponse.fromEntity(false, command))
+                .sendAndAck(context)
+        })
+
+        return null;
     }
 
 
