@@ -1,15 +1,13 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Member
 import net.dv8tion.jda.api.entities.Role
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -21,9 +19,7 @@ class UserProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
@@ -68,7 +64,7 @@ class UserProcessor : Processor {
                 }
             }
 
-            checkAction(parts, "nick", "set") -> setUserNickname(body, member, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "nick", "set") -> setUserNickname(body, member, context)
 
             checkAction(parts, "role") -> {
                 val roleId = body.get("role").asLong()
@@ -85,11 +81,11 @@ class UserProcessor : Processor {
                 return when {
                     // user:role:add
                     checkAction(parts, "role", "add") -> {
-                        return addUserRole(guild, member, role, rabbitMqChannel, properties, envelope)
+                        return addUserRole(guild, member, role, context)
                     }
                     // user:role:remove
                     checkAction(parts, "role", "remove") -> {
-                        return removeUserRole(guild, member, role, rabbitMqChannel, properties, envelope)
+                        return removeUserRole(guild, member, role, context)
                     }
                     // user:role:has
                     checkAction(parts, "role", "has") -> {
@@ -100,8 +96,8 @@ class UserProcessor : Processor {
                 }
             }
 
-            checkAction(parts, "voice", "deafen") -> deafenUser(body, member, rabbitMqChannel, properties, envelope)
-            checkAction(parts, "voice", "mute") -> muteUser(body, member, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "voice", "deafen") -> deafenUser(body, member, context)
+            checkAction(parts, "voice", "mute") -> muteUser(body, member, context)
 
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
@@ -110,16 +106,14 @@ class UserProcessor : Processor {
     private fun muteUser(
         body: ObjectNode,
         member: Member,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         val state = body.get("mute").asBoolean()
         member.deafen(state).queue(
             {
-                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                RabbitMQResponse.success().sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
         return null
     }
@@ -127,16 +121,14 @@ class UserProcessor : Processor {
     private fun deafenUser(
         body: ObjectNode,
         member: Member,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         val state = body.get("deafen").asBoolean()
         member.deafen(state).queue(
             {
-                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                RabbitMQResponse.success().sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
         return null
     }
@@ -145,14 +137,12 @@ class UserProcessor : Processor {
         guild: Guild,
         member: Member,
         role: Role,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         guild.removeRoleFromMember(member, role).queue({
             RabbitMQResponse.success()
-                .sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+                .sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 
@@ -160,16 +150,14 @@ class UserProcessor : Processor {
         guild: Guild,
         member: Member,
         role: Role,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         guild.addRoleToMember(member, role).queue(
             {
                 RabbitMQResponse.success()
-                    .sendAndAck(rabbitMqChannel, properties, envelope)
+                    .sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
         return null
     }
@@ -177,15 +165,13 @@ class UserProcessor : Processor {
     private fun setUserNickname(
         body: ObjectNode,
         member: Member,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         val nick = body.get("nick").asText()
         member.modifyNickname(nick).queue({
             RabbitMQResponse.success()
-                .sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+                .sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 

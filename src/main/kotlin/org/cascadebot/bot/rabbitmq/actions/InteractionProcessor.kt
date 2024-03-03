@@ -1,9 +1,6 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.messages.MessageEditBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.interactions.InteractionHook
@@ -14,6 +11,7 @@ import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.InteractionData
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
@@ -23,9 +21,7 @@ class InteractionProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.size <= 1) {
@@ -48,18 +44,14 @@ class InteractionProcessor : Processor {
             checkAction(parts, "reply", "simple") -> replySimple(
                 interactionHook,
                 body,
-                rabbitMqChannel,
-                properties,
-                envelope,
+                context,
                 rmqInteraction
             )
 
             checkAction(parts, "reply", "complex") -> replyComplex(
                 interactionHook,
                 body,
-                rabbitMqChannel,
-                properties,
-                envelope,
+                context,
                 rmqInteraction
             )
 
@@ -70,9 +62,7 @@ class InteractionProcessor : Processor {
     private fun replyComplex(
         interactionHook: InteractionHook,
         body: ObjectNode,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope,
+        context: RabbitMQContext,
         rmqInteraction: InteractionData
     ): Nothing? {
         val builder = MessageEditBuilder()
@@ -87,8 +77,8 @@ class InteractionProcessor : Processor {
         }
 
         interactionHook.editOriginal(builder.build()).queue({
-            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            RabbitMQResponse.success().sendAndAck(context)
+        }, ErrorHandler.handleError(context))
 
         // We can't reply to an interaction twice, so we should invalidate this after it's been used
         Main.interactionHookCache.invalidate(rmqInteraction.interactionId)
@@ -98,9 +88,7 @@ class InteractionProcessor : Processor {
     private fun replySimple(
         interactionHook: InteractionHook,
         body: ObjectNode,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope,
+        context: RabbitMQContext,
         rmqInteraction: InteractionData
     ): Nothing? {
         interactionHook.editOriginal(MessageEditBuilder {
@@ -109,9 +97,9 @@ class InteractionProcessor : Processor {
             }.build()
         }.build()).queue(
             {
-                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                RabbitMQResponse.success().sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
 
         // We can't reply to an interaction twice, so we should invalidate this after it's been used

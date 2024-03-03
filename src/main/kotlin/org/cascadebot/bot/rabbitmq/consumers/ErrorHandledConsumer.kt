@@ -8,6 +8,7 @@ import com.rabbitmq.client.Envelope
 import dev.minn.jda.ktx.util.SLF4J
 import org.cascadebot.bot.rabbitmq.objects.ErrorCode
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQException
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -22,11 +23,13 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
         properties: BasicProperties,
         body: ByteArray
     ) {
+        val context = RabbitMQContext(channel, envelope, properties)
+
         try {
-            onDeliver(consumerTag, envelope, properties, body.decodeToString())
+            onDeliver(consumerTag, context, body.decodeToString())
         } catch (e: RabbitMQException) {
             // RabbitMQException is a wrapper to break out of flow and return non-critical errors to the client
-            e.response.sendAndAck(channel, properties, envelope)
+            e.response.sendAndAck(context)
         } catch (e: Exception) {
             logger.error(
                 "Error in consumer (${e.javaClass.simpleName}): " + (e.message ?: "<No Message>")
@@ -48,7 +51,7 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
                         e.message ?: e.javaClass.simpleName
                     )
                 }
-                response.sendAndAck(channel, properties, envelope)
+                response.sendAndAck(context)
             } catch (e: Exception) {
                 logger.error(
                     "Error trying to send error message (${e.javaClass.simpleName}): " + (e.message ?: "<No Message>")
@@ -59,9 +62,9 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
         }
     }
 
-    internal fun assertReplyTo(properties: BasicProperties, envelope: Envelope): Boolean {
-        if (properties.replyTo == null) {
-            channel.basicReject(envelope.deliveryTag, false)
+    internal fun assertReplyTo(context: RabbitMQContext): Boolean {
+        if (context.properties.replyTo == null) {
+            channel.basicReject(context.envelope.deliveryTag, false)
             return false
         }
         return true
@@ -69,8 +72,7 @@ abstract class ErrorHandledConsumer(channel: Channel) : DefaultConsumer(channel)
 
     abstract fun onDeliver(
         consumerTag: String,
-        envelope: Envelope,
-        properties: BasicProperties,
+        context: RabbitMQContext,
         body: String
     )
 

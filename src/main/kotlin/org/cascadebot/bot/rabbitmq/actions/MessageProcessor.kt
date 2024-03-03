@@ -1,9 +1,6 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.Message
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -13,6 +10,7 @@ import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MessageData
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
@@ -22,9 +20,7 @@ class MessageProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.isEmpty()) {
@@ -49,10 +45,10 @@ class MessageProcessor : Processor {
 
         channel.retrieveMessageById(rmqMessage.messageId).queue({
             when {
-                checkAction(parts, "edit") -> editMessage(it, rmqMessage, rabbitMqChannel, properties, envelope)
-                else -> CommonResponses.UNSUPPORTED_ACTION.sendAndAck(rabbitMqChannel, properties, envelope)
+                checkAction(parts, "edit") -> editMessage(it, rmqMessage, context)
+                else -> CommonResponses.UNSUPPORTED_ACTION.sendAndAck(context)
             }
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        }, ErrorHandler.handleError(context))
 
         return null
     }
@@ -60,12 +56,10 @@ class MessageProcessor : Processor {
     private fun editMessage(
         message: Message,
         rmqMessage: MessageData,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ) {
         message.editMessage(rmqMessage.messageEditData).queue({
-            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+            RabbitMQResponse.success().sendAndAck(context)
         },
             { error ->
                 when (error) {
@@ -77,7 +71,7 @@ class MessageProcessor : Processor {
                         )
                     }
 
-                    else -> ErrorHandler.handleError(envelope, properties, rabbitMqChannel, error)
+                    else -> ErrorHandler.handleError(context, error)
                 }
             })
     }
