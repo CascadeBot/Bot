@@ -26,22 +26,20 @@ import java.util.UUID
 @Table(name = "custom_command")
 class CustomCommandEntity() : Serializable {
 
-    constructor(slotId: UUID, name: String, description: String, lang: ScriptLang) : this() {
+    constructor(
+        slotId: UUID,
+        name: String,
+        description: String?,
+        customCommandType: CustomCommandType,
+        lang: ScriptLang,
+        ephemeral: Boolean?
+    ) : this() {
         this.slotId = slotId
         this.name = name
         this.description = description
-        this.type = CustomCommandType.SLASH
-        this.lang = lang
-    }
-
-    constructor(slotId: UUID, name: String, customCommandType: CustomCommandType, lang: ScriptLang) : this() {
-        if (customCommandType == CustomCommandType.SLASH) {
-            throw UnsupportedOperationException("Cannot provide custom command type of slash for this constructor")
-        }
-        this.slotId = slotId
-        this.name = name
         this.type = customCommandType
         this.lang = lang
+        this.ephemeral = ephemeral
     }
 
     @Id
