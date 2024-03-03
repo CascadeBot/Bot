@@ -4,14 +4,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode
 import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
-import org.cascadebot.bot.db.entities.CustomCommandEntity
+import org.cascadebot.bot.SlotType
 import org.cascadebot.bot.db.entities.GuildSlotEntity
 import org.cascadebot.bot.db.entities.ScriptFileEntity
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
+import org.cascadebot.bot.rabbitmq.objects.CreateScriptFileRequest
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.ScriptFileResponse
 import org.cascadebot.bot.rabbitmq.objects.UUIDIDObject
+import org.cascadebot.bot.rabbitmq.objects.UpdateScriptFileRequest
 import org.cascadebot.bot.utils.QueryUtils.queryJoinedEntities
 
 class ScriptFileProcessor : Processor {
@@ -24,11 +26,8 @@ class ScriptFileProcessor : Processor {
     ): RabbitMQResponse<*> {
         /*
         * TODO:
-        *  - Get by ID
-        *  - Get all for guild
         *  - Create
         *  - Update
-        *  - Delete
         * */
 
         if (parts.isEmpty()) {
@@ -70,11 +69,66 @@ class ScriptFileProcessor : Processor {
     }
 
     private fun createScriptFile(body: ObjectNode, guild: Guild): RabbitMQResponse<ScriptFileResponse> {
-        TODO("Not yet implemented")
+        val createRequest = Main.json.treeToValue<CreateScriptFileRequest>(body)
+
+        val slot = dbTransaction {
+            get(GuildSlotEntity::class.java, createRequest.slotId)
+        }
+
+        if (slot == null || slot.guildId != guild.idLong) {
+            return CommonResponses.SLOT_NOT_FOUND
+        }
+
+        if (slot.slotType != SlotType.CUSTOM_CMD) {
+            return CommonResponses.UNSUPPORTED_SLOT
+        }
+
+        val scriptFile = ScriptFileEntity(
+            slot.slotId,
+            createRequest.filename,
+            createRequest.script
+        )
+
+        dbTransaction {
+            persist(scriptFile)
+        }
+
+        return RabbitMQResponse.success(ScriptFileResponse.fromEntity(scriptFile))
     }
 
     private fun updateScriptFile(body: ObjectNode, guild: Guild): RabbitMQResponse<ScriptFileResponse> {
-        TODO("Not yet implemented")
+        val updateRequest = Main.json.treeToValue<UpdateScriptFileRequest>(body)
+
+        val scriptFile = dbTransaction {
+            get(ScriptFileEntity::class.java, updateRequest.id)
+        }
+
+        if (scriptFile == null || scriptFile.slot.guildId != guild.idLong) {
+            return CommonResponses.SCRIPT_FILE_NOT_FOUND
+        }
+
+        scriptFile.fileName = updateRequest.filename
+        scriptFile.script = updateRequest.script
+
+        if (scriptFile.slot.slotId != updateRequest.slotId) {
+            val slot = dbTransaction {
+                get(GuildSlotEntity::class.java, updateRequest.slotId)
+            }
+            if (slot == null || slot.guildId != guild.idLong) {
+                return CommonResponses.SLOT_NOT_FOUND
+            }
+            if (slot.slotType != SlotType.CUSTOM_CMD) {
+                return CommonResponses.UNSUPPORTED_SLOT
+            }
+            scriptFile.slot = slot
+            scriptFile.slotId = slot.slotId
+        }
+
+        dbTransaction {
+            persist(scriptFile)
+        }
+
+        return RabbitMQResponse.success(ScriptFileResponse.fromEntity(scriptFile))
     }
 
     private fun deleteScriptFile(body: ObjectNode, guild: Guild): RabbitMQResponse<ScriptFileResponse> {

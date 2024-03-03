@@ -14,6 +14,12 @@ object CommonResponses {
         "Slot is an unsupported type"
     )
 
+    val SLOT_NOT_FOUND = RabbitMQResponse.failure(
+        StatusCode.NotFound,
+        MiscErrorCodes.SlotNotFound,
+        "The specified slot was not found"
+    )
+
     val CHANNEL_NOT_FOUND = RabbitMQResponse.failure(
         StatusCode.NotFound,
         MiscErrorCodes.ChannelNotFound,
