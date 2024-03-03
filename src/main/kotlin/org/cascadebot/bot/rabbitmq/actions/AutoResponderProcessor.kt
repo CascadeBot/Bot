@@ -1,6 +1,7 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.SlotType
@@ -35,7 +36,7 @@ class AutoResponderProcessor : Processor {
         body: ObjectNode,
         guild: Guild
     ): RabbitMQResponse<AutoResponderResponse> {
-        val createRequest = Main.json.treeToValue(body, CreateAutoResponderRequest::class.java)
+        val createRequest = Main.json.treeToValue<CreateAutoResponderRequest>(body)
 
         val slot = GuildSlotEntity(SlotType.AUTO_REPLY, guild.idLong)
         val autoResponder =

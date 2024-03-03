@@ -1,6 +1,7 @@
 package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import dev.minn.jda.ktx.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -90,7 +91,7 @@ class MessageChannelProcessor : Processor {
         val message = body.get("message")
         if (message.has("embeds")) {
             for (embedObj in message.get("embeds")) {
-                val embed = Main.json.treeToValue(embedObj, EmbedData::class.java)
+                val embed = Main.json.treeToValue<EmbedData>(embedObj)
                 builder.addEmbeds(embed.messageEmbed)
             }
         }

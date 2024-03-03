@@ -1,6 +1,7 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import dev.minn.jda.ktx.messages.MessageEditBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.interactions.InteractionHook
@@ -28,7 +29,7 @@ class InteractionProcessor : Processor {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
-        val rmqInteraction = Main.json.treeToValue(body, InteractionData::class.java)
+        val rmqInteraction = Main.json.treeToValue<InteractionData>(body)
 
         val interactionHook = Main.interactionHookCache.getIfPresent(rmqInteraction.interactionId)
 
@@ -69,7 +70,7 @@ class InteractionProcessor : Processor {
         val message = body.get("message")
         if (message.has("embeds")) {
             builder.setEmbeds(message.get("embeds").map {
-                Main.json.treeToValue(it, EmbedData::class.java).messageEmbed
+                Main.json.treeToValue<EmbedData>(it).messageEmbed
             })
         }
         if (message.has("content")) {
