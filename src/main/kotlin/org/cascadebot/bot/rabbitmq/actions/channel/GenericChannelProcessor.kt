@@ -1,9 +1,6 @@
 package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.GuildChannel
@@ -14,6 +11,7 @@ import org.cascadebot.bot.rabbitmq.objects.HolderType
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideData
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverridePermission
 import org.cascadebot.bot.rabbitmq.objects.PermissionOverrideState
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
@@ -24,9 +22,7 @@ class GenericChannelProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
@@ -36,15 +32,13 @@ class GenericChannelProcessor : Processor {
         }
 
         return when {
-            checkAction(parts, "name", "set") -> setChannelName(channel, body, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "name", "set") -> setChannelName(channel, body, context)
             checkAction(parts, "permissions", "list") -> listChannelPermissions(body, channel)
             checkAction(parts, "permissions", "create") -> createChannelPermission(
                 body,
                 guild,
                 channel,
-                rabbitMqChannel,
-                properties,
-                envelope
+                context
             )
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
@@ -54,9 +48,7 @@ class GenericChannelProcessor : Processor {
         body: ObjectNode,
         guild: Guild,
         channel: GuildChannel,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         val override =
             Main.json.treeToValue(body.get("override"), PermissionOverrideData::class.java)
@@ -80,9 +72,9 @@ class GenericChannelProcessor : Processor {
         val cal = calcPermsOverrides(override.permissions)
         channel.permissionContainer.manager.putPermissionOverride(holder, cal.allow, cal.deny).queue(
             {
-                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                RabbitMQResponse.success().sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
         return null
     }
@@ -106,9 +98,7 @@ class GenericChannelProcessor : Processor {
     private fun setChannelName(
         channel: GuildChannel,
         body: ObjectNode,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext,
     ): Nothing? {
         val oldName = channel.name
         val newName = body.get("name").asText()
@@ -117,8 +107,8 @@ class GenericChannelProcessor : Processor {
                 "old_name" to oldName,
                 "new_name" to newName
             )
-            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            RabbitMQResponse.success(node).sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 

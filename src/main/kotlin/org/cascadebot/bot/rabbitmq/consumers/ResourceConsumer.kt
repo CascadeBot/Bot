@@ -1,12 +1,11 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.objects.UserIDObject
@@ -14,8 +13,8 @@ import org.cascadebot.bot.rabbitmq.objects.UserResponse
 
 class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
 
-    override fun onDeliver(consumerTag: String, envelope: Envelope, properties: AMQP.BasicProperties, body: String) {
-        if (!assertReplyTo(properties, envelope)) return
+    override fun onDeliver(consumerTag: String, context: RabbitMQContext, body: String) {
+        if (!assertReplyTo(context)) return
 
         val jsonBody = try {
             Main.json.readValue(body, ObjectNode::class.java)
@@ -24,11 +23,11 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidJsonFormat,
                 e.message ?: e.javaClass.simpleName
-            ).sendAndAck(channel, properties, envelope)
+            ).sendAndAck(context)
             return
         }
 
-        val action = properties.headers["action"].toString()
+        val action = context.properties.headers["action"].toString()
 
         val response = when (action) {
             "user:get_by_id" -> {
@@ -39,7 +38,7 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                         StatusCode.BadRequest,
                         InvalidErrorCodes.InvalidRequestFormat,
                         "Invalid request format, please specify user_id"
-                    ).sendAndAck(channel, properties, envelope)
+                    ).sendAndAck(context)
                 }
 
                 val userId = decodeResult.getOrNull()?.userId
@@ -52,7 +51,7 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                         MiscErrorCodes.UserNotFound,
                         "User cannot be found"
                     )
-                    response.sendAndAck(channel, properties, envelope)
+                    response.sendAndAck(context)
                     return
                 }
 
@@ -65,13 +64,13 @@ class ResourceConsumer(channel: Channel) : ErrorHandledConsumer(channel) {
                     InvalidErrorCodes.InvalidMethod,
                     "The method '$action' is invalid."
                 )
-                response.sendAndAck(channel, properties, envelope)
+                response.sendAndAck(context)
                 return
             }
         }
 
         val wrappedResponse = RabbitMQResponse.success(response)
-        wrappedResponse.sendAndAck(channel, properties, envelope)
+        wrappedResponse.sendAndAck(context)
     }
 
 }

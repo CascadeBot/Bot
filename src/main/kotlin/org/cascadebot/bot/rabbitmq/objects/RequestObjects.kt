@@ -32,8 +32,20 @@ data class CreateAutoResponderRequest(
 data class CreateCustomCommandRequest(
     val name: String,
     val description: String?,
+    val marketplaceRef: UUID?,
     val type: CustomCommandType,
     val lang: ScriptLang,
-    val ephemeral: Boolean?
+    val ephemeral: Boolean?,
+)
+
+data class UpdateCustomCommandRequest(
+    val slotId: UUID,
+    val name: String,
+    val description: String?,
+    val marketplaceRef: UUID?,
+    val type: CustomCommandType,
+    val lang: ScriptLang,
+    val entrypoint: UUID?,
+    val ephemeral: Boolean?,
 )
 

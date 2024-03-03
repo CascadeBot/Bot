@@ -2,9 +2,6 @@ package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.interactions.commands.Command
 import org.cascadebot.bot.Main
@@ -16,6 +13,7 @@ import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.CustomCommandResponse
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQException
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.SlotEntry
@@ -33,9 +31,7 @@ class SlotProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         if (parts.size != 1) {
@@ -45,9 +41,9 @@ class SlotProcessor : Processor {
         return when {
             checkAction(parts, "getAll") -> getAllSlots(guild)
             checkAction(parts, "get") -> getSingleSlot(body, guild)
-            checkAction(parts, "isEnabled") -> isSlotEnabled(body, guild, envelope, properties, rabbitMqChannel)
-            checkAction(parts, "enable") -> setSlotEnabled(body, guild, envelope, properties, rabbitMqChannel, true)
-            checkAction(parts, "disable") -> setSlotEnabled(body, guild, envelope, properties, rabbitMqChannel, false)
+            checkAction(parts, "isEnabled") -> isSlotEnabled(body, guild, context)
+            checkAction(parts, "enable") -> setSlotEnabled(body, guild, context, true)
+            checkAction(parts, "disable") -> setSlotEnabled(body, guild, context, false)
             checkAction(parts, "delete") -> deleteSlot(body)
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
@@ -77,9 +73,7 @@ class SlotProcessor : Processor {
 
     private fun disableCustomCommand(
         slot: GuildSlotEntity,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<Nothing>? {
         val command = getCommand(slot)
@@ -97,21 +91,19 @@ class SlotProcessor : Processor {
                     "slot_id" to slot.slotId,
                     "enabled" to false
                 )
-                RabbitMQResponse.success(response).sendAndAck(rabbitMqChannel, properties, envelope)
-            }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+                RabbitMQResponse.success(response).sendAndAck(context)
+            }, ErrorHandler.handleError(context))
         }
 
         guild.retrieveCommands()
-            .queue(deleteCommand, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            .queue(deleteCommand, ErrorHandler.handleError(context))
         return null
     }
 
     private fun setSlotEnabled(
         body: ObjectNode,
         guild: Guild,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         enabled: Boolean
     ): RabbitMQResponse<out JsonNode>? {
         val slot = getSlot(body, guild.idLong)
@@ -119,9 +111,9 @@ class SlotProcessor : Processor {
         when {
             slot.isCustomCommand -> {
                 return if (enabled) {
-                    enableCustomCommand(slot, guild, envelope, properties, rabbitMqChannel)
+                    enableCustomCommand(slot, guild, context)
                 } else {
-                    disableCustomCommand(slot, rabbitMqChannel, properties, envelope, guild)
+                    disableCustomCommand(slot, context, guild)
                 }
             }
 
@@ -153,9 +145,7 @@ class SlotProcessor : Processor {
     private fun enableCustomCommand(
         slot: GuildSlotEntity,
         guild: Guild,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel
+        context: RabbitMQContext
     ): RabbitMQResponse<Nothing>? {
         val command = getCommand(slot)
 
@@ -176,16 +166,14 @@ class SlotProcessor : Processor {
                 "name" to it.name
             )
             RabbitMQResponse.success(obj)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+        }, ErrorHandler.handleError(context))
         return null
     }
 
     private fun isSlotEnabled(
         body: ObjectNode,
         guild: Guild,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel
+        context: RabbitMQContext
     ): RabbitMQResponse<out JsonNode>? {
         val slot = getSlot(body, guild.idLong)
 
@@ -207,7 +195,7 @@ class SlotProcessor : Processor {
                     )
 
                     RabbitMQResponse.success(response)
-                }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+                }, ErrorHandler.handleError(context))
                 return null
             }
 

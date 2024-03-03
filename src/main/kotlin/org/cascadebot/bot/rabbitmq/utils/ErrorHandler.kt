@@ -1,8 +1,5 @@
 package org.cascadebot.bot.rabbitmq.utils
 
-import com.rabbitmq.client.AMQP.BasicProperties
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.exceptions.ErrorResponseException
 import net.dv8tion.jda.api.exceptions.HierarchyException
 import net.dv8tion.jda.api.exceptions.InsufficientPermissionException
@@ -10,6 +7,7 @@ import net.dv8tion.jda.api.requests.ErrorResponse
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.PermissionsErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 
@@ -21,12 +19,10 @@ object ErrorHandler {
      * Used in places where "handleError" needs to be an else condition
      */
     fun handleError(
-        envelope: Envelope,
-        properties: BasicProperties,
-        channel: Channel,
+        context: RabbitMQContext,
         error: Throwable
     ) {
-        handleError(envelope, properties, channel).invoke(error)
+        handleError(context).invoke(error)
     }
 
     /**
@@ -35,9 +31,7 @@ object ErrorHandler {
      * @return The function to pass to .queue() as an error handler
      */
     fun handleError(
-        envelope: Envelope,
-        properties: BasicProperties,
-        rabbitMqChannel: Channel
+        context: RabbitMQContext
     ): (Throwable) -> Unit {
         return { throwable ->
             when (throwable) {
@@ -47,7 +41,7 @@ object ErrorHandler {
                             StatusCode.BadRequest,
                             InvalidErrorCodes.InvalidUser,
                             "The specified member was not found"
-                        ).sendAndAck(rabbitMqChannel, properties, envelope)
+                        ).sendAndAck(context)
                     }
                 }
 
@@ -56,7 +50,7 @@ object ErrorHandler {
                         StatusCode.DiscordException,
                         PermissionsErrorCodes.MissingPermission,
                         "The bot is missing the permission " + throwable.permission.name + " required to do this"
-                    ).sendAndAck(rabbitMqChannel, properties, envelope)
+                    ).sendAndAck(context)
                 }
 
                 is HierarchyException -> {
@@ -64,7 +58,7 @@ object ErrorHandler {
                         StatusCode.DiscordException,
                         PermissionsErrorCodes.CannotInteract,
                         "Cannot modify this object as it is higher then the bot!"
-                    ).sendAndAck(rabbitMqChannel, properties, envelope)
+                    ).sendAndAck(context)
                 }
 
                 else -> {
@@ -72,7 +66,7 @@ object ErrorHandler {
                         StatusCode.ServerException,
                         MiscErrorCodes.UnexpectedError,
                         "Received an unexpected error " + throwable.javaClass.name + ": " + throwable.message
-                    ).sendAndAck(rabbitMqChannel, properties, envelope)
+                    ).sendAndAck(context)
                 }
             }
         }

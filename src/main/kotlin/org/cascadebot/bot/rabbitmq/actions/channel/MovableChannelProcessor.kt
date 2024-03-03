@@ -1,13 +1,11 @@
 package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.attribute.IPositionableChannel
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.createJsonObject
@@ -17,9 +15,7 @@ class MovableChannelProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
@@ -34,9 +30,7 @@ class MovableChannelProcessor : Processor {
             checkAction(parts, "position", "set") -> setChannelPosition(
                 channel,
                 body,
-                rabbitMqChannel,
-                properties,
-                envelope
+                context,
             )
 
             else -> CommonResponses.UNSUPPORTED_ACTION
@@ -46,9 +40,7 @@ class MovableChannelProcessor : Processor {
     private fun setChannelPosition(
         channel: IPositionableChannel,
         body: ObjectNode,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext
     ): Nothing? {
         val old = channel.position
         val newPos = body.get("pos").asInt()
@@ -57,8 +49,8 @@ class MovableChannelProcessor : Processor {
                 "old_pos" to old,
                 "new_pos" to newPos
             )
-            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            RabbitMQResponse.success(node).sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 }
