@@ -32,6 +32,12 @@ object CommonResponses {
         "A custom command for the slot specified could not be found"
     )
 
+    val SCRIPT_FILE_NOT_FOUND = RabbitMQResponse.failure(
+        StatusCode.NotFound,
+        MiscErrorCodes.ScriptFileNotFound,
+        "A script file for the slot specified could not be found"
+    )
+
     val DISCORD_ID_INVALID = RabbitMQResponse.failure(
         StatusCode.BadRequest,
         InvalidErrorCodes.InvalidId,
