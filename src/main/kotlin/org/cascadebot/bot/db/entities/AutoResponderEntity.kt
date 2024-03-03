@@ -6,6 +6,8 @@ import com.vladmihalcea.hibernate.type.json.JsonType
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.cascadebot.bot.utils.createJsonObject
 import org.hibernate.annotations.Type
@@ -32,5 +34,9 @@ class AutoResponderEntity(slotId: UUID, text: JsonNode, match: MutableList<Strin
     @Column(name = "match_text")
     @Type(value = ListArrayType::class)
     var match: MutableList<String> = match
+
+    @OneToOne
+    @JoinColumn(name = "slot_id", referencedColumnName = "slot_id")
+    lateinit var slot: GuildSlotEntity
 
 }
