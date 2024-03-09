@@ -10,12 +10,14 @@ import jakarta.persistence.JoinTable
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
+import net.dv8tion.jda.api.interactions.commands.Command
 import net.dv8tion.jda.api.interactions.commands.build.CommandData
 import net.dv8tion.jda.api.interactions.commands.build.Commands
 import net.dv8tion.jda.api.interactions.commands.build.OptionData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandData
 import net.dv8tion.jda.api.interactions.commands.build.SubcommandGroupData
 import org.cascadebot.bot.CustomCommandType
+import org.cascadebot.bot.Main
 import org.cascadebot.bot.ScriptLang
 import org.cascadebot.bot.db.EnumDBType
 import org.hibernate.annotations.Type
@@ -107,6 +109,10 @@ class CustomCommandEntity() : Serializable {
 
             else -> throw IllegalStateException("Unexpected command type $type")
         }
+    }
+
+    fun matchesDiscordCommand(command: Command): Boolean {
+        return command.name == name && command.applicationIdLong == Main.applicationInfo.idLong
     }
 
 }

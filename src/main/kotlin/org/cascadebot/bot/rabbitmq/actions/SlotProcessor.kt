@@ -245,8 +245,7 @@ class SlotProcessor : Processor {
                 }
 
                 guild.retrieveCommands().queue { commands ->
-                    val exists =
-                        commands.any { it.applicationIdLong == Main.applicationInfo.idLong && it.name == command.name }
+                    val exists = commands.any(command::matchesDiscordCommand)
 
                     RabbitMQResponse.success(CustomCommandResponse.fromEntity(exists, command))
                 }
@@ -287,8 +286,14 @@ class SlotProcessor : Processor {
             Pair(customCommands, autoResponders)
         }
 
-        // TODO Query Discord
-        val commandsResponse = commands.map { CustomCommandResponse.fromEntity(false, it) }
+        val discordCommands = guild.retrieveCommands().complete()
+
+        val commandsResponse = commands.map { command ->
+            CustomCommandResponse.fromEntity(
+                discordCommands.any(command::matchesDiscordCommand),
+                command
+            )
+        }
         val autoResponse = responders.map { AutoResponderResponse.fromEntity(it) }
 
         return RabbitMQResponse.success(commandsResponse + autoResponse)
