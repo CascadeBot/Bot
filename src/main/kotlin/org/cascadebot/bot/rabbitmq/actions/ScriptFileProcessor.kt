@@ -24,19 +24,13 @@ class ScriptFileProcessor : Processor {
         context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*> {
-        /*
-        * TODO:
-        *  - Create
-        *  - Update
-        * */
-
         if (parts.isEmpty()) {
             return CommonResponses.UNSUPPORTED_ACTION
         }
 
         return when {
             checkAction(parts, "get", "byId") -> getScriptFile(body, guild)
-            checkAction(parts, "get", "all") -> getAllScriptFiles(body, guild)
+            checkAction(parts, "get", "all") -> getAllScriptFiles(guild)
             checkAction(parts, "create") -> createScriptFile(body, guild)
             checkAction(parts, "update") -> updateScriptFile(body, guild)
             checkAction(parts, "delete") -> deleteScriptFile(body, guild)
@@ -58,7 +52,7 @@ class ScriptFileProcessor : Processor {
         return RabbitMQResponse.success(ScriptFileResponse.fromEntity(scriptFile))
     }
 
-    private fun getAllScriptFiles(body: ObjectNode, guild: Guild): RabbitMQResponse<List<ScriptFileResponse>> {
+    private fun getAllScriptFiles(guild: Guild): RabbitMQResponse<List<ScriptFileResponse>> {
         val scriptFiles = dbTransaction {
             queryJoinedEntities(ScriptFileEntity::class.java, GuildSlotEntity::class.java) { _, join ->
                 equal(join.get<Long>("guildId"), guild.idLong)
