@@ -180,7 +180,6 @@ class UserProcessor : Processor {
         body: ObjectNode,
         member: Member
     ): RabbitMQResponse<PaginationUtil.PaginationResult<RoleResponse>> {
-        // TODO pagination
         val params = PaginationUtil.parsePaginationParameters(body)
         val response = params.paginate(member.roles.map { RoleResponse.fromRole(it) })
         return RabbitMQResponse.success(response)
