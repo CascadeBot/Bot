@@ -50,8 +50,8 @@ object InvalidErrorCodes {
 
     val InvalidPermission = ErrorCode("invalid_Permission")
 
-    val InvalidJsonFormat = ErrorCode("invalid_json")
     val InvalidRequestFormat = ErrorCode("invalid_request")
+    val InvalidId = ErrorCode("invalid_id")
 
     val InvalidPosition = ErrorCode("invalid_position")
 }
@@ -61,7 +61,8 @@ object MiscErrorCodes {
     val UserNotFound = ErrorCode("user_not_found")
     val GuildNotFound = ErrorCode("guild_not_found")
     val ChannelNotFound = ErrorCode("channel_not_found")
-    val SlotNotFound= ErrorCode("slot_not_found")
+    val SlotNotFound = ErrorCode("slot_not_found")
+    val ScriptFileNotFound = ErrorCode("script_file_not_found")
     val UnexpectedError = ErrorCode("unexpected")
     val BotDoesNotOwnMessage = ErrorCode("unowned_message")
     val JsonProcessingError = ErrorCode("json_processing_error")

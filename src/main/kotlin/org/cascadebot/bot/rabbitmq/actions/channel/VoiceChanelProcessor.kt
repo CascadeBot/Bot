@@ -1,15 +1,13 @@
 package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.AudioChannel
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
@@ -20,9 +18,7 @@ class VoiceChanelProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
@@ -63,9 +59,9 @@ class VoiceChanelProcessor : Processor {
                     checkAction(parts, "member", "move") -> {
                         guild.moveVoiceMember(member, channel).queue(
                             {
-                                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                                RabbitMQResponse.success().sendAndAck(context)
                             },
-                            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+                            ErrorHandler.handleError(context)
                         )
                         return null
                     }

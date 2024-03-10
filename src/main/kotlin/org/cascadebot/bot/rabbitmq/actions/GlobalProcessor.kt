@@ -1,15 +1,13 @@
 package org.cascadebot.bot.rabbitmq.actions
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.StandardGuildChannel
 import org.cascadebot.bot.rabbitmq.objects.ChannelResponse
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.RoleResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
@@ -20,9 +18,7 @@ class GlobalProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*> {
         if (parts.size <= 1) {
@@ -43,7 +39,7 @@ class GlobalProcessor : Processor {
     private fun getChannelByName(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out PaginationUtil.PaginationResult<ChannelResponse>> {
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<ChannelResponse>> {
         val name = body.get("name").asText()
         if (name == null) {
             return RabbitMQResponse.failure(
@@ -64,7 +60,7 @@ class GlobalProcessor : Processor {
     private fun getChannelById(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out ChannelResponse> {
+    ): RabbitMQResponse<ChannelResponse> {
         val channelId = body.get("channel").asLong()
         val discordChannel =
             guild.getGuildChannelById(channelId)
@@ -85,7 +81,7 @@ class GlobalProcessor : Processor {
     private fun getRoleByName(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out PaginationUtil.PaginationResult<RoleResponse>> {
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<RoleResponse>> {
         val name = body.get("name").asText()
         if (name == null) {
             return RabbitMQResponse.failure(
@@ -105,7 +101,7 @@ class GlobalProcessor : Processor {
     private fun getRoleById(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out RoleResponse> {
+    ): RabbitMQResponse<RoleResponse> {
         val roleId = body.get("role").asLong()
         val role =
             guild.getRoleById(roleId)
@@ -126,7 +122,7 @@ class GlobalProcessor : Processor {
     private fun getUserByName(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out PaginationUtil.PaginationResult<MemberResponse>> {
+    ): RabbitMQResponse<PaginationUtil.PaginationResult<MemberResponse>> {
         val name = body.get("name").asText()
         if (name == null) {
             return RabbitMQResponse.failure(
@@ -149,7 +145,7 @@ class GlobalProcessor : Processor {
     private fun getUserById(
         body: ObjectNode,
         guild: Guild
-    ): RabbitMQResponse<out MemberResponse> {
+    ): RabbitMQResponse<MemberResponse> {
         val userId = body.get("user").asLong()
         val member =
             guild.getMemberById(userId)

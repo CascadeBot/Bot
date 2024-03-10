@@ -10,3 +10,5 @@
 dataSources.xml
 modules.xml
 modules
+# GitHub Copilot persisted chat sessions
+/copilot/chatSessions

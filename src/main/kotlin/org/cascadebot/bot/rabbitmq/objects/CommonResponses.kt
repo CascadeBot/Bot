@@ -14,6 +14,12 @@ object CommonResponses {
         "Slot is an unsupported type"
     )
 
+    val SLOT_NOT_FOUND = RabbitMQResponse.failure(
+        StatusCode.NotFound,
+        MiscErrorCodes.SlotNotFound,
+        "The specified slot was not found"
+    )
+
     val CHANNEL_NOT_FOUND = RabbitMQResponse.failure(
         StatusCode.NotFound,
         MiscErrorCodes.ChannelNotFound,
@@ -30,6 +36,18 @@ object CommonResponses {
         StatusCode.NotFound,
         MiscErrorCodes.SlotNotFound,
         "A custom command for the slot specified could not be found"
+    )
+
+    val SCRIPT_FILE_NOT_FOUND = RabbitMQResponse.failure(
+        StatusCode.NotFound,
+        MiscErrorCodes.ScriptFileNotFound,
+        "A script file for the slot specified could not be found"
+    )
+
+    val DISCORD_ID_INVALID = RabbitMQResponse.failure(
+        StatusCode.BadRequest,
+        InvalidErrorCodes.InvalidId,
+        "The ID provided is not a valid snowflake"
     )
 
 }

@@ -22,6 +22,7 @@ enum class ActionProcessors(val root: String, val processor: Processor) {
     MESSAGE("message", MessageProcessor()),
     SLOT("slot", SlotProcessor()),
     COMMAND("command", CommandProcessor()),
-    AUTO_RESPONDER("auto_responder", AutoResponderProcessor())
+    AUTO_RESPONDER("auto_responder", AutoResponderProcessor()),
+    SCRIPT_FILE("script_file", ScriptFileProcessor())
 
 }

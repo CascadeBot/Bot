@@ -1,9 +1,7 @@
 package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import dev.minn.jda.ktx.messages.MessageCreateBuilder
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel
@@ -14,6 +12,7 @@ import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.EmbedData
 import org.cascadebot.bot.rabbitmq.objects.MessageData
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
@@ -23,9 +22,7 @@ class MessageChannelProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
@@ -40,21 +37,17 @@ class MessageChannelProcessor : Processor {
             checkAction(parts, "send", "simple") -> sendSimpleMessage(
                 channel,
                 body,
-                rabbitMqChannel,
-                properties,
-                envelope
+                context,
             )
 
             checkAction(parts, "send", "complex") -> sendComplexMessage(
                 body,
                 channel,
-                rabbitMqChannel,
-                properties,
-                envelope
+                context,
             )
 
-            checkAction(parts, "list") -> listMessages(body, channel, rabbitMqChannel, properties, envelope)
-            checkAction(parts, "byId") -> getMessageById(body, channel, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "list") -> listMessages(body, channel, context)
+            checkAction(parts, "byId") -> getMessageById(body, channel, context)
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
     }
@@ -62,17 +55,15 @@ class MessageChannelProcessor : Processor {
     private fun getMessageById(
         body: ObjectNode,
         channel: MessageChannel,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext,
     ): Nothing? {
         val messageId = body.get("message_id").asLong()
         channel.retrieveMessageById(messageId).queue(
             {
                 RabbitMQResponse.success(MessageData.fromMessage(it))
-                    .sendAndAck(rabbitMqChannel, properties, envelope)
+                    .sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
         return null
     }
@@ -80,31 +71,27 @@ class MessageChannelProcessor : Processor {
     private fun listMessages(
         body: ObjectNode,
         channel: MessageChannel,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext,
     ): Nothing? {
         val params = PaginationUtil.parsePaginationParameters(body)
         channel.getHistoryBefore(params.start, params.count).queue({ history ->
             RabbitMQResponse.success(history
                 .retrievedHistory.map { MessageData.fromMessage(it) })
-                .sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+                .sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 
     private fun sendComplexMessage(
         body: ObjectNode,
         channel: MessageChannel,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext,
     ): Nothing? {
         val builder = MessageCreateBuilder()
         val message = body.get("message")
         if (message.has("embeds")) {
             for (embedObj in message.get("embeds")) {
-                val embed = Main.json.treeToValue(embedObj, EmbedData::class.java)
+                val embed = Main.json.treeToValue<EmbedData>(embedObj)
                 builder.addEmbeds(embed.messageEmbed)
             }
         }
@@ -113,17 +100,15 @@ class MessageChannelProcessor : Processor {
         }
 
         channel.sendMessage(builder.build()).queue({
-            RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            RabbitMQResponse.success().sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 
     private fun sendSimpleMessage(
         channel: MessageChannel,
         body: ObjectNode,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext,
     ): Nothing? {
         channel.sendMessage(MessageCreateBuilder {
             embeds += MessageType.INFO.embed.apply {
@@ -131,9 +116,9 @@ class MessageChannelProcessor : Processor {
             }.build()
         }.build()).queue(
             {
-                RabbitMQResponse.success().sendAndAck(rabbitMqChannel, properties, envelope)
+                RabbitMQResponse.success().sendAndAck(context)
             },
-            ErrorHandler.handleError(envelope, properties, rabbitMqChannel)
+            ErrorHandler.handleError(context)
         )
         return null
     }

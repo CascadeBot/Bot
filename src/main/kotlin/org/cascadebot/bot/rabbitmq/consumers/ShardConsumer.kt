@@ -1,55 +1,44 @@
 package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP.BasicProperties
 import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.JDA
 import net.dv8tion.jda.api.entities.Guild
 import org.cascadebot.bot.Main
 import org.cascadebot.bot.rabbitmq.actions.ActionProcessors
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
 import java.util.Optional
 
 class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda: JDA) : ErrorHandledConsumer(channel) {
 
-    override fun onDeliver(consumerTag: String, envelope: Envelope, properties: BasicProperties, body: String) {
-        if (!assertReplyTo(properties, envelope)) return
+    override fun onDeliver(consumerTag: String, context: RabbitMQContext, body: String) {
+        if (!assertReplyTo(context)) return
 
-        val jsonBody = try {
-            Main.json.readValue(body, ObjectNode::class.java)
-        } catch (e: Exception) {
-            RabbitMQResponse.failure(
-                StatusCode.BadRequest,
-                InvalidErrorCodes.InvalidJsonFormat,
-                e.message ?: e.javaClass.simpleName
-            ).sendAndAck(channel, properties, envelope)
-            return
-        }
+        val jsonBody = Main.json.readValue(body, ObjectNode::class.java)
 
         // If this is a broadcast request, send to a separate processor
-        if (envelope.routingKey == "shard.all") {
+        if (context.envelope.routingKey == "shard.all") {
             onShardBroadcast(
-                envelope,
-                properties,
+                context,
                 jsonBody
             )
             return
         }
 
-        val action = properties.headers["action"].toString()
+        val action = context.properties.headers["action"].toString()
 
         val consumerEnum = ActionProcessors.entries.firstOrNull { action.startsWith(it.root) }
 
         if (consumerEnum == null) {
-            CommonResponses.UNSUPPORTED_ACTION.sendAndAck(channel, properties, envelope)
+            CommonResponses.UNSUPPORTED_ACTION.sendAndAck(context)
             return
         }
 
-        val guildResult = validateGuildId(jsonBody, properties, envelope)
+        val guildResult = validateGuildId(jsonBody, context)
 
         if (guildResult.isEmpty) return
 
@@ -60,14 +49,12 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
         consumerEnum.processor.consume(
             actionParts,
             jsonBody,
-            envelope,
-            properties,
-            channel,
+            context,
             guildResult.get()
-        )?.sendAndAck(channel, properties, envelope)
+        )?.sendAndAck(context)
     }
 
-    private fun validateGuildId(jsonBody: ObjectNode, properties: BasicProperties, envelope: Envelope): Optional<Guild> {
+    private fun validateGuildId(jsonBody: ObjectNode, context: RabbitMQContext): Optional<Guild> {
         val guildIdField = jsonBody.get("guild_id")
 
         if (guildIdField == null) {
@@ -75,7 +62,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidGuild,
                 "Guild must be specified in the request"
-            ).sendAndAck(channel, properties, envelope)
+            ).sendAndAck(context)
             return Optional.empty()
         }
 
@@ -86,7 +73,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidGuild,
                 "Guild ID must be a 64-bit int contained in a string"
-            ).sendAndAck(channel, properties, envelope)
+            ).sendAndAck(context)
             return Optional.empty()
         }
 
@@ -97,7 +84,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidShard,
                 "Shard mismatch. Guild shard: $shardId. Requested shard: $shardId"
-            ).sendAndAck(channel, properties, envelope)
+            ).sendAndAck(context)
             return Optional.empty()
         }
 
@@ -108,7 +95,7 @@ class ShardConsumer(channel: Channel, private val shardId: Int, internal val jda
                 StatusCode.BadRequest,
                 InvalidErrorCodes.InvalidGuild,
                 "The specified guild does not exist"
-            ).sendAndAck(channel, properties, envelope)
+            ).sendAndAck(context)
             return Optional.empty()
         }
 

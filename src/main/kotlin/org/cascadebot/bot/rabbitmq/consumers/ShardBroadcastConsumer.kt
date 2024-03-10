@@ -2,41 +2,35 @@ package org.cascadebot.bot.rabbitmq.consumers
 
 import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Envelope
+import com.fasterxml.jackson.module.kotlin.treeToValue
 import net.dv8tion.jda.api.Permission
 import net.dv8tion.jda.api.requests.RestAction
 import org.cascadebot.bot.Main
+import org.cascadebot.bot.rabbitmq.objects.CommonResponses
+import org.cascadebot.bot.rabbitmq.objects.DiscordIDObject
 import org.cascadebot.bot.rabbitmq.objects.InvalidErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MiscErrorCodes
 import org.cascadebot.bot.rabbitmq.objects.MutualGuildResponse
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.objects.StatusCode
-import org.cascadebot.bot.rabbitmq.objects.UserIDObject
 
 fun ShardConsumer.onShardBroadcast(
-    envelope: Envelope,
-    properties: AMQP.BasicProperties,
+    context: RabbitMQContext,
     body: ObjectNode
 ) {
-    val action = properties.headers["action"].toString()
+    val action = context.properties.headers["action"].toString()
 
     val response: Any = when (action) {
         "user:mutual_guilds" -> {
-            if (!assertReplyTo(properties, envelope)) return
-            val decodeResult = kotlin.runCatching { Main.json.treeToValue(body, UserIDObject::class.java) }
+            if (!assertReplyTo(context)) return
+            val userId = Main.json.treeToValue<DiscordIDObject>(body).id.toLongOrNull()
 
-            if (decodeResult.isFailure) {
-                RabbitMQResponse.failure(
-                    StatusCode.BadRequest,
-                    InvalidErrorCodes.InvalidRequestFormat,
-                    "Invalid request format, please specify user_id"
-                ).sendAndAck(channel, properties, envelope)
+            if (userId == null) {
+                return CommonResponses.DISCORD_ID_INVALID.sendAndAck(context)
             }
 
-            val userId = decodeResult.getOrNull()?.userId
-
-            val user = userId?.let { Main.shardManager.getUserById(userId) }
+            val user = Main.shardManager.getUserById(userId)
 
             if (user == null) {
                 val response = RabbitMQResponse.failure(
@@ -44,7 +38,7 @@ fun ShardConsumer.onShardBroadcast(
                     MiscErrorCodes.UserNotFound,
                     "User cannot be found"
                 )
-                response.sendAndAck(channel, properties, envelope)
+                response.sendAndAck(context)
                 return
             }
 
@@ -67,7 +61,7 @@ fun ShardConsumer.onShardBroadcast(
                 InvalidErrorCodes.InvalidMethod,
                 "The method '$action' is invalid."
             )
-            response.sendAndAck(channel, properties, envelope)
+            response.sendAndAck(context)
             return
         }
     }
@@ -75,5 +69,5 @@ fun ShardConsumer.onShardBroadcast(
     val jsonResponse = Main.json.valueToTree<JsonNode>(response)
 
     val wrappedResponse = RabbitMQResponse.success(jsonResponse)
-    wrappedResponse.sendAndAck(channel, properties, envelope)
+    wrappedResponse.sendAndAck(context)
 }

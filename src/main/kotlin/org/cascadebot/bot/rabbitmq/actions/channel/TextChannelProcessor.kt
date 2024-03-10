@@ -1,14 +1,12 @@
 package org.cascadebot.bot.rabbitmq.actions.channel
 
 import com.fasterxml.jackson.databind.node.ObjectNode
-import com.rabbitmq.client.AMQP
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Envelope
 import net.dv8tion.jda.api.entities.Guild
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel
 import org.cascadebot.bot.rabbitmq.actions.Processor
 import org.cascadebot.bot.rabbitmq.objects.CommonResponses
 import org.cascadebot.bot.rabbitmq.objects.MemberResponse
+import org.cascadebot.bot.rabbitmq.objects.RabbitMQContext
 import org.cascadebot.bot.rabbitmq.objects.RabbitMQResponse
 import org.cascadebot.bot.rabbitmq.utils.ErrorHandler
 import org.cascadebot.bot.utils.PaginationUtil
@@ -19,9 +17,7 @@ class TextChannelProcessor : Processor {
     override fun consume(
         parts: List<String>,
         body: ObjectNode,
-        envelope: Envelope,
-        properties: AMQP.BasicProperties,
-        rabbitMqChannel: Channel,
+        context: RabbitMQContext,
         guild: Guild
     ): RabbitMQResponse<*>? {
         val channel = ChannelUtils.validateAndGetChannel(body, guild)
@@ -34,7 +30,7 @@ class TextChannelProcessor : Processor {
 
         return when {
             checkAction(parts, "topic", "get") -> RabbitMQResponse.success("topic", channel.topic)
-            checkAction(parts, "topic", "set") -> setChannelTopic(channel, body, rabbitMqChannel, properties, envelope)
+            checkAction(parts, "topic", "set") -> setChannelTopic(channel, body, context)
             checkAction(parts, "members", "list") -> listChannelMembers(body, channel)
             else -> CommonResponses.UNSUPPORTED_ACTION
         }
@@ -51,9 +47,7 @@ class TextChannelProcessor : Processor {
     private fun setChannelTopic(
         channel: TextChannel,
         body: ObjectNode,
-        rabbitMqChannel: Channel,
-        properties: AMQP.BasicProperties,
-        envelope: Envelope
+        context: RabbitMQContext,
     ): Nothing? {
         val old = channel.topic
         val newVal = body.get("topic").asText()
@@ -62,8 +56,8 @@ class TextChannelProcessor : Processor {
                 "old_topic" to old,
                 "new_topic" to newVal
             )
-            RabbitMQResponse.success(node).sendAndAck(rabbitMqChannel, properties, envelope)
-        }, ErrorHandler.handleError(envelope, properties, rabbitMqChannel))
+            RabbitMQResponse.success(node).sendAndAck(context)
+        }, ErrorHandler.handleError(context))
         return null
     }
 }
