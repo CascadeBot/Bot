@@ -29,7 +29,7 @@ class ScriptFileEntity(slotId: UUID, fileName: String, script: String): Serializ
     var script: String = script
 
     @OneToOne
-    @JoinColumn(name = "slot_id", referencedColumnName = "slot_id")
+    @JoinColumn(name = "slot_id", referencedColumnName = "slot_id", insertable = false, updatable = false)
     lateinit var slot: GuildSlotEntity
 
 }
