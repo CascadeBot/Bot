@@ -15,6 +15,7 @@ import org.cascadebot.bot.db.entities.CommandOptionEntity
 import org.cascadebot.bot.db.entities.CustomCommandEntity
 import org.cascadebot.bot.db.entities.GuildSlotEntity
 import org.cascadebot.bot.utils.QueryUtils.queryEntity
+import org.cascadebot.bot.utils.QueryUtils.queryJoinedEntities
 import org.cascadebot.bot.utils.tryOrNull
 import java.util.UUID
 
@@ -49,45 +50,38 @@ class HelpCommand : RootCommand("help", "Give you a list of all commands availab
             }
             val guildBuilder = StringBuilder()
             context.guild.retrieveCommands().queue { guildCommands ->
-                for (slot in Main.postgres.transaction {
-                    queryEntity(GuildSlotEntity::class.java) { root ->
-                        equal(root.get<Long>("guildId"), context.guild.idLong)
-                    }.list()
-                }) {
-                    for (guildCommand in guildCommands) {
-                        val customCommand = Main.postgres.transaction {
-                            return@transaction tryOrNull {
-                                queryEntity(CustomCommandEntity::class.java) { root ->
-                                    and(
-                                        equal(root.get<UUID>("slotId"), slot.slotId),
-                                        equal(root.get<String>("name"), guildCommand.name)
-                                    )
-                                }.singleResult
-                            }
-                        }
-                        if (customCommand == null) {
-                            // TODO remove from discord as it does not exist in db?
-                            continue
-                        }
-                        if (doesNotHaveSubCommands(customCommand)) {
-                            guildBuilder.append("* </${guildCommand.name}:${guildCommand.id}> ")
+                val customCommands = Main.postgres.transaction {
+                    queryJoinedEntities(CustomCommandEntity::class.java, GuildSlotEntity::class.java) { _, join ->
+                        equal(join.get<Long>("guildId"), context.guild.idLong)
+                    }.list();
+                }
 
-                            handleOptions(guildBuilder, customCommand.options)
-                            guildBuilder.append("\n")
-                        } else {
-                            for (option in customCommand.options) {
-                                if (option.optionType == org.cascadebot.bot.OptionType.SUB_COMMAND) {
-                                    guildBuilder.append("* </${guildCommand.name} ${option.name}:${guildCommand.id}> ")
+                for (guildCommand in guildCommands) {
+                    val customCommand = customCommands.find { entity -> entity.name == guildCommand.name }
 
-                                    handleOptions(guildBuilder, option.subOptions)
+                    if (customCommand == null) {
+                        // TODO remove from discord as it does not exist in db?
+                        continue
+                    }
+
+                    if (doesNotHaveSubCommands(customCommand)) {
+                        guildBuilder.append("* </${guildCommand.name}:${guildCommand.id}> ")
+
+                        handleOptions(guildBuilder, customCommand.options)
+                        guildBuilder.append("\n")
+                    } else {
+                        for (option in customCommand.options) {
+                            if (option.optionType == org.cascadebot.bot.OptionType.SUB_COMMAND) {
+                                guildBuilder.append("* </${guildCommand.name} ${option.name}:${guildCommand.id}> ")
+
+                                handleOptions(guildBuilder, option.subOptions)
+                                guildBuilder.append("\n")
+                            } else {
+                                for (subCommand in option.subOptions) {
+                                    guildBuilder.append("* </${guildCommand.name} ${option.name} ${subCommand.name}:${guildCommand.id}> ")
+
+                                    handleOptions(guildBuilder, subCommand.subOptions)
                                     guildBuilder.append("\n")
-                                } else {
-                                    for (subCommand in option.subOptions) {
-                                        guildBuilder.append("* </${guildCommand.name} ${option.name} ${subCommand.name}:${guildCommand.id}> ")
-
-                                        handleOptions(guildBuilder, subCommand.subOptions)
-                                        guildBuilder.append("\n")
-                                    }
                                 }
                             }
                         }
@@ -270,7 +264,13 @@ class HelpCommand : RootCommand("help", "Give you a list of all commands availab
         }
     }
 
-    private fun commandReply(context: CommandContext, path: String, rootCommand: CustomCommandEntity, options: List<CommandOptionEntity>, id: Long) {
+    private fun commandReply(
+        context: CommandContext,
+        path: String,
+        rootCommand: CustomCommandEntity,
+        options: List<CommandOptionEntity>,
+        id: Long
+    ) {
         val optionsBuilder = StringBuilder()
         for (subOption in options) {
             if (subOption.required == true) {
@@ -297,7 +297,10 @@ class HelpCommand : RootCommand("help", "Give you a list of all commands availab
             return
         }
 
-        context.reply("Was unable to find sub command or sub command group at location " + path.joinToString(" "), MessageType.DANGER)
+        context.reply(
+            "Was unable to find sub command or sub command group at location " + path.joinToString(" "),
+            MessageType.DANGER
+        )
     }
 
     private fun easterEggHelp(context: CommandContext) {
